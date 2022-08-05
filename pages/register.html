@@ -1,0 +1,37 @@
+{{ template "header.html" .}}
+{{$usernames := index .Query "username"}}
+{{$usernamelen := len $usernames}}
+{{$username := ""}}
+{{$proceed := false}}
+{{if ge $usernamelen 1}}
+	{{$username = index $usernames 0}}
+	{{$prettynames := index .Query "prettyname"}}
+	{{$pass1s := index .Query "pass1"}}
+	{{$pass2s := index .Query "pass2"}}
+	{{$prettyname := index $prettynames 0}}
+	{{$pass1 := index $pass1s 0}}
+	{{$pass2 := index $pass2s 0}}
+
+	{{$errors := CreateUser $username $prettyname $pass1 $pass2}}
+	{{if ne $errors ""}}
+		{{$errors}}
+	{{else}}
+		{{$proceed = true}}
+	{{end}}
+{{end}}
+{{if eq $proceed false}}
+	<h1>Register</h1>
+	<form method='get' action='/register'>
+		Username: <input type='text' name='username'><br><br>
+		Full Name: <input type='text' name='prettyname'><br><br>
+		Password: <input type='password' name='pass1'><br><br>
+		Confirm Password: <input type='password' name='pass2'><br><br>
+		<input type='submit' value='Sign up'>
+	</form>
+{{else}}
+	{{SetSessionValue .SessionValues "username" $username}}
+	<script>
+		window.location.href = "/";
+	</script>
+{{end}}
+{{ template "footer.html" .}}

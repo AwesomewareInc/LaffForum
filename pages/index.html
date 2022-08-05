@@ -1,0 +1,8 @@
+{{ template "header.html" .}}
+<span style='float: right; background: #34D399; padding: 1em; margin: 0 2em; font-size:75%; color: white; text-align: center;'>
+	<h1>The Funny Wars forum</h1>
+	<p>Official news and discussion regarding the Funny Wars comic</p>
+</span>
+{{$username := index .SessionValues "username"}}
+{{$username}}
+{{ template "footer.html" .}}
