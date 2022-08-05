@@ -9,3 +9,4 @@ func SetSessionValue(theMap phpencode.PhpSession, key, value string) (string) {
 	theMap[key] = value;
 	return theMap[key].(string);
 };
+//

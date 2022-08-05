@@ -170,3 +170,4 @@ func GetContentType(output *os.File) (string, error) {
 		return http.DetectContentType(file), nil
 	}
 }
+//
