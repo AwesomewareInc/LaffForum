@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis"
 	"github.com/tiket-oss/phpsessgo"
 	"github.com/tiket-oss/phpsessgo/phpencode"
 )
@@ -22,17 +21,6 @@ var pages embed.FS
 var tmpl *template.Template
 
 var sessionManager = phpsessgo.NewSessionManager( 
-	phpsessgo.DefaultSessionName,
-	&phpsessgo.UUIDCreator{},
-	&phpsessgo.RedisSessionHandler{
-		Client:         redis.NewClient(&redis.Options{
-										Addr:     "localhost:6379",
-										Password: "",
-										DB:       0,
-									}),
-		RedisKeyPrefix: "redislock:",
-	},
-	&phpsessgo.PHPSessionEncoder{},
 	phpsessgo.SessionManagerConfig{
 		Expiration:     time.Hour * 24,
 		CookiePath:     "/",
@@ -46,10 +34,12 @@ func main() {
 	// initialize the template shit
 	tmpl = template.New("")
 	tmpl.Funcs(funcMap) // "FuncMap" refers to a template.FuncMap in another file, that isn't included in this one.
-	_, err := tmpl.ParseFS(pages, "pages/*")
-	if err != nil {
-		log.Println(err)
-	}
+
+	// For as long as the program is running, continually refresh the templates on another thread
+			_, err := tmpl.ParseFS(pages, "pages/*")
+			if err != nil {
+				log.Println(err)
+			}
 
 	fmt.Println("Running")
 	// initialize the main server
