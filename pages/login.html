@@ -26,5 +26,8 @@
 	</form>
 {{else}}
 	{{SetSessionValue .SessionValues "username" $username}}
+	<script>
+		window.open("/","_self");
+	</script>
 {{end}}
 {{ template "footer.html" .}}

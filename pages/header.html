@@ -12,7 +12,15 @@
 						<input type='submit'>
 					</span>
 					<span class='user'>
-						<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
+						{{$username := ""}}
+						{{if .SessionValues}}
+							{{$username = index .SessionValues "username"}}
+						{{end}}
+						{{if $username}}
+							<a href="/user/{{$username}}">{{$username}}</a>
+						{{else}}
+							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
+						{{end}}
 					</span>
 				</span>
 				<span class='links'>

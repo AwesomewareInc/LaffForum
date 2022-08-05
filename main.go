@@ -51,6 +51,7 @@ func main() {
 		log.Println(err)
 	}
 
+	fmt.Println("Running")
 	// initialize the main server
 	s := &http.Server{
 		Addr:           ":8083",
@@ -62,10 +63,11 @@ func main() {
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println("Running")
+	
 }
 
 func handlerFunc(w http.ResponseWriter, r *http.Request) {
+	// Start a session.
 	session, err := sessionManager.Start(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

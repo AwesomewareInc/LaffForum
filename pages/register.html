@@ -31,7 +31,7 @@
 {{else}}
 	{{SetSessionValue .SessionValues "username" $username}}
 	<script>
-		window.location.href = "/";
+		window.open("/","_self");
 	</script>
 {{end}}
 {{ template "footer.html" .}}
