@@ -1,0 +1,25 @@
+{{ template "header.html" .}}
+	{{$valuelen := len .Values}}
+	{{if eq $valuelen 0}}
+		{{ template "sections.html" }}
+	{{else}}
+	{{$topic := index .Values 1}}
+	{{$topiclen := len .Values}}
+
+	{{$subpage := ""}}
+	{{if gt $topiclen 2}}
+		{{$subpage = index .Values 2}}
+	{{else}}
+		{{$subpage = ""}}
+	{{end}}
+
+	{{if eq $subpage ""}}
+		{{ template "topic_posts.html" .}}
+	{{end}}
+	{{if eq $subpage "submit"}}
+		{{ template "topic_submit.html" .}}
+	{{end}}
+
+	{{end}}
+	
+{{ template "footer.html" .}}

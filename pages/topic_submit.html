@@ -1,0 +1,36 @@
+{{$topic := index .Values 1}}
+{{$username := ""}}
+{{$subject := ""}}
+{{$content := ""}}
+{{$post := ""}}
+{{$id := -1}}
+{{if .SessionValues}}
+	{{$username = index .SessionValues "username"}}
+{{end}}
+
+	{{$subjects := index .Query "subject"}}
+	{{$subjectlen := len $subjects}}
+	{{$proceed := true}}
+	{{if ge $subjectlen 1}}
+		{{$subject = index $subjects 0}}
+		{{$contents := index .Query "content"}}
+		{{$content = index $contents 0}}
+		{{$post := SubmitPost $username $topic $subject $content}}
+		{{if $post.Error}}
+			<h1>Error while submitting your post.</h1>
+			<span style="white-space: pre-wrap">{{$post.Error}}</span>
+		{{else}}
+			<script>
+				window.open("/post/{{$post.ID}}","_self");
+			</script>		
+		{{end}}
+	{{end}}
+	<h1>Create a post in {{Capitalize $topic}}</h1>
+	You can use markdown to flair your posts. Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
+	<form method='get' action='/topic/{{$topic}}/submit'>
+		<b>Subject:</b><br>
+		<input type='text' name='subject' value='{{$subject}}'><br><br>
+		<b>Content:</b><br>
+		<textarea style="width: 100%; height: 100%; display:block;" name='content' value='{{$content}}'></textarea>
+		<input type='submit'>
+	</form>

@@ -1,0 +1,40 @@
+{{$topic := index .Values 1}}
+{{$username := ""}}
+{{if .SessionValues}}
+	{{$username = index .SessionValues "username"}}
+{{end}}
+
+<span class='box heading' style='
+	background: #f9c56c;
+	'>
+	Threads in {{Capitalize $topic}} 
+</span>
+{{if $username}}
+	<a href='/topic/{{$topic}}/submit' class='box make-post'>Submit a topic</a>
+{{end}}
+	{{$posts := GetPostsBySectionName $topic}}
+	{{if $posts.Error}}
+		{{$posts.Error.Error}}
+	{{else}}
+	<table class='posts'>
+		<thead>
+			<tr>
+				<th>From</th>
+				<th>Subject</th>
+			</tr>
+		</thead>
+		<tbody>
+		{{range $i, $v := $posts.Posts}}
+			<tr>
+				{{$author := GetUsernameByID $v.Author}}
+				{{if ne $author.Error.Error ""}}
+					Could not get author; $author.Error.Error
+				{{else}}
+					<td class='from'>{{$author.Result}}</td>
+				{{end}}
+				<td class='subject'>{{$v.Subject}}</td>
+			</tr>
+		{{end}}
+		</tbody>
+	</table>
+{{end}}

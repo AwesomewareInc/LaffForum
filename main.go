@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -40,8 +39,6 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
-
-	fmt.Println("Running")
 	// initialize the main server
 	s := &http.Server{
 		Addr:           ":8083",
