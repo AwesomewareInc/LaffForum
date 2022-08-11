@@ -5,18 +5,25 @@
 {{else}}
 	{{$postid := index .Values 1}}
 	{{$post := GetPostInfo $postid}}
-	{{if ne $post.Error.Error ""}}
+	{{if $post.Error}}
 		{{$post.Error.Error}}
 	{{else}}
 		<span class='box authorbox'>
 			{{$author := GetUsernameByID $post.Author}}
-			{{if ne $author.Error.Error ""}}
-				Could not get author; $author.Error.Error
+			{{if $author.Error}}
+				Could not get author; {{$author.Error.Error}}
 			{{else}}
 				Post by <a href='/user/{{$author.Result}}/'>{{$author.Result}}</a><br>
-				<small>Made on {{$post.Timestamp}}</small>
 			{{end}}
-		</span><span class='box postinfo'>
+			<br>
+			{{$timestamp := PrettyTime $post.Timestamp}}
+			{{if $timestamp.Error}}
+				Couldn't get timestamp; {{$timestamp.Error.Error}}
+			{{else}}
+				<small style='font-weight: normal;'>posted {{$timestamp.Result}}</small>
+			{{end}}
+		</span>
+		<span class='box postinfo'>
 			<h1>{{$post.Subject}}</h1>
 			{{$post.Contents}}
 		</span>

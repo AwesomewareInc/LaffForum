@@ -16,4 +16,6 @@ var funcMap = template.FuncMap{
 	"GetPostInfo":	GetPostInfo,
 
 	"SubmitPost": SubmitPost,
+
+	"PrettyTime": PrettyTime,
 }

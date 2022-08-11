@@ -145,7 +145,8 @@ table.posts .subject {
 }
 
 .authorbox {
-	width: 13%;
+	width: 15%;
+	min-height: 20%;
 	float: left;
 	background: #DBEAFE;
 	border: 1px solid #60A5FA;
@@ -153,7 +154,7 @@ table.posts .subject {
 }
 
 .postinfo {
-	width: 86%;
+	width: 80%;
 	float: right;
 	display: inline-block;
 }

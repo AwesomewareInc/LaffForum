@@ -81,7 +81,8 @@ func CommandListenerThread() {
 // =============
 
 func ExecuteDirect(query string, args ...any) error {
-	_, err = database.Exec(query, args...)
+	fmt.Printf(strings.Replace(query,"?","%v",99)+"\n",args[:]...)
+	_, err = database.Exec(query, args[:]...)
 	return err
 }
 
@@ -105,8 +106,46 @@ type GenericResult struct {
 }
 
 func PublicFacingError(msg string, err error) (error) {
+
+	// stack trace
+	stacktrace := string(debug.Stack())
+
+	// code into
 	pc, filename_, line, _ := runtime.Caller(1)
 
+	// manipulate the stacktrace.
+	stacktraceParts := strings.Split(stacktrace,"\n")[3:] // the first three lines are guaranteed to be part of this call.
+	var relevant bool 		// whether we've begun encountering lines that are part of this project
+	var maxStackDetail int 	// the point at which we stop encountering those lines.
+	// for each part of the stacktrace...
+	for i, v := range stacktraceParts {
+		// does it many slashes in it?
+		if(strings.Count(v,string(os.PathSeparator)) >= 2) {
+			// how many tabs in it?
+			tabcount := strings.Count(v,"	")
+			// split it into parts and filter the line to only the last part
+			stacktracePartParts := strings.Split(v,string(os.PathSeparator))
+			// make sure it retains the amount of tabs
+			var newString string
+			for i := 0; i < tabcount; i++ {
+				newString += "	"
+			}
+			newString += stacktracePartParts[len(stacktracePartParts)-1]
+			stacktraceParts[i] = newString
+		}
+		if(strings.Contains(v,"LaffForum")) {
+			if(relevant == false) {
+				relevant = true
+			} else {
+				maxStackDetail = i+3
+				break
+			}
+		}
+	}
+
+	// and reduce the stacktrace to fit in the scope we want.
+	stacktrace = strings.Join(stacktraceParts[0:maxStackDetail],"\n")
+	stacktrace += "\n(...continues entering system files...)"
 	filenameParts := strings.Split(filename_,"/")
 	filename := filenameParts[len(filenameParts)-1]
 
@@ -114,9 +153,7 @@ func PublicFacingError(msg string, err error) (error) {
 	funcnames := strings.Split(funcname_,".")
 	funcname := funcnames[len(funcnames)-1]
 
-	stacktrace := string(debug.Stack())
-
-	return fmt.Errorf("%v at %v:%v in %v(), %v. \n %v",msg,filename,line,funcname,err.Error(),stacktrace)
+	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v",msg,filename,line,funcname,err.Error(),stacktrace)
 }
 
 // ==============
@@ -312,12 +349,14 @@ func GetPostInfo(id_ string) (result GetPostInfoResult) {
 	var author int
 	var replyto int
 	var timestamp int
-	rows.Next()
-	if err := rows.Scan(&postID, &topic, &subject, &contents, &author, &replyto, &timestamp); err != nil {
-		result.Error = PublicFacingError("Error while getting post info;",err)
-	} else {
-		result.Post = Post{postID, topic, subject, contents, author, replyto, timestamp}
+	for rows.Next() {
+		if err := rows.Scan(&postID, &topic, &subject, &contents, &author, &replyto, &timestamp); err != nil {
+			result.Error = PublicFacingError("Error while getting post info;",err)
+		} else {
+			result.Post = Post{postID, topic, subject, contents, author, replyto, timestamp}
+		}
 	}
+
 	return
 }
 
@@ -375,7 +414,7 @@ func SubmitPost(username, topic, subject, content string) (result *GenericResult
 	}
 
 	// Prepare to insert into posts.
-	statement, err := database.Prepare("INSERT INTO `posts` (id, author, topic, subject, contents, timestamp, replyto) VALUES (?, ?, ?, ?, ?, ?, ?);")
+	statement, err := database.Prepare("INSERT INTO `posts` (author, topic, subject, contents, timestamp, replyto) VALUES (?, ?, ?, ?, ?, ?);")
 	if err != nil {
 		result.Error = err
 		return
@@ -401,10 +440,13 @@ func SubmitPost(username, topic, subject, content string) (result *GenericResult
 	timestamp := fmt.Sprintf("%v", timestampInt)
 
 	// Submit the post with those values and what we got in the function arguments, and return the new post id.
-	rows, err := statement.Query(timestampInt+userid+topicid, userid, topicid, subject, content, timestamp, 0)
-	result.Result = ""
-	rows.Next()
-	if err := rows.Scan(&result.Result); err != nil {
+	execResult, err := statement.Exec(userid, topicid, subject, content, timestamp, 0)
+	if err != nil {
+		result.Error = PublicFacingError("",err)
+		return
+	}
+	result.Result, err = execResult.LastInsertId()
+	if err != nil {
 		result.Error = PublicFacingError("",err)
 		return
 	}
@@ -430,7 +472,7 @@ func DoCommand(text string) error {
 		if len(args) < 2 {
 			return fmt.Errorf("mkadmin <string username>")
 		}
-		err = MakeAdmin(args[1], args[2])
+		err = MakeAdmin(args[1])
 	case "exit":
 		os.Exit(0)
 	default:
@@ -444,5 +486,5 @@ func CreateSection(args ...any) error {
 }
 
 func MakeAdmin(args ...any) error {
-	return ExecuteDirect("UPDATE `users` WHERE username = ? SET adminonly = 1;", args)
+	return ExecuteDirect("UPDATE `users` SET admin = 1 WHERE username = ?;", args...)
 }

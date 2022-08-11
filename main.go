@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -167,4 +168,41 @@ func GetContentType(output *os.File) (string, error) {
 		return http.DetectContentType(file), nil
 	}
 }
-//
+
+func PrettyTime(unixTime int) (result GenericResult) {
+	unixTimeDur, err := time.ParseDuration(fmt.Sprintf("%vs",time.Now().Unix()-int64(unixTime)))
+	if(err != nil) {
+		result.Error = err
+		return
+	}
+
+	if(unixTimeDur.Hours() >= 8760) {
+		result.Result = fmt.Sprintf("%0.f years ago",unixTimeDur.Hours()/8760)
+		return 
+	}
+	if(unixTimeDur.Hours() >= 730) {
+		result.Result = fmt.Sprintf("%0.f months ago",unixTimeDur.Hours()/730)
+		return 
+	}
+	if(unixTimeDur.Hours() >= 168) {
+		result.Result = fmt.Sprintf("%0.f weeks ago",unixTimeDur.Hours()/168)
+		return 
+	}
+	if(unixTimeDur.Hours() >= 24) {
+		result.Result = fmt.Sprintf("%0.f days ago",unixTimeDur.Hours()/24)
+		return 
+	}
+	if(unixTimeDur.Hours() >= 1) {
+		result.Result = fmt.Sprintf("%0.f hours ago",unixTimeDur.Hours())
+		return 
+	}
+	if(unixTimeDur.Minutes() >= 1) {
+		result.Result = fmt.Sprintf("%0.f minutes ago",unixTimeDur.Minutes())
+		return 
+	}
+	if(unixTimeDur.Seconds() >= 1) {
+		result.Result = fmt.Sprintf("%0.f seconds ago",unixTimeDur.Seconds())
+		return 
+	}
+	return
+}

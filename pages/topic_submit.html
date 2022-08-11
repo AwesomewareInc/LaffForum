@@ -7,7 +7,9 @@
 {{if .SessionValues}}
 	{{$username = index .SessionValues "username"}}
 {{end}}
-
+{{if eq $username ""}}
+	You aren't logged in.
+{{else}}
 	{{$subjects := index .Query "subject"}}
 	{{$subjectlen := len $subjects}}
 	{{$proceed := true}}
@@ -21,7 +23,7 @@
 			<span style="white-space: pre-wrap">{{$post.Error}}</span>
 		{{else}}
 			<script>
-				window.open("/post/{{$post.ID}}","_self");
+				window.open("/post/{{$post.Result}}","_self");
 			</script>		
 		{{end}}
 	{{end}}
@@ -34,3 +36,4 @@
 		<textarea style="width: 100%; height: 100%; display:block;" name='content' value='{{$content}}'></textarea>
 		<input type='submit'>
 	</form>
+{{end}}
