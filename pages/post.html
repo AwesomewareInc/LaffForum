@@ -1,4 +1,15 @@
 {{ template "header.html" .}}
+
+{{$userinfo := ""}}
+{{$username := ""}}
+{{if .SessionValues}}
+	{{$username = index .SessionValues "username"}}
+	{{$userinfo = GetUserInfo $username }}
+	{{if $userinfo.Error}}
+		Error getting info about this user: {{$userinfo.Error.Error}}
+	{{end}}
+{{end}}
+
 {{$valuelen := len .Values}}
 {{if eq $valuelen 0}}
 	you have me nothing you fuckwad
@@ -8,6 +19,10 @@
 	{{if $post.Error}}
 		{{$post.Error.Error}}
 	{{else}}
+		{{$sectioninf := GetSectionInfo $post.Topic}}
+		{{if $sectioninf.Error}}
+			{{$sectioninf.Error.Error}}
+		{{else}}
 		<span class='box authorbox'>
 			{{$author := GetUsernameByID $post.Author}}
 			{{if $author.Error}}
@@ -27,6 +42,17 @@
 			<h1>{{$post.Subject}}</h1>
 			{{$post.Contents}}
 		</span>
+		{{end}}
+
+		{{if $username}}
+			{{if eq $sectioninf.AdminOnly 2}}
+				{{if $userinfo.Admin}}
+					<textarea class='replybox' placeholder='Reply'></textarea>
+				{{end}}
+			{{else}}
+				<textarea class='replybox' placeholder='Reply'></textarea>
+			{{end}}
+		{{end}}
 	{{end}}
 {{end}}
 {{ template "footer.html" .}}

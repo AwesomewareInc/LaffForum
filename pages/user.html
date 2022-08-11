@@ -1,0 +1,48 @@
+{{ template "header.html" .}}
+{{if eq (len .Values) 0}}
+	what
+{{else}}
+	{{$userid := index .Values 1}}
+	{{$user := GetUserInfo $userid}}
+	{{if $user.Error}}
+		{{$user.Error.Error}}
+	{{else}}
+		<span class='box userinfo'>
+			{{if $user.Admin}}
+				<small><b style='float:  right'>Admin</b></small>
+			{{end}}
+			<h3>{{$user.PrettyName}}</h3>
+			<p>{{$user.Bio}}</p>
+			{{$timestamp := PrettyTime $user.Timestamp}}
+			{{if $timestamp.Error}}
+				Couldn't get timestamp; {{$timestamp.Error.Error}}
+			{{else}}
+				A member since {{$timestamp.Result}}
+			{{end}}
+		</span>
+		<span class='box posts'>
+			{{$posts := GetPostsFromUser $user.Username}}
+			{{if $posts.Error}}
+				{{$posts.Error.Error}}
+			{{else}}
+				{{if ge (len $posts.Posts) 1}}
+				<table class='posts user'>
+					<thead>
+						<tr>
+							<th>{{$user.Username}}'s posts</th>
+						</tr>
+					</thead>
+					<tbody>
+					{{range $i, $v := $posts.Posts}}
+						<tr>
+							<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
+						</tr>
+					{{end}}
+					</tbody>
+				</table>
+				{{end}}
+			{{end}}
+		</span>
+	{{end}}
+{{end}}
+{{ template "footer.html" .}}

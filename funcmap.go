@@ -12,9 +12,12 @@ var funcMap = template.FuncMap{
 
 	"GetSections": GetSections,
 	"GetPostsBySectionName": GetPostsBySectionName,
+	"GetPostsFromUser": GetPostsFromUser,
 	"GetUsernameByID": 	GetUsernameByID,
 	"GetPostInfo":	GetPostInfo,
-
+	"GetUserInfo": GetUserInfo,
+	"GetSectionInfo": GetSectionInfo,
+	
 	"SubmitPost": SubmitPost,
 
 	"PrettyTime": PrettyTime,

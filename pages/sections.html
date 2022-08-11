@@ -15,7 +15,11 @@
 		Sections
 	</span>
 	{{$sections := GetSections}}
-	{{range $i, $v := $sections}}
-		<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a><br>
+	{{if $sections.Error}}
+		{{$sections.Error.Error}}
+	{{else}}
+		{{range $i, $v := $sections.Results}}
+			<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a><br>
+		{{end}}
 	{{end}}
 </span>

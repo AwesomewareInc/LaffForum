@@ -1,40 +1,57 @@
 {{$topic := index .Values 1}}
 {{$username := ""}}
+{{$userinfo := "nil"}}
 {{if .SessionValues}}
 	{{$username = index .SessionValues "username"}}
+	{{$userinfo = GetUserInfo $username }}
+	{{if $userinfo.Error}}
+		Error getting info about this user: {{$userinfo.Error.Error}}
+	{{end}}
 {{end}}
 
-<span class='box heading' style='
-	background: #f9c56c;
-	'>
-	Threads in {{Capitalize $topic}} 
-</span>
-{{if $username}}
-	<a href='/topic/{{$topic}}/submit' class='box make-post'>Submit a topic</a>
-{{end}}
-	{{$posts := GetPostsBySectionName $topic}}
-	{{if $posts.Error}}
-		{{$posts.Error.Error}}
-	{{else}}
-	<table class='posts'>
-		<thead>
-			<tr>
-				<th>From</th>
-				<th>Subject</th>
-			</tr>
-		</thead>
-		<tbody>
-		{{range $i, $v := $posts.Posts}}
-			<tr>
-				{{$author := GetUsernameByID $v.Author}}
-				{{if $author.Error}}
-					Could not get author; {{$author.Error.Error}}
-				{{else}}
-					<td class='from'><a href='/user/{{$author.Result}}'>{{$author.Result}}</a></td>
-				{{end}}
-				<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
-			</tr>
+{{$sectioninf := GetSectionInfo $topic}}
+{{if $sectioninf.Error}}
+	{{$sectioninf.Error.Error}}
+{{else}}
+	<span class='box heading' style='
+		background: #f9c56c;
+		'>
+		Threads in {{Capitalize $topic}} 
+	</span>
+	{{if $username}}
+		{{$userinfo.Admin}}
+		{{if ge $sectioninf.AdminOnly 1}}
+			{{if $userinfo.Admin}}
+				<a href='/topic/{{$topic}}/submit' class='box make-post'>Submit a topic</a>
+			{{end}}
+		{{else}}
+			<a href='/topic/{{$topic}}/submit' class='box make-post'>Submit a topic</a>
 		{{end}}
-		</tbody>
-	</table>
+	{{end}}
+		{{$posts := GetPostsBySectionName $topic}}
+		{{if $posts.Error}}
+			{{$posts.Error.Error}}
+		{{else}}
+		<table class='posts'>
+			<thead>
+				<tr>
+					<th>From</th>
+					<th>Subject</th>
+				</tr>
+			</thead>
+			<tbody>
+			{{range $i, $v := $posts.Posts}}
+				<tr>
+					{{$author := GetUsernameByID $v.Author}}
+					{{if $author.Error}}
+						Could not get author; {{$author.Error.Error}}
+					{{else}}
+						<td class='from'><a href='/user/{{$author.Result}}'>{{$author.Result}}</a></td>
+					{{end}}
+					<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
+				</tr>
+			{{end}}
+			</tbody>
+		</table>
+	{{end}}
 {{end}}

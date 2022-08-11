@@ -153,8 +153,32 @@ table.posts .subject {
 	display: inline-block;
 }
 
+
+
 .postinfo {
 	width: 80%;
 	float: right;
 	display: inline-block;
+}
+
+
+.userinfo {
+	width: 15%;
+	height: 80%;
+	float: left;
+	background: #DBEAFE;
+	border: 1px solid #60A5FA;
+	display: inline-block;
+}
+
+.posts.user {
+	width: 80%!important;
+	float: right;
+}
+
+.replybox {
+    width: 80%;
+    height: 15%;
+    float: right;
+    margin: 5em 0;
 }

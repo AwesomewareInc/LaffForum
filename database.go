@@ -160,6 +160,57 @@ func PublicFacingError(msg string, err error) (error) {
 // USER SHIT
 // ==============
 
+type UserInfo struct {
+	ID 			int
+	Username 	string
+	PrettyName 	string
+	Timestamp 	int
+	bio 		interface{}
+	admin 		interface{}
+
+	Error 		error
+}
+
+func (user UserInfo) Bio() (string) {
+	if(user.bio == nil) {
+		return ""
+	} else {
+		return user.bio.(string)
+	}
+}
+
+func (user UserInfo) Admin() (bool) {
+	if(user.admin == nil) {
+		return false
+	} else {
+		return (int(user.admin.(int64)) == 1)
+	}
+}
+
+func GetUserInfo(id interface{}) (result UserInfo) {
+	var userID int
+	switch v := id.(type) {
+		case string: 
+			j := GetUserIDByName(id.(string))
+			if(j.Error != nil) {
+				result.Error = fmt.Errorf("Couldn't get user id from username; %v",j.Error.Error())
+				return
+			}
+			userID = int(j.Result.(int64))
+		case int: 
+			userID = id.(int)
+		default:
+			result.Error = fmt.Errorf("Invalid type '%v' given.",v)
+	}
+	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin from `users` WHERE id = ?;", []interface{}{userID}, 
+	&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin)
+	if(err != nil) {
+		result.Error = fmt.Errorf("Couldn't get user info; %v",err.Error())
+		return
+	}
+	return
+}
+
 func UserExists(username string) string {
 	var id int
 	err := ExecuteReturn("SELECT count(id) from `users` WHERE username = ?;", []interface{}{username}, &id)
@@ -274,29 +325,63 @@ func VerifyPassword(username, password string) string {
 // ==============
 
 type Section struct {
-	ID   int
-	Name string
+	ID   		int
+	Name 		string
+	AdminOnly 	int
+
+	Error error
 }
 
-// Todo: GetSectionsResult
-func GetSections() []Section {
-	statement, err := database.Prepare("SELECT id, name from `sections`;")
+type GetSectionsResult struct {
+	Results []Section
+	Error error
+}
+
+func GetSections() (result GetSectionsResult) {
+	result.Results = make([]Section, 0)
+	statement, err := database.Prepare("SELECT id, name, adminonly from `sections`;")
 	if err != nil {
-		return []Section{{-1, err.Error()}}
+		result.Error = err
+		return
 	}
 	defer statement.Close()
 
 	rows, err := statement.Query()
-	results := make([]Section, 0)
 	for rows.Next() {
 		var id int
 		var name string
-		if err := rows.Scan(&id, &name); err != nil {
-			results = append(results, Section{-1, err.Error()})
+		var adminonly int
+		if err := rows.Scan(&id, &name, &adminonly); err != nil {
+			result.Error = err
+			return
 		}
-		results = append(results, Section{id, name})
+		result.Results = append(result.Results, Section{id, name, adminonly, nil})
 	}
-	return results
+	return result
+}
+
+func GetSectionInfo(id interface{}) (result Section) {
+	var sectionID int
+	switch v := id.(type) {
+		case string: 
+			j := GetSectionIDByName(id.(string))
+			if(j.Error != nil) {
+				result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v",id,j.Error.Error())
+				return
+			}
+			sectionID = int(j.Result.(int64))
+		case int: 
+			sectionID = id.(int)
+		default:
+			result.Error = fmt.Errorf("Invalid type '%v' given.",v)
+	}
+	err := ExecuteReturn("SELECT id, name, adminonly from `sections` WHERE id = ?;", []interface{}{sectionID}, 
+	&result.ID, &result.Name, &result.AdminOnly)
+	if(err != nil) {
+		result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v",id,err.Error())
+		return
+	}
+	return
 }
 
 func GetSectionIDByName(name string) (result GenericResult) {
@@ -320,14 +405,11 @@ type Post struct {
 	Author    int
 	ReplyTo   int
 	Timestamp int
-}
 
-type GetPostInfoResult struct {
-	Post
 	Error error
 }
 
-func GetPostInfo(id_ string) (result GetPostInfoResult) {
+func GetPostInfo(id_ string) (result Post) {
 	id, err := strconv.Atoi(id_)
 	if err != nil {
 		result.Error = PublicFacingError("Error while getting post info;",err)
@@ -342,49 +424,37 @@ func GetPostInfo(id_ string) (result GetPostInfoResult) {
 	defer statement.Close()
 
 	rows, err := statement.Query(id)
-	var postID int
-	var topic int
-	var subject string
-	var contents string
-	var author int
-	var replyto int
-	var timestamp int
 	for rows.Next() {
-		if err := rows.Scan(&postID, &topic, &subject, &contents, &author, &replyto, &timestamp); err != nil {
+		if err := rows.Scan(&result.ID, 
+							&result.Topic, 
+							&result.Subject, 
+							&result.Contents, 
+							&result.Author, 
+							&result.ReplyTo, 
+							&result.Timestamp); err != nil {
 			result.Error = PublicFacingError("Error while getting post info;",err)
-		} else {
-			result.Post = Post{postID, topic, subject, contents, author, replyto, timestamp}
 		}
 	}
 
 	return
 }
 
-type GetPostsBySectionNameResult struct {
+type GetPostsByCriteriaResult struct {
 	Posts []Post
 	Error error
 }
 
-func GetPostsBySectionName(name string) (result GetPostsBySectionNameResult) {
-	result.Posts = make([]Post,0)
-	id_ := GetSectionIDByName(name)
-	if(id_.Error != nil) {
-		result.Error = PublicFacingError("Error getting posts by section name; ",id_.Error)
-		return
-	}
-	id := id_.Result.(int64)
-
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp from posts WHERE `topic` = ?;")
+func GetPostsByCriteria(criteria string, value any) (result GetPostsByCriteriaResult) {
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp FROM `posts` "+criteria)
 	if err != nil {
-		result.Error = err
+		result.Error = fmt.Errorf("Couldn't get posts following the relevant criteria; "+err.Error())
 		return 
 	}
 	defer statement.Close()
 
-	rows, err := statement.Query(id)
+	rows, err := statement.Query(value)
 	for rows.Next() {
-		var id int
-
+		var id interface{}
 		var topic int
 		var subject string
 		var contents string
@@ -395,8 +465,34 @@ func GetPostsBySectionName(name string) (result GetPostsBySectionNameResult) {
 			result.Error = PublicFacingError("Error getting posts by section name; ",err)
 			return
 		}
-		result.Posts = append(result.Posts, Post{id, topic, subject, contents, author, replyto, timestamp})
+		result.Posts = append(result.Posts, Post{int(id.(int64)), topic,subject,contents,author,replyto,timestamp,nil})
 	}
+	return
+}
+
+func GetPostsBySectionName(name string) (result GetPostsByCriteriaResult) {
+	id_ := GetSectionIDByName(name)
+	if(id_.Error != nil) {
+		result.Error = PublicFacingError("Error getting posts by section name; ",id_.Error)
+		return
+	}
+	id := id_.Result.(int64)
+
+	result = GetPostsByCriteria("WHERE topic = ?;",id)
+
+	return
+}
+
+func GetPostsFromUser(name string) (result GetPostsByCriteriaResult) {
+	id_ := GetUserIDByName(name)
+	if(id_.Error != nil) {
+		result.Error = PublicFacingError("Error getting posts from user; ",id_.Error)
+		return
+	}
+	id := id_.Result.(int64)
+
+	result = GetPostsByCriteria("WHERE id = ?;",id)
+
 	return
 }
 
