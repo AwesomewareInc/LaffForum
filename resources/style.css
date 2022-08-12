@@ -24,7 +24,7 @@
 */
 
 * {
-	box-sizing: border-box;
+	box-sizing: border-box!important;
 }
 
 body {
@@ -43,6 +43,21 @@ textarea {
 	height: 100%;
 }
 
+/* GENERAL CLASSES */
+.box {
+	display: block;
+	color: black;
+	padding: 4px;
+}
+
+.heading {
+	width: 100%;
+	background: #f9c56c;
+	font-size: 130%;
+	font-weight: bold;
+}
+
+/* MAIN PAGE */
 .container {
 	background: white;
 	max-width: 50rem;
@@ -52,42 +67,6 @@ textarea {
 	margin: 0 auto;
 }
 
-.header {
-	background-color: #1D4ED8;
-	display: block;
-	position: relative;
-}
-
-.header .top {
-	display: flex;
-	padding: 15px 10px 14px 10px;
-}
-
-.header .search {
-	position: absolute;
-	left: 50%;
-	transform: translateX(-50%);
-}
-
-.header .user {
-	position: absolute;
-	right: 1em;
-	color: white;
-}
-.header .user a {
-	color: white;
-}
-
-.header .links {
-	display: block;
-	padding: 3.5px 16px 5.5px 16px;
-	background-color: #60A5FA;
-}
-
-.header .links a {
-	color: white;
-}
-
 .main {
 	padding: 16px 10px;
 	width: 100%;
@@ -95,18 +74,77 @@ textarea {
 	display: block;
 }
 
-.box {
+/* HEADER */ 
+
+.header {
+	background-color: #1D4ED8;
 	display: block;
-	color: black;
-	font-weight: bold;
-	padding: 4px;
+	position: relative;
+	width: 100%;
 }
 
-.heading {
-	width: 100%;
-	background: #f9c56c;
-	font-size: 130%;
+.header .top {
+	display: flex;
+	padding: 15px 10px 14px 10px;
 }
+
+.header .logo,
+.header .user {
+	flex: 7;
+	display: inline-block;
+}
+.header .search {
+	flex: 6;
+	display: inline-block;
+	min-width: 0px;
+}
+
+.header .logo {
+	align-self: flex-start;
+}
+.header .search {
+	align-self: center;
+}
+.header .user {
+	align-self: flex-end;
+	text-align: right;
+}
+
+.header a {
+	color: white;
+}
+
+.links {
+	display: block;
+	padding: 3.5px 16px 5.5px 16px;
+	background-color: #60A5FA;
+}
+.links a {
+	color: white;
+}
+
+/* MAIN PAGE*/
+
+.sections {
+	float: left; 
+	border: 1px solid #f9c56c; 
+	font-size: 75%;
+	position: relative;
+	min-width: 25%;
+	color: black;
+}
+
+.welcome {
+	float: right; 
+	background: #34D399; 
+	font-size: 75%; 
+	position: relative;
+	color: white; 
+	text-align: center;
+	min-width: 50%;
+}
+
+/* POST LISTING */
 
 table.posts {
 	font-size: 100%;
@@ -136,6 +174,8 @@ table.posts .subject {
 	width: 100%;
 }
 
+/* POST CREATION */
+
 .make-post {
 	margin: 1em;
 	background: #1E40AF;
@@ -144,28 +184,102 @@ table.posts .subject {
 	color: white;
 }
 
+/* POST PAGE */
+
+.post-vbox {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+.post-vbox .hbox-1,
+.post-vbox .hbox-2 {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+}
+.post-vbox .hbox-1 {
+	align-self: flex-start;
+	flex: 2;
+}
+.post-vbox .hbox-2 {
+	flex: 1;
+}
+
 .authorbox {
-	width: 15%;
-	min-height: 20%;
-	float: left;
 	background: #DBEAFE;
 	border: 1px solid #60A5FA;
 	display: inline-block;
+	flex: 1;
+	align-self: flex-start;
 }
-
-
 
 .postinfo {
-	width: 80%;
-	float: right;
 	display: inline-block;
+	margin-left: 1%;
+	flex: 4;
+	align-self: flex-start;
 }
 
+.post-vbox .hbox-2 form {
+	width: 100%;
+	display: flex;
+}
+
+.post-vbox .hbox-2 textarea {
+	flex: 5;
+	align-self: flex-start;
+	margin: 1em;
+}
+
+.post-vbox .hbox-2 input {
+	display: inline-block;
+	margin: 1em;
+	flex: 1;
+	align-self: flex-end;
+}
+
+table.replies {
+	font-size: 120%;
+	border-collapse: collapse;
+    border-spacing: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    width: 100%;
+    margin: 4em 0;
+}
+
+table.replies td {
+	border: 2px solid white;
+	padding: 7px;
+	display: table-cell;
+}
+
+table.replies tr {
+	padding: 5px;
+}
+
+table.replies tr input[type="submit"] {
+	float: right;
+}
+
+table.replies .from {
+	background:  #f9c56c;
+	width: 34%;
+	text-align: center;
+	font-weight: bold;
+}
+
+table.replies .contents {
+	background: #fcdbb8;
+	width: 100%;
+}
+
+/* USER PAGE */
 
 .userinfo {
 	width: 15%;
 	height: 80%;
-	float: left;
 	background: #DBEAFE;
 	border: 1px solid #60A5FA;
 	display: inline-block;
@@ -174,11 +288,4 @@ table.posts .subject {
 .posts.user {
 	width: 80%!important;
 	float: right;
-}
-
-.replybox {
-    width: 80%;
-    height: 15%;
-    float: right;
-    margin: 5em 0;
 }

@@ -6,10 +6,12 @@
 	{{$user := GetUserInfo $userid}}
 	{{if $user.Error}}
 		{{$user.Error.Error}}
+	{{else if eq $user.ID 0}}
+		This user does not exist.
 	{{else}}
 		<span class='box userinfo'>
 			{{if $user.Admin}}
-				<small><b style='float:  right'>Admin</b></small>
+				<small><b style='float: right'>Admin</b></small>
 			{{end}}
 			<h3>{{$user.PrettyName}}</h3>
 			<p>{{$user.Bio}}</p>

@@ -7,25 +7,21 @@
 		<span class='container'>
 			<span class='header'>
 				<span class='top'>
-					<a href='/'><img src="/resources/logo.png" alt="LaffForum" fetchpriority="high" style="aspect-ratio: 55/14;"></a>
+					<a class='logo' href='/'><img src="/resources/logo.png" alt="LaffForum" fetchpriority="high" style="aspect-ratio: 55/14;"></a>
 					<span class='search'>
 						<input type='text'>
 						<input type='submit'>
 					</span>
 					<span class='user'>
-						{{$username := ""}}
-						{{if .SessionValues}}
-							{{$username = index .SessionValues "username"}}
-						{{end}}
-						{{if $username}}
-							<a href="/user/{{$username}}">{{$username}}</a>
+						{{if .Global.Username}}
+							<a href="/user/{{.Global.Username}}">{{.Global.Username}}</a>
 						{{else}}
 							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
 						{{end}}
 					</span>
 				</span>
-				<span class='links'>
-					<a href='/'>Yeah</a> | <a href='/'>yeah</a> | <a href='/'>yup</a>
-				</span>
+			</span>
+			<span class='links'>
+				<a href='/'>Yeah</a> | <a href='/'>yeah</a> | <a href='/'>yup</a>
 			</span>
 			<span class='main'>

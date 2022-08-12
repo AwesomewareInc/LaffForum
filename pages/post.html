@@ -1,17 +1,6 @@
 {{ template "header.html" .}}
 
-{{$userinfo := ""}}
-{{$username := ""}}
-{{if .SessionValues}}
-	{{$username = index .SessionValues "username"}}
-	{{$userinfo = GetUserInfo $username }}
-	{{if $userinfo.Error}}
-		Error getting info about this user: {{$userinfo.Error.Error}}
-	{{end}}
-{{end}}
-
-{{$valuelen := len .Values}}
-{{if eq $valuelen 0}}
+{{if eq (len .Values) 0}}
 	you have me nothing you fuckwad
 {{else}}
 	{{$postid := index .Values 1}}
@@ -19,39 +8,86 @@
 	{{if $post.Error}}
 		{{$post.Error.Error}}
 	{{else}}
-		{{$sectioninf := GetSectionInfo $post.Topic}}
-		{{if $sectioninf.Error}}
-			{{$sectioninf.Error.Error}}
+		{{if eq $post.ID 0}}
+			<h1>Non-existent post.</h1>
 		{{else}}
-		<span class='box authorbox'>
-			{{$author := GetUsernameByID $post.Author}}
-			{{if $author.Error}}
-				Could not get author; {{$author.Error.Error}}
+			{{$sectioninf := GetSectionInfo $post.Topic}}
+			{{if $sectioninf.Error}}
+				{{$sectioninf.Error.Error}}
 			{{else}}
-				Post by <a href='/user/{{$author.Result}}/'>{{$author.Result}}</a><br>
-			{{end}}
-			<br>
-			{{$timestamp := PrettyTime $post.Timestamp}}
-			{{if $timestamp.Error}}
-				Couldn't get timestamp; {{$timestamp.Error.Error}}
-			{{else}}
-				<small style='font-weight: normal;'>posted {{$timestamp.Result}}</small>
-			{{end}}
-		</span>
-		<span class='box postinfo'>
-			<h1>{{$post.Subject}}</h1>
-			{{$post.Contents}}
-		</span>
-		{{end}}
-
-		{{if $username}}
-			{{if eq $sectioninf.AdminOnly 2}}
-				{{if $userinfo.Admin}}
-					<textarea class='replybox' placeholder='Reply'></textarea>
+			{{if .Global.Username}}
+				{{$contents := index .Query "contents"}}
+				{{if ge (len $contents) 1}}
+					{{$allowed := true}}
+					{{if eq $sectioninf.AdminOnly 2}}
+						{{if .Global.Me.Admin}}
+						{{else}}
+							$allowed = false
+						{{end}}
+					{{end}}
+					{{if $allowed = true}}
+						{{$content := index $contents 0}}
+						{{$reply := SubmitPost .Global.Username $post.Topic (print "RE: " $post.Subject) $content $post.ID}}
+						{{if $reply.Error}}
+							<h1>Error while submitting your post.</h1>
+							<span style="white-space: pre-wrap">{{$reply.Error}}</span>
+						{{else}}
+							<script>
+								window.open("/post/{{$post.Topic}}","_self");
+							</script>		
+						{{end}}
+					{{else}}
+						<h1>Permission denied</h1>
+					{{end}}
 				{{end}}
-			{{else}}
-				<textarea class='replybox' placeholder='Reply'></textarea>
 			{{end}}
+			<span class='post-vbox'>
+				<span class='hbox-1'>
+					<span class='box authorbox'>
+						{{$author := GetUsernameByID $post.Author}}
+						{{if $author.Error}}
+							Could not get author; {{$author.Error.Error}}
+						{{else}}
+							Post by <a href='/user/{{$author.Result}}/'>{{$author.Result}}</a><br>
+						{{end}}
+						<br>
+						{{$timestamp := PrettyTime $post.Timestamp}}
+						{{if $timestamp.Error}}
+							Couldn't get timestamp; {{$timestamp.Error.Error}}
+						{{else}}
+							<small style='font-weight: normal;'>posted {{$timestamp.Result}}</small>
+						{{end}}
+					</span>
+					<span class='box postinfo'>
+						<h1>{{$post.Subject}}</h1>
+						{{$post.Contents}}
+					</span>
+				</span>
+				<span class='hbox-2'>
+				{{if .Global.Username}}
+					{{if eq $sectioninf.AdminOnly 2}}
+						{{if .Global.Me.Admin}}
+							<form method='get'>
+								<textarea name='contents' placeholder='Reply'></textarea>
+								<input type= 'submit' value='Post'>
+							</form>
+						{{end}}
+					{{else}}
+						<form method='get'>
+							<textarea name='contents' placeholder='Reply'></textarea>
+							<input type='submit' value='Post'>
+						</form>
+					{{end}}
+				{{end}}
+				</span>
+			</span>
+			<hr>
+			<table class='replies'>
+				<tbody>
+				{{template "replies.html" $post.ID}}
+				{{end}}
+				</tbody>
+			</table>
 		{{end}}
 	{{end}}
 {{end}}

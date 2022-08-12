@@ -1,23 +1,28 @@
 {{$topic := index .Values 1}}
-{{$username := ""}}
 {{$subject := ""}}
 {{$content := ""}}
 {{$post := ""}}
 {{$id := -1}}
-{{if .SessionValues}}
-	{{$username = index .SessionValues "username"}}
-{{end}}
-{{if eq $username ""}}
-	You aren't logged in.
-{{else}}
+{{if .Global.Username}}
+	{{$allowed := true}}
+	{{$sectioninf := GetSectionInfo $topic}}
+	{{if $sectioninf.Error}}
+		{{$sectioninf.Error.Error}}
+		{{$allowed = false}}
+	{{else}}
+		{{if eq $sectioninf.AdminOnly 1}}
+			{{if .Global.Me.Admin}}
+			{{else}}
+				$allowed = false
+			{{end}}
+		{{end}}
+	{{end}}
 	{{$subjects := index .Query "subject"}}
-	{{$subjectlen := len $subjects}}
-	{{$proceed := true}}
-	{{if ge $subjectlen 1}}
+	{{if ge (len $subjects) 1}}
 		{{$subject = index $subjects 0}}
 		{{$contents := index .Query "content"}}
 		{{$content = index $contents 0}}
-		{{$post := SubmitPost $username $topic $subject $content}}
+		{{$post := SubmitPost .Global.Username $topic $subject $content 0}}
 		{{if $post.Error}}
 			<h1>Error while submitting your post.</h1>
 			<span style="white-space: pre-wrap">{{$post.Error}}</span>
@@ -28,7 +33,7 @@
 		{{end}}
 	{{end}}
 	<h1>Create a post in {{Capitalize $topic}}</h1>
-	You can use markdown to flair your posts. Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
+	<strikethough>You can use markdown to flair your posts.</strikethough> Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
 	<form method='get' action='/topic/{{$topic}}/submit'>
 		<b>Subject:</b><br>
 		<input type='text' name='subject' value='{{$subject}}'><br><br>
@@ -36,4 +41,6 @@
 		<textarea style="width: 100%; height: 100%; display:block;" name='content' value='{{$content}}'></textarea>
 		<input type='submit'>
 	</form>
+{{else}}
+	You aren't logged in.
 {{end}}

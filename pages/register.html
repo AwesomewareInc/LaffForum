@@ -1,9 +1,9 @@
 {{ template "header.html" .}}
-{{$usernames := index .Query "username"}}
-{{$usernamelen := len $usernames}}
+
 {{$username := ""}}
+{{$usernames := index .Query "username"}}
 {{$proceed := false}}
-{{if ge $usernamelen 1}}
+{{if ge (len $usernames) 1}}
 	{{$username = index $usernames 0}}
 	{{$prettynames := index .Query "prettyname"}}
 	{{$pass1s := index .Query "pass1"}}
@@ -19,6 +19,7 @@
 		{{$proceed = true}}
 	{{end}}
 {{end}}
+
 {{if eq $proceed false}}
 	<h1>Register</h1>
 	<form method='get' action='/register'>
@@ -29,9 +30,10 @@
 		<input type='submit' value='Sign up'>
 	</form>
 {{else}}
-	{{SetSessionValue .SessionValues "username" $username}}
+	{{.Global.SetUsername $username}}
 	<script>
 		window.open("/","_self");
 	</script>
 {{end}}
+
 {{ template "footer.html" .}}

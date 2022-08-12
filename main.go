@@ -13,14 +13,13 @@ import (
 	"time"
 
 	"github.com/tiket-oss/phpsessgo"
-	"github.com/tiket-oss/phpsessgo/phpencode"
 )
 
 //go:embed pages/*.*
 var pages embed.FS
 var tmpl *template.Template
 
-var sessionManager = phpsessgo.NewSessionManager( 
+var sessionManager = phpsessgo.NewSessionManager(
 	phpsessgo.SessionManagerConfig{
 		Expiration:     time.Hour * 24,
 		CookiePath:     "/",
@@ -36,10 +35,10 @@ func main() {
 	tmpl.Funcs(funcMap) // "FuncMap" refers to a template.FuncMap in another file, that isn't included in this one.
 
 	// For as long as the program is running, continually refresh the templates on another thread
-			_, err := tmpl.ParseFS(pages, "pages/*")
-			if err != nil {
-				log.Println(err)
-			}
+	_, err := tmpl.ParseFS(pages, "pages/*")
+	if err != nil {
+		log.Println(err)
+	}
 	// initialize the main server
 	s := &http.Server{
 		Addr:           ":8083",
@@ -48,13 +47,26 @@ func main() {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+	// If panics can't be handled by the handler function then something is very wrong.
+	// But we don't want the server to go down because of it, so we have to ignore it.
+	defer func() {
+		if recover() != nil {
+			fmt.Println(recover())
+		}
+	}()
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatalln(err)
 	}
-	
 }
 
 func handlerFunc(w http.ResponseWriter, r *http.Request) {
+	// Handle panics and send them to the user instead of sending them to me.
+	defer func() {
+		if recover() != nil {
+			http.Error(w, recover().(string), http.StatusInternalServerError)
+			return
+		}
+	}()
 	// Start a session.
 	session, err := sessionManager.Start(w, r)
 	if err != nil {
@@ -107,13 +119,13 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 
 	var Info struct {
-		Values 	[]string
-		Query  	url.Values
-		SessionValues phpencode.PhpSession
+		Values []string
+		Query  url.Values
+		Global GlobalValues
 	}
 	Info.Values = values
 	Info.Query = r.URL.Query()
-	Info.SessionValues = session.Value
+	Info.Global.PhpSession = session.Value
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
@@ -139,13 +151,13 @@ func getPagename(fullpagename string) (string, []string) {
 
 	// Then try and get the relevant pagename from that, accounting for many specifics.
 	pagename := values[0]
-	switch(pagename) {
-		// If it's blank, set it to the default page.
-		case "": 
-			return "index", values
-		// If the first part is resources, then treat the rest of the url normally
-		case "resources":
-			return fullpagename, values
+	switch pagename {
+	// If it's blank, set it to the default page.
+	case "":
+		return "index", values
+	// If the first part is resources, then treat the rest of the url normally
+	case "resources":
+		return fullpagename, values
 	}
 	return pagename, values
 }
@@ -170,39 +182,36 @@ func GetContentType(output *os.File) (string, error) {
 }
 
 func PrettyTime(unixTime int) (result GenericResult) {
-	unixTimeDur, err := time.ParseDuration(fmt.Sprintf("%vs",time.Now().Unix()-int64(unixTime)))
-	if(err != nil) {
+	unixTimeDur, err := time.ParseDuration(fmt.Sprintf("%vs", time.Now().Unix()-int64(unixTime)))
+	if err != nil {
 		result.Error = err
 		return
 	}
 
-	if(unixTimeDur.Hours() >= 8760) {
-		result.Result = fmt.Sprintf("%0.f years ago",unixTimeDur.Hours()/8760)
-		return 
+	if unixTimeDur.Hours() >= 8760 {
+		result.Result = fmt.Sprintf("%0.f years ago", unixTimeDur.Hours()/8760)
+		return
 	}
-	if(unixTimeDur.Hours() >= 730) {
-		result.Result = fmt.Sprintf("%0.f months ago",unixTimeDur.Hours()/730)
-		return 
+	if unixTimeDur.Hours() >= 730 {
+		result.Result = fmt.Sprintf("%0.f months ago", unixTimeDur.Hours()/730)
+		return
 	}
-	if(unixTimeDur.Hours() >= 168) {
-		result.Result = fmt.Sprintf("%0.f weeks ago",unixTimeDur.Hours()/168)
-		return 
+	if unixTimeDur.Hours() >= 168 {
+		result.Result = fmt.Sprintf("%0.f weeks ago", unixTimeDur.Hours()/168)
+		return
 	}
-	if(unixTimeDur.Hours() >= 24) {
-		result.Result = fmt.Sprintf("%0.f days ago",unixTimeDur.Hours()/24)
-		return 
+	if unixTimeDur.Hours() >= 24 {
+		result.Result = fmt.Sprintf("%0.f days ago", unixTimeDur.Hours()/24)
+		return
 	}
-	if(unixTimeDur.Hours() >= 1) {
-		result.Result = fmt.Sprintf("%0.f hours ago",unixTimeDur.Hours())
-		return 
+	if unixTimeDur.Hours() >= 1 {
+		result.Result = fmt.Sprintf("%0.f hours ago", unixTimeDur.Hours())
+		return
 	}
-	if(unixTimeDur.Minutes() >= 1) {
-		result.Result = fmt.Sprintf("%0.f minutes ago",unixTimeDur.Minutes())
-		return 
+	if unixTimeDur.Minutes() >= 1 {
+		result.Result = fmt.Sprintf("%0.f minutes ago", unixTimeDur.Minutes())
+		return
 	}
-	if(unixTimeDur.Seconds() >= 1) {
-		result.Result = fmt.Sprintf("%0.f seconds ago",unixTimeDur.Seconds())
-		return 
-	}
+	result.Result = fmt.Sprintf("%0.f seconds ago", unixTimeDur.Seconds())
 	return
 }

@@ -3,21 +3,20 @@ package main
 import "html/template"
 
 var funcMap = template.FuncMap{
-	"SetSessionValue": SetSessionValue,
-
 	"Capitalize": Capitalize,
 
-	"CreateUser": CreateUser,
+	"CreateUser":     CreateUser,
 	"VerifyPassword": VerifyPassword,
 
-	"GetSections": GetSections,
+	"GetSections":           GetSections,
 	"GetPostsBySectionName": GetPostsBySectionName,
-	"GetPostsFromUser": GetPostsFromUser,
-	"GetUsernameByID": 	GetUsernameByID,
-	"GetPostInfo":	GetPostInfo,
-	"GetUserInfo": GetUserInfo,
-	"GetSectionInfo": GetSectionInfo,
-	
+	"GetPostsFromUser":      GetPostsFromUser,
+	"GetPostsInReplyTo":     GetPostsInReplyTo,
+	"GetUsernameByID":       GetUsernameByID,
+	"GetPostInfo":           GetPostInfo,
+	"GetUserInfo":           GetUserInfo,
+	"GetSectionInfo":        GetSectionInfo,
+
 	"SubmitPost": SubmitPost,
 
 	"PrettyTime": PrettyTime,

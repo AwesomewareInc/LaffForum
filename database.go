@@ -13,7 +13,6 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,24 +27,12 @@ var err error
 var usernameCheck *regexp.Regexp
 
 func init() {
-	// database settings
-	f, err := os.Open("config.toml")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	err = toml.NewDecoder(f).Decode(&DatabaseConfig)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	// Load the database
 	database, err = sql.Open("sqlite3", "database.db"+
-												"?_busy_timeout=10000"+
-												"&_journal=WAL"+
-												"&_sync=NORMAL"+
-												"&cache=shared")
+		"?_busy_timeout=10000"+
+		"&_journal=WAL"+
+		"&_sync=NORMAL"+
+		"&cache=shared")
 
 	if err != nil {
 		fmt.Println(err)
@@ -81,7 +68,7 @@ func CommandListenerThread() {
 // =============
 
 func ExecuteDirect(query string, args ...any) error {
-	fmt.Printf(strings.Replace(query,"?","%v",99)+"\n",args[:]...)
+	fmt.Printf(strings.Replace(query, "?", "%v", 99)+"\n", args[:]...)
 	_, err = database.Exec(query, args[:]...)
 	return err
 }
@@ -102,10 +89,10 @@ func ExecuteReturn(query string, args []any, dest ...any) error {
 
 type GenericResult struct {
 	Result any
-	Error error
+	Error  error
 }
 
-func PublicFacingError(msg string, err error) (error) {
+func PublicFacingError(msg string, err error) error {
 
 	// stack trace
 	stacktrace := string(debug.Stack())
@@ -114,17 +101,17 @@ func PublicFacingError(msg string, err error) (error) {
 	pc, filename_, line, _ := runtime.Caller(1)
 
 	// manipulate the stacktrace.
-	stacktraceParts := strings.Split(stacktrace,"\n")[3:] // the first three lines are guaranteed to be part of this call.
-	var relevant bool 		// whether we've begun encountering lines that are part of this project
-	var maxStackDetail int 	// the point at which we stop encountering those lines.
+	stacktraceParts := strings.Split(stacktrace, "\n")[3:] // the first three lines are guaranteed to be part of this call.
+	var relevant bool                                      // whether we've begun encountering lines that are part of this project
+	var maxStackDetail int                                 // the point at which we stop encountering those lines.
 	// for each part of the stacktrace...
 	for i, v := range stacktraceParts {
 		// does it many slashes in it?
-		if(strings.Count(v,string(os.PathSeparator)) >= 2) {
+		if strings.Count(v, string(os.PathSeparator)) >= 2 {
 			// how many tabs in it?
-			tabcount := strings.Count(v,"	")
+			tabcount := strings.Count(v, "	")
 			// split it into parts and filter the line to only the last part
-			stacktracePartParts := strings.Split(v,string(os.PathSeparator))
+			stacktracePartParts := strings.Split(v, string(os.PathSeparator))
 			// make sure it retains the amount of tabs
 			var newString string
 			for i := 0; i < tabcount; i++ {
@@ -133,27 +120,27 @@ func PublicFacingError(msg string, err error) (error) {
 			newString += stacktracePartParts[len(stacktracePartParts)-1]
 			stacktraceParts[i] = newString
 		}
-		if(strings.Contains(v,"LaffForum")) {
-			if(relevant == false) {
+		if strings.Contains(v, "LaffForum") {
+			if relevant == false {
 				relevant = true
 			} else {
-				maxStackDetail = i+3
+				maxStackDetail = i + 3
 				break
 			}
 		}
 	}
 
 	// and reduce the stacktrace to fit in the scope we want.
-	stacktrace = strings.Join(stacktraceParts[0:maxStackDetail],"\n")
+	stacktrace = strings.Join(stacktraceParts[0:maxStackDetail], "\n")
 	stacktrace += "\n(...continues entering system files...)"
-	filenameParts := strings.Split(filename_,"/")
+	filenameParts := strings.Split(filename_, "/")
 	filename := filenameParts[len(filenameParts)-1]
 
 	funcname_ := runtime.FuncForPC(pc).Name()
-	funcnames := strings.Split(funcname_,".")
+	funcnames := strings.Split(funcname_, ".")
 	funcname := funcnames[len(funcnames)-1]
 
-	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v",msg,filename,line,funcname,err.Error(),stacktrace)
+	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v", msg, filename, line, funcname, err.Error(), stacktrace)
 }
 
 // ==============
@@ -161,26 +148,26 @@ func PublicFacingError(msg string, err error) (error) {
 // ==============
 
 type UserInfo struct {
-	ID 			int
-	Username 	string
-	PrettyName 	string
-	Timestamp 	int
-	bio 		interface{}
-	admin 		interface{}
+	ID         int
+	Username   string
+	PrettyName string
+	Timestamp  int
+	bio        interface{}
+	admin      interface{}
 
-	Error 		error
+	Error error
 }
 
-func (user UserInfo) Bio() (string) {
-	if(user.bio == nil) {
+func (user UserInfo) Bio() string {
+	if user.bio == nil {
 		return ""
 	} else {
 		return user.bio.(string)
 	}
 }
 
-func (user UserInfo) Admin() (bool) {
-	if(user.admin == nil) {
+func (user UserInfo) Admin() bool {
+	if user.admin == nil {
 		return false
 	} else {
 		return (int(user.admin.(int64)) == 1)
@@ -190,22 +177,22 @@ func (user UserInfo) Admin() (bool) {
 func GetUserInfo(id interface{}) (result UserInfo) {
 	var userID int
 	switch v := id.(type) {
-		case string: 
-			j := GetUserIDByName(id.(string))
-			if(j.Error != nil) {
-				result.Error = fmt.Errorf("Couldn't get user id from username; %v",j.Error.Error())
-				return
-			}
-			userID = int(j.Result.(int64))
-		case int: 
-			userID = id.(int)
-		default:
-			result.Error = fmt.Errorf("Invalid type '%v' given.",v)
+	case string:
+		j := GetUserIDByName(id.(string))
+		if j.Error != nil {
+			result.Error = fmt.Errorf("Couldn't get user id from username; %v", j.Error.Error())
+			return
+		}
+		userID = int(j.Result.(int64))
+	case int:
+		userID = id.(int)
+	default:
+		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
-	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin from `users` WHERE id = ?;", []interface{}{userID}, 
-	&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin)
-	if(err != nil) {
-		result.Error = fmt.Errorf("Couldn't get user info; %v",err.Error())
+	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin from `users` WHERE id = ?;", []interface{}{userID},
+		&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin)
+	if err != nil {
+		result.Error = fmt.Errorf("Couldn't get user info; %v", err.Error())
 		return
 	}
 	return
@@ -215,7 +202,7 @@ func UserExists(username string) string {
 	var id int
 	err := ExecuteReturn("SELECT count(id) from `users` WHERE username = ?;", []interface{}{username}, &id)
 	if err != nil {
-		return "Couldn't validate username; "+err.Error()
+		return "Couldn't validate username; " + err.Error()
 	}
 	if id != 0 {
 		return "Username is taken!"
@@ -262,16 +249,16 @@ func CreateUser(username, prettyname, pass1, pass2 string) string {
 	// Those are the main checks for now, now create the user.
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(pass1), 10)
 	if err != nil {
-		return "Couldn't generate password; "+err.Error()
+		return "Couldn't generate password; " + err.Error()
 	}
 	statement, err := database.Prepare("INSERT INTO `users` (username, password, prettyname, timestamp) VALUES (?, ?, ?, ?);")
 	if err != nil {
-		return "Couldn't prepare statement to create user; "+err.Error()
+		return "Couldn't prepare statement to create user; " + err.Error()
 	}
 	defer statement.Close()
 	_, err = statement.Exec(username, hashedPass, prettyname, fmt.Sprintf("%v", time.Now().Unix()))
 	if err != nil {
-		return "Couldn't create user; "+err.Error()
+		return "Couldn't create user; " + err.Error()
 	}
 
 	return ""
@@ -281,7 +268,7 @@ func GetUserIDByName(name string) (result GenericResult) {
 	result.Result = -1
 	err := ExecuteReturn("SELECT count(id) from `users` WHERE username = ?;", []interface{}{name}, &result.Result)
 	if err != nil {
-		result.Error = PublicFacingError("Error while getting user id by name;",err)
+		result.Error = PublicFacingError("Error while getting user id by name;", err)
 		return
 	}
 	return
@@ -290,7 +277,7 @@ func GetUserIDByName(name string) (result GenericResult) {
 func GetUsernameByID(id int) (result GenericResult) {
 	err := ExecuteReturn("SELECT username from `users` WHERE id = ?;", []interface{}{id}, &result.Result)
 	if err != nil {
-		result.Error = PublicFacingError("Error while getting username by id;",err)
+		result.Error = PublicFacingError("Error while getting username by id;", err)
 		return
 	}
 	return
@@ -325,16 +312,16 @@ func VerifyPassword(username, password string) string {
 // ==============
 
 type Section struct {
-	ID   		int
-	Name 		string
-	AdminOnly 	int
+	ID        int
+	Name      string
+	AdminOnly int
 
 	Error error
 }
 
 type GetSectionsResult struct {
 	Results []Section
-	Error error
+	Error   error
 }
 
 func GetSections() (result GetSectionsResult) {
@@ -363,31 +350,31 @@ func GetSections() (result GetSectionsResult) {
 func GetSectionInfo(id interface{}) (result Section) {
 	var sectionID int
 	switch v := id.(type) {
-		case string: 
-			j := GetSectionIDByName(id.(string))
-			if(j.Error != nil) {
-				result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v",id,j.Error.Error())
-				return
-			}
-			sectionID = int(j.Result.(int64))
-		case int: 
-			sectionID = id.(int)
-		default:
-			result.Error = fmt.Errorf("Invalid type '%v' given.",v)
+	case string:
+		j := GetSectionIDByName(id.(string))
+		if j.Error != nil {
+			result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v", id, j.Error.Error())
+			return
+		}
+		sectionID = int(j.Result.(int64))
+	case int:
+		sectionID = id.(int)
+	default:
+		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
-	err := ExecuteReturn("SELECT id, name, adminonly from `sections` WHERE id = ?;", []interface{}{sectionID}, 
-	&result.ID, &result.Name, &result.AdminOnly)
-	if(err != nil) {
-		result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v",id,err.Error())
+	err := ExecuteReturn("SELECT id, name, adminonly from `sections` WHERE id = ?;", []interface{}{sectionID},
+		&result.ID, &result.Name, &result.AdminOnly)
+	if err != nil {
+		result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v", id, err.Error())
 		return
 	}
 	return
 }
 
 func GetSectionIDByName(name string) (result GenericResult) {
-	err := ExecuteReturn("SELECT id from `sections` WHERE name = ?;",[]interface{}{name},&result.Result)
+	err := ExecuteReturn("SELECT id from `sections` WHERE name = ?;", []interface{}{name}, &result.Result)
 	if err != nil {
-		result.Error = PublicFacingError("Error while getting section id by name;",err)
+		result.Error = PublicFacingError("Error while getting section id by name;", err)
 		return
 	}
 	return
@@ -412,27 +399,27 @@ type Post struct {
 func GetPostInfo(id_ string) (result Post) {
 	id, err := strconv.Atoi(id_)
 	if err != nil {
-		result.Error = PublicFacingError("Error while getting post info;",err)
+		result.Error = PublicFacingError("Error while getting post info;", err)
 		return
 	}
 
 	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp from `posts` WHERE id = ? LIMIT 1;")
 	if err != nil {
-		result.Error = PublicFacingError("Error while getting post info;",err)
+		result.Error = PublicFacingError("Error while getting post info;", err)
 		return
 	}
 	defer statement.Close()
 
 	rows, err := statement.Query(id)
 	for rows.Next() {
-		if err := rows.Scan(&result.ID, 
-							&result.Topic, 
-							&result.Subject, 
-							&result.Contents, 
-							&result.Author, 
-							&result.ReplyTo, 
-							&result.Timestamp); err != nil {
-			result.Error = PublicFacingError("Error while getting post info;",err)
+		if err := rows.Scan(&result.ID,
+			&result.Topic,
+			&result.Subject,
+			&result.Contents,
+			&result.Author,
+			&result.ReplyTo,
+			&result.Timestamp); err != nil {
+			result.Error = PublicFacingError("Error while getting post info;", err)
 		}
 	}
 
@@ -445,10 +432,10 @@ type GetPostsByCriteriaResult struct {
 }
 
 func GetPostsByCriteria(criteria string, value any) (result GetPostsByCriteriaResult) {
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp FROM `posts` "+criteria)
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp FROM `posts` " + criteria)
 	if err != nil {
-		result.Error = fmt.Errorf("Couldn't get posts following the relevant criteria; "+err.Error())
-		return 
+		result.Error = fmt.Errorf("Couldn't get posts following the relevant criteria; " + err.Error())
+		return
 	}
 	defer statement.Close()
 
@@ -462,41 +449,76 @@ func GetPostsByCriteria(criteria string, value any) (result GetPostsByCriteriaRe
 		var replyto int
 		var timestamp int
 		if err := rows.Scan(&id, &topic, &subject, &contents, &author, &replyto, &timestamp); err != nil {
-			result.Error = PublicFacingError("Error getting posts by section name; ",err)
+			result.Error = PublicFacingError("Error getting posts by section name; ", err)
 			return
 		}
-		result.Posts = append(result.Posts, Post{int(id.(int64)), topic,subject,contents,author,replyto,timestamp,nil})
+		result.Posts = append(result.Posts, Post{int(id.(int64)), topic, subject, contents, author, replyto, timestamp, nil})
 	}
 	return
 }
 
 func GetPostsBySectionName(name string) (result GetPostsByCriteriaResult) {
 	id_ := GetSectionIDByName(name)
-	if(id_.Error != nil) {
-		result.Error = PublicFacingError("Error getting posts by section name; ",id_.Error)
+	if id_.Error != nil {
+		result.Error = PublicFacingError("Error getting posts by section name; ", id_.Error)
 		return
 	}
 	id := id_.Result.(int64)
 
-	result = GetPostsByCriteria("WHERE topic = ?;",id)
+	result = GetPostsByCriteria("WHERE topic = ? AND replyto = 0;", id)
 
 	return
 }
 
 func GetPostsFromUser(name string) (result GetPostsByCriteriaResult) {
 	id_ := GetUserIDByName(name)
-	if(id_.Error != nil) {
-		result.Error = PublicFacingError("Error getting posts from user; ",id_.Error)
+	if id_.Error != nil {
+		result.Error = PublicFacingError("Error getting posts from user; ", id_.Error)
 		return
 	}
 	id := id_.Result.(int64)
 
-	result = GetPostsByCriteria("WHERE id = ?;",id)
+	result = GetPostsByCriteria("WHERE id = ?;", id)
 
 	return
 }
 
-func SubmitPost(username, topic, subject, content string) (result *GenericResult) {
+func GetPostsInReplyTo(id int) (result GetPostsByCriteriaResult) {
+	return GetPostsByCriteria("WHERE replyto = ?;", id)
+}
+
+func SubmitPost(username string, topic interface{}, subject string, content string, replyto interface{}) (result *GenericResult) {
+	var topicID int
+	switch v := topic.(type) {
+	case string:
+		j := GetSectionIDByName(topic.(string))
+		if j.Error != nil {
+			result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v", topic, j.Error.Error())
+			return
+		}
+		topicID = int(j.Result.(int64))
+	case int:
+		topicID = topic.(int)
+	default:
+		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
+	}
+
+	var replyID int
+	switch v := replyto.(type) {
+	case string:
+		replyID, err = strconv.Atoi(replyto.(string))
+		if err != nil {
+			result.Error = err
+			return
+		}
+	case int:
+		replyID = replyto.(int)
+	default:
+		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
+	}
+
+	fmt.Println(replyID)
+
 	result = new(GenericResult)
 
 	// Check for invalid length of things
@@ -519,31 +541,24 @@ func SubmitPost(username, topic, subject, content string) (result *GenericResult
 
 	// Get the necessary values.
 	userid_ := GetUserIDByName(username)
-	if(userid_.Error != nil) {
-		result.Error = PublicFacingError("",userid_.Error)
+	if userid_.Error != nil {
+		result.Error = PublicFacingError("", userid_.Error)
 		return
 	}
 	userid := userid_.Result.(int64)
-
-	topicid_ := GetSectionIDByName(topic)
-	if(topicid_.Error != nil) {
-		result.Error = PublicFacingError("",topicid_.Error)
-		return
-	}
-	topicid := topicid_.Result.(int64)
 
 	timestampInt := time.Now().Unix()
 	timestamp := fmt.Sprintf("%v", timestampInt)
 
 	// Submit the post with those values and what we got in the function arguments, and return the new post id.
-	execResult, err := statement.Exec(userid, topicid, subject, content, timestamp, 0)
+	execResult, err := statement.Exec(userid, topicID, subject, content, timestamp, replyID)
 	if err != nil {
-		result.Error = PublicFacingError("",err)
+		result.Error = PublicFacingError("", err)
 		return
 	}
 	result.Result, err = execResult.LastInsertId()
 	if err != nil {
-		result.Error = PublicFacingError("",err)
+		result.Error = PublicFacingError("", err)
 		return
 	}
 	return

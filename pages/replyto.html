@@ -1,0 +1,83 @@
+{{ template "header.html" . }}
+
+{{$allowed := true}}
+{{if .Global.Username}}
+{{else}}
+	You aren't logged in.<br>
+	{{$allowed = false}}
+{{end}}
+
+{{if $allowed}}
+	{{if eq (len .Values) 0}}
+		what are you doing.<br>
+		{{$allowed = false}}
+	{{end}}
+{{end}}
+
+{{$postid := 0}}
+{{if $allowed}}
+	{{$postvalues := index .Query "post"}}
+	{{if le (len $postvalues) 0}}
+		stop.<br>
+		{{$allowed = false}}
+	{{else}}
+		{{$postid = index $postvalues 0}}
+	{{end}}
+{{end}}
+
+{{$postinfo := ""}}
+{{if $allowed}}
+	{{$postinfo = GetPostInfo $postid}}
+	{{if $postinfo.Error}}
+		{{$postinfo.Error.Error}}<br>
+		{{$allowed = false}}
+	{{end}}
+{{end}}
+
+{{$sectioninfo := ""}}
+{{if $allowed}}
+	{{$sectioninfo = GetSectionInfo $postinfo.Topic}}
+	{{if $sectioninfo.Error}}
+		{{$sectioninfo.Error.Error}}<br>
+		{{$allowed = false}}
+	{{else}}
+		{{if eq $sectioninfo.AdminOnly 2}}
+			{{if .Global.Me.Admin}}
+			{{else}}
+				<h1>Permission denied</h1>
+				$allowed = false
+			{{end}}
+		{{end}}
+	{{end}}
+{{end}}
+
+{{if $allowed}}
+	{{$contentsValues := index .Query "content"}}
+	{{$contents := ""}}
+	{{$postid}}
+	{{if ge (len $contentsValues) 1}}
+		{{$contents = index $contentsValues 0}}
+		{{$post := SubmitPost .Global.Username $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
+		{{if $post.Error}}
+			<h1>Error while submitting your reply.</h1>
+			<span style="white-space: pre-wrap">{{$post.Error}}</span>
+		{{else}}
+			<script>
+				window.open("/post/{{$post.ReplyTo}}","_self");
+			</script>		
+		{{end}}
+	{{else}}
+	{{$replyee := GetUsernameByID $postinfo.Author}}
+	{{if $replyee.Error}}
+		<h3>(couldn't get the name of the person this reply is directed at; ){{$replyee.Error.Error}}</h3>
+	{{else}}
+		<h1>Reply to {{$replyee.Result}}'s post in {{Capitalize $sectioninfo.Name}}</h1>
+	<strikethough>You can use markdown to flair your posts.</strikethough> Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
+	<form method='get' action='/replyto'>
+		<input type='hidden' name='post' value='{{$postid}}'>
+		<textarea style="width: 100%; height: 100%; display:block;" name='content' value='{{$contents}}'></textarea>
+		<input type='submit'>
+	</form>
+	{{end}}
+	{{end}}
+{{end}}

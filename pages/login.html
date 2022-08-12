@@ -1,10 +1,9 @@
 {{ template "header.html" }}
 
-{{$usernames := index .Query "username"}}
-{{$usernamelen := len $usernames}}
 {{$username := ""}}
+{{$usernames := index .Query "username"}}
 {{$proceed := false}}
-{{if ge $usernamelen 1}}
+{{if ge (len $usernames) 1}}
 	{{$username = index $usernames 0}}
 	{{$passwords := index .Query "password"}}
 	{{$password := index $passwords 0}}
@@ -22,10 +21,10 @@
 	<form method='get' action='/login'>
 		Username: <input type='text' name='username'><br><br>
 		Password: <input type='password' name='password'><br><br>
-		<input type='submit' value='Sign up'>
+		<input type='submit' value='Login'>
 	</form>
 {{else}}
-	{{SetSessionValue .SessionValues "username" $username}}
+	{{.Global.SetUsername $username}}
 	<script>
 		window.open("/","_self");
 	</script>
