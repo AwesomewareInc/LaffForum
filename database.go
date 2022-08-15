@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sort"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -44,6 +45,25 @@ func init() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	// Try and create the database.
+	file, err := os.Open("tableStructure.sql")
+	if(err != nil) {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	var sql []byte
+	_, err = file.Read(sql)
+	if(err != nil) {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	err = ExecuteDirect(string(sql))
+	// if we get an error from something this basic here, 
+	if(err != nil) {
+
+	}
+
 
 	usernameCheck = regexp.MustCompile(`[^A-z0-9_-]`)
 
@@ -484,16 +504,39 @@ func GetPostsFromUser(name string) (result GetPostsByCriteriaResult) {
 }
 
 func GetPostsInReplyTo(id int) (result GetPostsByCriteriaResult) {
-	return GetPostsByCriteria("WHERE replyto = ?;", id)
+	posts := GetPostsByCriteria("WHERE replyto = ?;", id)
+	if(posts.Error != nil) {
+		return
+	}
+	for _, v := range posts.Posts {
+		posts_ := GetPostsByCriteria("WHERE replyto = ?;", v.ID)
+		if(posts_.Error != nil) {
+			return posts_
+		}
+		for _, v_ := range posts_.Posts {
+			posts.Posts = append(posts.Posts, v_)
+		}
+	}
+	sort.Slice(posts.Posts[:], func (i, j int) bool {
+		return posts.Posts[i].Timestamp < posts.Posts[j].Timestamp
+	})
+	return posts
 }
 
-func SubmitPost(username string, topic interface{}, subject string, content string, replyto interface{}) (result *GenericResult) {
+type SubmitPostResult struct {
+	ID  		int64
+	Result 		Post
+	Error 		error
+}
+
+func SubmitPost(username string, topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
+	result = new(SubmitPostResult)
 	var topicID int
 	switch v := topic.(type) {
 	case string:
 		j := GetSectionIDByName(topic.(string))
 		if j.Error != nil {
-			result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v", topic, j.Error.Error())
+			result.Error = fmt.Errorf("Couldn't get info for the %v section; %v", topic, j.Error.Error())
 			return
 		}
 		topicID = int(j.Result.(int64))
@@ -518,8 +561,6 @@ func SubmitPost(username string, topic interface{}, subject string, content stri
 	}
 
 	fmt.Println(replyID)
-
-	result = new(GenericResult)
 
 	// Check for invalid length of things
 	if len(subject) == 0 {
@@ -556,11 +597,13 @@ func SubmitPost(username string, topic interface{}, subject string, content stri
 		result.Error = PublicFacingError("", err)
 		return
 	}
-	result.Result, err = execResult.LastInsertId()
+	result.Result = GetPostInfo(fmt.Sprint(result.ID))
+	result.ID, err = execResult.LastInsertId()
 	if err != nil {
 		result.Error = PublicFacingError("", err)
 		return
 	}
+
 	return
 }
 

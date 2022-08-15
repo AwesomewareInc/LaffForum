@@ -1,7 +1,16 @@
 {{ template "header.html" .}}
-<span class='box welcome'>
-	<h1>The Funny Wars forum</h1>
-	<p>Official news and discussion regarding the Funny Wars comic</p>
+<span class='vbox'>
+	<span class='hbox'>
+		{{ template "sections.html" .}}
+		<span class='whitespace'></span>
+		<span class='box welcome'>
+			<h1>The Funny Wars forum</h1>
+			<p>Official news and discussion regarding the Funny Wars comic</p>
+		</span>
+	</span>
+	<span class='hbox'>
+		{{ template "announcementsbox.html" .}}
+		<span class='whitespace'></span>
+	</span>
 </span>
-{{ template "sections.html" .}}
 {{ template "footer.html" .}}

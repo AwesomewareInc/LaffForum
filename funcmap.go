@@ -1,6 +1,11 @@
 package main
 
-import "html/template"
+import (
+	"html/template"
+	"strings"
+
+	"github.com/gomarkdown/markdown"
+)
 
 var funcMap = template.FuncMap{
 	"Capitalize": Capitalize,
@@ -20,4 +25,14 @@ var funcMap = template.FuncMap{
 	"SubmitPost": SubmitPost,
 
 	"PrettyTime": PrettyTime,
+
+	"String": String,
+	"IsString": IsString,
+	"IsInt": IsInt,
+
+	"Markdown": func(val string) (string) {
+		val = strings.Replace(val,"<","\\<",99)
+		val = strings.Replace(val,">","\\>",99)
+		return string(markdown.ToHTML([]byte(val),nil,nil))
+	},
 }

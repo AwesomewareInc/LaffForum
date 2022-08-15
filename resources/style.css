@@ -43,6 +43,15 @@ textarea {
 	height: 100%;
 }
 
+:not(.indent) > li {
+	margin-top: 2em;
+	margin-bottom: 2em;
+}
+
+li+ul {
+	margin-top: -2em!important;
+}
+
 /* GENERAL CLASSES */
 .box {
 	display: block;
@@ -126,22 +135,39 @@ textarea {
 /* MAIN PAGE*/
 
 .sections {
-	float: left; 
+	flex: 1;
 	border: 1px solid #f9c56c; 
 	font-size: 75%;
 	position: relative;
 	min-width: 25%;
 	color: black;
+	margin: 8px;
+}
+
+.announcements {
+	flex: 1;
+	border: 1px solid #A0C99C; 
+	font-size: 75%;
+	position: relative;
+	min-width: 25%;
+	color: black;
+	margin: 8px;
 }
 
 .welcome {
-	float: right; 
+	flex: 3;
 	background: #34D399; 
 	font-size: 75%; 
 	position: relative;
 	color: white; 
 	text-align: center;
 	min-width: 50%;
+	margin: 8px;
+}
+
+.whitespace {
+	display: block;
+	flex: 2;
 }
 
 /* POST LISTING */
@@ -186,24 +212,19 @@ table.posts .subject {
 
 /* POST PAGE */
 
-.post-vbox {
+.vbox {
 	display: flex;
 	flex-direction: column;
 	position: relative;
 }
 
-.post-vbox .hbox-1,
-.post-vbox .hbox-2 {
+.vbox .hbox {
 	display: flex;
 	flex-direction: row;
 	width: 100%;
 }
-.post-vbox .hbox-1 {
+.vbox .hbox:nth-of-type(1) {
 	align-self: flex-start;
-	flex: 2;
-}
-.post-vbox .hbox-2 {
-	flex: 1;
 }
 
 .authorbox {
@@ -273,6 +294,15 @@ table.replies .from {
 table.replies .contents {
 	background: #fcdbb8;
 	width: 100%;
+}
+
+.original-post {
+	opacity: 0.75;
+	display: block;
+}
+
+.original-post:before {
+	content: "> ";
 }
 
 /* USER PAGE */

@@ -7,6 +7,10 @@
 	{{$post := GetPostInfo $postid}}
 	{{if $post.Error}}
 		{{$post.Error.Error}}
+	{{else if ne $post.ReplyTo 0}}
+		<script>
+			window.open("/post/{{$post.ReplyTo}}#{{$post.ID}}","_self");
+		</script>
 	{{else}}
 		{{if eq $post.ID 0}}
 			<h1>Non-existent post.</h1>

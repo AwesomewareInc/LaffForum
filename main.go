@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	texttemplate "text/template"
 	"log"
 	"net/http"
 	"net/url"
@@ -18,6 +19,7 @@ import (
 //go:embed pages/*.*
 var pages embed.FS
 var tmpl *template.Template
+var texttmpl *texttemplate.Template
 
 var sessionManager = phpsessgo.NewSessionManager(
 	phpsessgo.SessionManagerConfig{
@@ -34,10 +36,19 @@ func main() {
 	tmpl = template.New("")
 	tmpl.Funcs(funcMap) // "FuncMap" refers to a template.FuncMap in another file, that isn't included in this one.
 
-	// For as long as the program is running, continually refresh the templates on another thread
+	// initialize text/template too
+	texttmpl = texttemplate.New("")
+	texttmpl.Funcs(funcMap) 
+
 	_, err := tmpl.ParseFS(pages, "pages/*")
 	if err != nil {
 		log.Println(err)
+		return
+	}
+	_, err = texttmpl.ParseFS(pages, "pages/*")
+	if err != nil {
+		log.Println(err)
+		return
 	}
 	// initialize the main server
 	s := &http.Server{
@@ -129,9 +140,18 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
-		if err := tmpl.ExecuteTemplate(w, pagename+".html", Info); err != nil {
-			http.Error(w, err.Error(), 500)
-		}
+		// On some pages, html escaping needs to be disabled.
+		switch(pagename) {
+			case "post":
+				if err := texttmpl.ExecuteTemplate(w, pagename+".html", Info); err != nil {
+					http.Error(w, err.Error(), 500)
+				}
+			default:
+				if err := tmpl.ExecuteTemplate(w, pagename+".html", Info); err != nil {
+					http.Error(w, err.Error(), 500)
+				}
+		} 
+
 	} else {
 		page, err := os.ReadFile(filename)
 		if err != nil {
@@ -166,6 +186,8 @@ func GetContentType(output *os.File) (string, error) {
 	ext := filepath.Ext(output.Name())
 	file := make([]byte, 1024)
 	switch ext {
+	case ".svg":
+		return "image/svg+xml", nil
 	case ".htm", ".html":
 		return "text/html", nil
 	case ".css":

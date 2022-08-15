@@ -1,38 +1,42 @@
-{{$posts := GetPostsInReplyTo .}}
-{{if $posts.Error}}
-	{{$posts.Error.Error}}
-{{else}}
-	{{range $i, $v := $posts.Posts}}
-		<tr>
-			<td class='from'>
-			{{$author := GetUsernameByID $v.Author}}
-			{{if $author.Error}}
-				Could not get author; {{$author.Error.Error}}
-			{{else}}
-				<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
-			{{end}}
-			</td>
-			<td class='contents'>
-			<b>{{$timestamp := PrettyTime $v.Timestamp}}
-			{{if $timestamp.Error}}
-				Could not parse; {{$timestamp.Error.Error}}
-			{{else}}
-				{{$timestamp.Result}}
-			{{end}}</b><br>
-
-			{{$v.Contents}}
-			<form action='/replyto'>
-				<input type='hidden' name='post' value='{{$v.ID}}'>
-				<input type='submit' value='Reply'>
-			</form>
-			</td>
-		</tr>
-		{{$replies := GetPostsInReplyTo $v.ID}}
-		{{if $replies.Error}}
-			{{$replies.Error.Error}}
-		{{else if le (len $replies.Posts) 0}}
-		{{else}}
-			{{template "replies.html" $v.ID}}
+{{if IsInt .}}
+	{{$posts := GetPostsInReplyTo .}}
+	{{$id := .}}
+	{{if $posts.Error}}
+		{{$posts.Error.Error}}
+	{{else}}
+		{{range $i, $v := $posts.Posts}}
+			<tr>
+				<td class='from'>
+				{{$author := GetUsernameByID $v.Author}}
+				{{if $author.Error}}
+					Could not get author; {{$author.Error.Error}}
+				{{else}}
+					<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
+				{{end}}
+				</td>
+				<td class='contents'>
+				<b>{{$timestamp := PrettyTime $v.Timestamp}}
+				{{if $timestamp.Error}}
+					Could not parse; {{$timestamp.Error.Error}}
+				{{else}}
+					{{$timestamp.Result}}
+				{{end}}</b><br>
+				{{if ne $v.ReplyTo $id}}
+					{{$post_ := GetPostInfo (String $v.ReplyTo)}}
+					{{if $post_.Error}}
+					{{else}}
+						<span class='original-post'>{{$post_.Contents}}</span>
+					{{end}}
+				{{end}}
+				{{$v.Contents}}
+				<form action='/replyto'>
+					<input type='hidden' name='post' value='{{$v.ID}}'>
+					<input type='submit' value='Reply'>
+				</form>
+				</td>
+			</tr>
 		{{end}}
 	{{end}}
+{{else}}
+	No.
 {{end}}

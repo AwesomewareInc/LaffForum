@@ -7,11 +7,13 @@
 		<span class='container'>
 			<span class='header'>
 				<span class='top'>
-					<a class='logo' href='/'><img src="/resources/logo.png" alt="LaffForum" fetchpriority="high" style="aspect-ratio: 55/14;"></a>
+					<a class='logo' href='/'><img src="/resources/logo.svg" alt="LaffForum" width="128" height="64"></a>
+					<!---
 					<span class='search'>
 						<input type='text'>
 						<input type='submit'>
 					</span>
+					--->
 					<span class='user'>
 						{{if .Global.Username}}
 							<a href="/user/{{.Global.Username}}">{{.Global.Username}}</a>
@@ -22,6 +24,9 @@
 				</span>
 			</span>
 			<span class='links'>
-				<a href='/'>Yeah</a> | <a href='/'>yeah</a> | <a href='/'>yup</a>
+				<a href='/'>Home</a> | 
+				<a href='/about'>About</a> | 
+				<a href='/rules'>Rules</a> |
+				<a href='/privacy'>Privacy</a>
 			</span>
 			<span class='main'>

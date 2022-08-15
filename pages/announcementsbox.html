@@ -1,0 +1,11 @@
+<span class='box announcements'>
+	<span class='box heading' style='
+		background: #A0C99C;
+		'>
+		Announcements
+	</span>
+	{{$posts := GetPostsBySectionName "announcements"}}
+	{{range $i, $v := $posts.Posts}}
+		<h3><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></h3>
+	{{end}}
+</span>
