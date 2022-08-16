@@ -12,24 +12,12 @@ import (
 	"strings"
 	texttemplate "text/template"
 	"time"
-
-	"github.com/tiket-oss/phpsessgo"
 )
 
 //go:embed pages/*.*
 var pages embed.FS
 var tmpl *template.Template
 var texttmpl *texttemplate.Template
-
-var sessionManager = phpsessgo.NewSessionManager(
-	phpsessgo.SessionManagerConfig{
-		Expiration:     time.Hour * 24,
-		CookiePath:     "/",
-		CookieHttpOnly: true,
-		CookieDomain:   "localhost",
-		CookieSecure:   true,
-	},
-)
 
 func main() {
 	// initialize the template shit
@@ -78,15 +66,6 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}()
-	// Start a session.
-	session, err := sessionManager.Start(w, r)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-	defer sessionManager.Save(session)
-
 	// How are we trying to access the site?
 	switch r.Method {
 	case http.MethodGet, http.MethodHead: // These methods are allowed. continue.
@@ -129,6 +108,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Name", filename)
 	w.WriteHeader(200)
 
+	// Get the session relating to the user
 	var Info struct {
 		Values 	[]string
 		Query  	url.Values
@@ -137,12 +117,16 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 	Info.Values = values
 	Info.Query = r.URL.Query()
-	Info.Global.values = session.Value
+	Info.Global.Session = GetSession(r)
 	ip := r.RemoteAddr
 	if(ip[0:3] == "127" || ip[0:3] == "192") {
 		ip = r.Header.Get("HTTP_X_FORWARDED")
+		if(ip == "") {
+			ip = r.RemoteAddr
+		}
 	}
-	
+	Info.IP = ip
+
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
 		// On some pages, html escaping needs to be disabled.

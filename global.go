@@ -2,28 +2,21 @@ package main
 
 import (
 	"fmt"
-	"sync"
-
-	"github.com/tiket-oss/phpsessgo/phpencode"
 )
 
 // File for global values that can be used across all files without
 // extra setup.
 
 type GlobalValues struct {
-	values phpencode.PhpSession
-	mutex sync.Mutex
+	*Session
 }
 
 func (session *GlobalValues) Username() string {
-	session.mutex.Lock()
-	fmt.Println(session.values["username"])
-	if session.values["username"] == nil {
-		session.mutex.Unlock()
+	username := session.Get("username")
+	if username == nil {
 		return ""
 	} else {
-		session.mutex.Unlock()
-		return session.values["username"].(string)
+		return *username
 	}
 }
 
@@ -40,7 +33,7 @@ func (session *GlobalValues) SetUsername(value string) string {
 	session.mutex.Lock()
 	session.values["username"] = value
 	session.mutex.Unlock()
-	return session.values["username"].(string)
+	return session.values["username"]
 }
 
 /*func (values GlobalValues) Set(key, value string) string {
