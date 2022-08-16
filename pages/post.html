@@ -76,17 +76,12 @@
 							{{if eq $sectioninf.AdminOnly 2}}
 								{{if .Global.Me.Admin}}
 									<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
-									<h3>{{$verificationErrors}}</h3>
 									<input style='flex: 1' type= 'submit' value='Post'>
 								{{end}}
 							{{else}}
 								<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
-								<h3>{{$verificationErrors}}</h3>
 								<input style='flex: 1' type='submit' value='Post'>
 							{{end}}
-						</span>
-						<span class='vbox'>
-							<div style='align-self:flex-end' class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
 						</span>
 					</form>
 				{{end}}
