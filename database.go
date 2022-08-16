@@ -27,6 +27,15 @@ var database *sql.DB
 var err error
 var usernameCheck *regexp.Regexp
 
+var SQLEscape = strings.NewReplacer(
+	";", "\\;",
+	"\\", "\\\\",
+	"'", "\\'",
+	"\"", "\\\"",
+	"\x00", "\\\x00",
+	"\x1a", "\\\x1a",
+)
+
 func init() {
 	// Load the database
 	database, err = sql.Open("sqlite3", "database.db"+
@@ -161,6 +170,10 @@ func PublicFacingError(msg string, err error) error {
 	funcname := funcnames[len(funcnames)-1]
 
 	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v", msg, filename, line, funcname, err.Error(), stacktrace)
+}
+
+func SQLSanitize(val string) (string) {
+	return SQLEscape.Replace(val)
 }
 
 // ==============
@@ -531,6 +544,8 @@ type SubmitPostResult struct {
 
 func SubmitPost(username string, topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
 	result = new(SubmitPostResult)
+
+	// topic/reply IDs from string, if we have to.
 	var topicID int
 	switch v := topic.(type) {
 	case string:
@@ -545,7 +560,6 @@ func SubmitPost(username string, topic interface{}, subject string, content stri
 	default:
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
-
 	var replyID int
 	switch v := replyto.(type) {
 	case string:
@@ -560,7 +574,7 @@ func SubmitPost(username string, topic interface{}, subject string, content stri
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
 
-	fmt.Println(replyID)
+	// 
 
 	// Check for invalid length of things
 	if len(subject) == 0 {

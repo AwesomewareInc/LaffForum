@@ -3,13 +3,13 @@
 {{if eq (len .Values) 0}}
 	you have me nothing you fuckwad
 {{else}}
-	{{$postid := index .Values 1}}
+	{{$postid := HTMLEscape (index .Values 1)}}
 	{{$post := GetPostInfo $postid}}
 	{{if $post.Error}}
-		{{$post.Error.Error}}
+		{{HTMLEscape $post.Error.Error}}
 	{{else if ne $post.ReplyTo 0}}
 		<script>
-			window.open("/post/{{$post.ReplyTo}}#{{$post.ID}}","_self");
+			window.open("/post/{{HTMLEscape $post.ReplyTo}}#{{HTMLEscape $post.ID}}","_self");
 		</script>
 	{{else}}
 		{{if eq $post.ID 0}}
@@ -19,8 +19,8 @@
 			{{if $sectioninf.Error}}
 				{{$sectioninf.Error.Error}}
 			{{else}}
-			{{if .Global.Username}}
-				{{$contents := index .Query "contents"}}
+			{{if (HTMLEscape .Global.Username)}}
+				{{$contents := HTMLEscape (index .Query "contents")}}
 				{{if ge (len $contents) 1}}
 					{{$allowed := true}}
 					{{if eq $sectioninf.AdminOnly 2}}
@@ -30,8 +30,8 @@
 						{{end}}
 					{{end}}
 					{{if $allowed = true}}
-						{{$content := index $contents 0}}
-						{{$reply := SubmitPost .Global.Username $post.Topic (print "RE: " $post.Subject) $content $post.ID}}
+						{{$content := HTMLEscape (index $contents 0)}}
+						{{$reply := SubmitPost .Global.Username (HTMLEscape $post.Topic) (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
 						{{if $reply.Error}}
 							<h1>Error while submitting your post.</h1>
 							<span style="white-space: pre-wrap">{{$reply.Error}}</span>
@@ -63,8 +63,8 @@
 						{{end}}
 					</span>
 					<span class='box postinfo'>
-						<h1>{{$post.Subject}}</h1>
-						{{$post.Contents}}
+						<h1>{{Markdown $post.Subject}}</h1>
+						{{Markdown $post.Contents}}
 					</span>
 				</span>
 				<span class='hbox-2'>
