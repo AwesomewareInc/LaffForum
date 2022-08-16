@@ -4,13 +4,13 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	texttemplate "text/template"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	texttemplate "text/template"
 	"time"
 
 	"github.com/tiket-oss/phpsessgo"
@@ -138,8 +138,11 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	Info.Values = values
 	Info.Query = r.URL.Query()
 	Info.Global.values = session.Value
-	Info.IP = r.RemoteAddr
-
+	ip := r.RemoteAddr
+	if(ip[0:3] == "127" || ip[0:3] == "192") {
+		ip = r.Header.Get("HTTP_X_FORWARDED")
+	}
+	
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
 		// On some pages, html escaping needs to be disabled.
