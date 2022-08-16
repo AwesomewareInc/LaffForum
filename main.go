@@ -136,18 +136,18 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 	Info.Values = values
 	Info.Query = r.URL.Query()
-	Info.Global.PhpSession = session.Value
+	Info.Global.values = session.Value
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
 		// On some pages, html escaping needs to be disabled.
 		switch(pagename) {
 			case "post":
-				if err := texttmpl.ExecuteTemplate(w, pagename+".html", Info); err != nil {
+				if err := texttmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
 					http.Error(w, err.Error(), 500)
 				}
 			default:
-				if err := tmpl.ExecuteTemplate(w, pagename+".html", Info); err != nil {
+				if err := tmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
 					http.Error(w, err.Error(), 500)
 				}
 		} 

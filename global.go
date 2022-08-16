@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/tiket-oss/phpsessgo/phpencode"
 )
 
@@ -8,28 +10,37 @@ import (
 // extra setup.
 
 type GlobalValues struct {
-	phpencode.PhpSession
+	values phpencode.PhpSession
+	mutex sync.Mutex
 }
 
-func (values GlobalValues) Username() string {
-	if values.PhpSession["username"] == nil {
+func (session *GlobalValues) Username() string {
+	session.mutex.Lock()
+	if session.values["username"] == nil {
+		session.mutex.Unlock()
 		return ""
 	} else {
-		return values.PhpSession["username"].(string)
+		session.mutex.Unlock()
+		return session.values["username"].(string)
 	}
 }
 
-func (values GlobalValues) Me() UserInfo {
-	if values.Username() == "" {
+func (session *GlobalValues) Me() UserInfo {
+	session.mutex.Lock()
+	if session.Username() == "" {
+		session.mutex.Unlock()
 		return UserInfo{}
 	} else {
-		return GetUserInfo(values.Username())
+		session.mutex.Unlock()
+		return GetUserInfo(session.Username())
 	}
 }
 
-func (values GlobalValues) SetUsername(value string) string {
-	values.PhpSession["username"] = value
-	return values.PhpSession["username"].(string)
+func (session *GlobalValues) SetUsername(value string) string {
+	session.mutex.Lock()
+	session.values["username"] = value
+	session.mutex.Unlock()
+	return session.values["username"].(string)
 }
 
 /*func (values GlobalValues) Set(key, value string) string {
