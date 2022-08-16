@@ -38,7 +38,7 @@ func main() {
 
 	// initialize text/template too
 	texttmpl = texttemplate.New("")
-	texttmpl.Funcs(funcMap) 
+	texttmpl.Funcs(textTemplateFuncMap) 
 
 	_, err := tmpl.ParseFS(pages, "pages/*")
 	if err != nil {
