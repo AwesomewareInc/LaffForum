@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/tiket-oss/phpsessgo/phpencode"
@@ -16,6 +17,7 @@ type GlobalValues struct {
 
 func (session *GlobalValues) Username() string {
 	session.mutex.Lock()
+	fmt.Println(session.values["username"])
 	if session.values["username"] == nil {
 		session.mutex.Unlock()
 		return ""
@@ -26,17 +28,15 @@ func (session *GlobalValues) Username() string {
 }
 
 func (session *GlobalValues) Me() UserInfo {
-	session.mutex.Lock()
 	if session.Username() == "" {
-		session.mutex.Unlock()
 		return UserInfo{}
 	} else {
-		session.mutex.Unlock()
 		return GetUserInfo(session.Username())
 	}
 }
 
 func (session *GlobalValues) SetUsername(value string) string {
+	fmt.Println(value)
 	session.mutex.Lock()
 	session.values["username"] = value
 	session.mutex.Unlock()

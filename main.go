@@ -130,13 +130,15 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 
 	var Info struct {
-		Values []string
-		Query  url.Values
-		Global GlobalValues
+		Values 	[]string
+		Query  	url.Values
+		Global 	GlobalValues
+		IP 		string
 	}
 	Info.Values = values
 	Info.Query = r.URL.Query()
 	Info.Global.values = session.Value
+	Info.IP = r.RemoteAddr
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
