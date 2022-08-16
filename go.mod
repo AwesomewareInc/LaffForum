@@ -14,4 +14,3 @@ require (
 	github.com/google/uuid v1.1.1 // indirect
 )
 
-replace github.com/tiket-oss/phpsessgo => /home/gavin/Projects/phpsessgo
