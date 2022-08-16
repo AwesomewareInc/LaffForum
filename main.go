@@ -120,7 +120,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	Info.Global.Session = getSession(r)
 	ip := r.RemoteAddr
 	if(ip[0:3] == "127" || ip[0:3] == "192") {
-		ip = r.Header.Get("HTTP_X_FORWARDED")
+		ip = r.Header.Get("X-Forwarded-For")
 		if(ip == "") {
 			ip = r.RemoteAddr
 		}
