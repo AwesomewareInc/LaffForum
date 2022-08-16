@@ -119,15 +119,12 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	Info.Query = r.URL.Query()
 	Info.Global.Session = getSession(r)
 	ip := r.RemoteAddr
-	ipOnly := strings.Split(ip,":")[0]
-	if(ipOnly[0:3] == "127" || ipOnly[0:3] == "192") {
-		ip_ := r.Header.Get("HTTP_X_FORWARDED")
-		if(ip != "") {
-			ipParts := strings.Split(ip_, ",")
-			ipOnly = strings.Split(ipParts[1],":")[0]
+	if(ip[0:3] == "127" || ip[0:3] == "192") {
+		ip = r.Header.Get("X-Forwarded-For")
+		if(ip == "") {
+			ip = r.RemoteAddr
 		}
 	}
-
 	Info.IP = ip
 
 	// Serve the file differently based on whether it's an internal page or not.
