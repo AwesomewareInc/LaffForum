@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -11,6 +12,7 @@ var alphabetOnly regexp.Regexp
 
 func init() {
 	Sessions = SessionsStruct{}
+	Sessions.sessions = make(map[string]*Session)
 	alphabetOnly = *regexp.MustCompile(`[^A-z0-9]`)
 }
 
@@ -25,36 +27,44 @@ type Session struct {
 	mutex 		sync.Mutex
 }
 
-func GetSession(r *http.Request) (*Session) {
+func getSession(r *http.Request) (*Session) {
 	ip := r.RemoteAddr
 	ua := r.UserAgent()
 	ipOnly := strings.Split(ip,":")[0]
 
+	if(ipOnly == "127" || ipOnly == "192") {
+		ip = r.Header.Get("HTTP_X_FORWARDED")
+		if(ip != "") {
+			ipOnly = strings.Split(ip,":")[0]
+		}
+	}
+
 	identifier := string(alphabetOnly.ReplaceAll([]byte(ipOnly+ua),[]byte("")))
 
-	return Sessions.Get(identifier)
+	return Sessions.get(identifier)
 }
 
-func (s *SessionsStruct) Get(id string) (*Session) {
+func (s *SessionsStruct) get(id string) (*Session) {
 	s.mutex.Lock()
-	result := s.sessions[id]
-	/*if(result == nil) {
+	result, ok := s.sessions[id]
+	if(!ok) {
 		s.sessions[id] = new(Session)
+		s.sessions[id].values = make(map[string]string)
 		result = s.sessions[id]
-	}*/
+	}
 	s.mutex.Unlock()
 	return result
 }
 
-func (s *Session) Get(key string) (*string) {
+func (s *Session) get(key string) (string) {
 	s.mutex.Lock()
-	result := s.values[key]
-	s.mutex.Unlock()
-	return &result
+	defer s.mutex.Unlock()
+	return s.values[key]
 }
 
-func (s *Session) Set(key string, value string) {
+func (s *Session) set(key string, value string) {
 	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	fmt.Println(s.values[key])
 	s.values[key] = value
-	s.mutex.Unlock()
 }

@@ -1,8 +1,5 @@
 package main
 
-import (
-	"fmt"
-)
 
 // File for global values that can be used across all files without
 // extra setup.
@@ -12,12 +9,7 @@ type GlobalValues struct {
 }
 
 func (session *GlobalValues) Username() string {
-	username := session.Get("username")
-	if username == nil {
-		return ""
-	} else {
-		return *username
-	}
+	return session.get("username")
 }
 
 func (session *GlobalValues) Me() UserInfo {
@@ -29,11 +21,8 @@ func (session *GlobalValues) Me() UserInfo {
 }
 
 func (session *GlobalValues) SetUsername(value string) string {
-	fmt.Println(value)
-	session.mutex.Lock()
-	session.values["username"] = value
-	session.mutex.Unlock()
-	return session.values["username"]
+	session.set("username", value)
+	return session.get("username")
 }
 
 /*func (values GlobalValues) Set(key, value string) string {
