@@ -1,8 +1,7 @@
-{{ template "header.html" .}}
-
 {{$username := ""}}
 {{$usernames := index .Query "username"}}
 {{$proceed := false}}
+{{$errors := ""}}
 {{if ge (len $usernames) 1}}
 	{{$username = index $usernames 0}}
 	{{$prettynames := index .Query "prettyname"}}
@@ -13,15 +12,15 @@
 	{{$pass2 := index $pass2s 0}}
 
 	{{$errors := CreateUser $username $prettyname $pass1 $pass2}}
-	{{if ne $errors ""}}
-		{{$errors}}
-	{{else}}
+	{{if eq $errors ""}}
 		{{$proceed = true}}
 	{{end}}
 {{end}}
 
 {{if eq $proceed false}}
+	{{ template "header.html" .}}
 	<h1>Register</h1>
+	{{$errors}}
 	<form method='get' action='/register'>
 		Username: <input type='text' name='username'><br><br>
 		Full Name: <input type='text' name='prettyname'><br><br>
@@ -29,6 +28,7 @@
 		Confirm Password: <input type='password' name='pass2'><br><br>
 		<input type='submit' value='Sign up'>
 	</form>
+	{{ template "footer.html" .}}
 {{else}}
 	{{.Global.SetUsername $username}}
 	<script>
@@ -36,4 +36,3 @@
 	</script>
 {{end}}
 
-{{ template "footer.html" .}}

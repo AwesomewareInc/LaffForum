@@ -1,32 +1,36 @@
-{{ template "header.html" }}
-
 {{$username := ""}}
 {{$usernames := index .Query "username"}}
 {{$proceed := false}}
+{{$errors := ""}}
 {{if ge (len $usernames) 1}}
 	{{$username = index $usernames 0}}
 	{{$passwords := index .Query "password"}}
 	{{$password := index $passwords 0}}
 
-	{{$errors := VerifyPassword $username $password}}
-	{{if ne $errors ""}}
-		{{$errors}}
-	{{else}}
+	{{$errors = VerifyPassword $username $password}}
+	{{if eq $errors ""}}
 		{{$proceed = true}}
 	{{end}}
 {{end}}
 {{if eq $proceed false}}
+	{{ template "header.html" }}
 	<h1>Login</h1>
+	{{$errors}}
 
 	<form method='get' action='/login'>
 		Username: <input type='text' name='username'><br><br>
 		Password: <input type='password' name='password'><br><br>
 		<input type='submit' value='Login'>
 	</form>
+
+	{{ template "footer.html" .}}
 {{else}}
 	{{.Global.SetUsername $username}}
 	<script>
 		window.open("/","_self");
 	</script>
 {{end}}
-{{ template "footer.html" .}}
+
+
+
+
