@@ -25,3 +25,6 @@ LaffForum
 go.work
 
 config.toml
+
+# so that i can have this in production and git will shut up :3
+start.sh 
