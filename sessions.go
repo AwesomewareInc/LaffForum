@@ -33,10 +33,10 @@ func getSession(r *http.Request) (*Session) {
 	ipOnly := strings.Split(ip,":")[0]
 
 	if(ipOnly[0:3] == "127" || ipOnly[0:3] == "192") {
-		ip = r.Header.Get("HTTP_X_FORWARDED")
+		ip = r.Header.Get("X-Forwarded-For")
 		if(ip != "") {
 			ipParts := strings.Split(ip, ",")
-			ipOnly = strings.Split(ipParts[1],":")[0]
+			ipOnly = ipParts[0]
 		}
 	}
 
