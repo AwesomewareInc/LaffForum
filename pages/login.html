@@ -1,25 +1,39 @@
 {{$username := ""}}
-{{$usernames := index .Query "username"}}
+{{$usernames := index .PostValues "username"}}
 {{$proceed := false}}
 {{$errors := ""}}
+{{$verificationErrors := ""}}
 {{if ge (len $usernames) 1}}
 	{{$username = index $usernames 0}}
-	{{$passwords := index .Query "password"}}
+	{{$passwords := index .PostValues "password"}}
 	{{$password := index $passwords 0}}
 
 	{{$errors = VerifyPassword $username $password}}
 	{{if eq $errors ""}}
-		{{$proceed = true}}
+		{{$captcha := .PostValues.Get "h-captcha-response"}}
+		{{$verification := VerifyCaptcha $captcha}}
+		{{if $verification.Error}}
+			{{$verificationErrors = $verification.Error}}
+		{{else}}
+			{{if $verification.Success}}
+				{{$proceed = true}}
+			{{else}}
+				{{$verificationErrors = "Captcha failed."}}
+			{{end}}
+		{{end}}
 	{{end}}
 {{end}}
+
 {{if eq $proceed false}}
 	{{ template "header.html" }}
 	<h1>Login</h1>
 	{{$errors}}
+	{{$verificationErrors}}
 
-	<form method='get' action='/login'>
+	<form method='post' action='/login'>
 		Username: <input type='text' name='username'><br><br>
 		Password: <input type='password' name='password'><br><br>
+		<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
 		<input type='submit' value='Login'>
 	</form>
 

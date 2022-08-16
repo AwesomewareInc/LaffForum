@@ -25,6 +25,12 @@ func (session *GlobalValues) SetUsername(value string) string {
 	return session.get("username")
 }
 
+func (session *GlobalValues) Clear() string {
+	session.values = nil
+	session = nil
+	return ""
+}
+
 /*func (values GlobalValues) Set(key, value string) string {
 	values.PhpSession[key] = value
 	return values.PhpSession[key].(string)

@@ -1,18 +1,16 @@
 package main
 
 import (
-	"strings"
+	"text/template"
 
 	"github.com/gomarkdown/markdown"
 )
 
 func Markdown(val string) (string) {
-	val = HTMLEscape(val)
+	val = template.HTMLEscapeString(val)
 	return string(markdown.ToHTML([]byte(val),nil,nil))
 }
 
 func HTMLEscape(val string) (string) {
-	val = strings.Replace(val,"<","\\<",99)
-	val = strings.Replace(val,">","\\>",99)
-	return val
+	return template.HTMLEscapeString(val)
 }

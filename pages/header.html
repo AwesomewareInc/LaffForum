@@ -2,6 +2,7 @@
 	<head>
 		<title>Funny Wars Forum</title>
 		<link href="/resources/style.css" type="text/css" rel="stylesheet">
+		<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 	</head>
 	<body>
 		<span class='container'>
@@ -16,7 +17,7 @@
 					--->
 					<span class='user'>
 						{{if .Global.Username}}
-							<a href="/user/{{.Global.Username}}">{{.Global.Username}}</a>
+							<a href="/user/{{.Global.Username}}">{{.Global.Username}}</a> | <a href='/logout'>Logout</a>
 						{{else}}
 							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
 						{{end}}

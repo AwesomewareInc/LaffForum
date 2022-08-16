@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -47,13 +46,13 @@ func getSession(r *http.Request) (*Session) {
 
 func (s *SessionsStruct) get(id string) (*Session) {
 	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	result, ok := s.sessions[id]
 	if(!ok) {
 		s.sessions[id] = new(Session)
 		s.sessions[id].values = make(map[string]string)
 		result = s.sessions[id]
 	}
-	s.mutex.Unlock()
 	return result
 }
 
@@ -66,6 +65,9 @@ func (s *Session) get(key string) (string) {
 func (s *Session) set(key string, value string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	fmt.Println(s.values[key])
+	_, ok := s.values[key]
+	if(!ok) {
+		s.values = make(map[string]string)
+	}
 	s.values[key] = value
 }

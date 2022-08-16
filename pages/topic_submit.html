@@ -3,6 +3,7 @@
 {{$content := ""}}
 {{$post := ""}}
 {{$id := -1}}
+{{$verificationErrors := ""}}
 {{if .Global.Username}}
 	{{$allowed := true}}
 	{{$sectioninf := GetSectionInfo $topic}}
@@ -17,28 +18,39 @@
 			{{end}}
 		{{end}}
 	{{end}}
-	{{$subjects := index .Query "subject"}}
-	{{if ge (len $subjects) 1}}
-		{{$subject = index $subjects 0}}
-		{{$contents := index .Query "content"}}
-		{{$content = index $contents 0}}
-		{{$post := SubmitPost .Global.Username $topic $subject $content 0}}
-		{{if $post.Error}}
-			<h1>Error while submitting your post.</h1>
-			<span style="white-space: pre-wrap">{{$post.Error}}</span>
+	{{$subject := .PostValues.Get "subject"}}
+	{{if ge (len $subject) 1}}
+		{{$captcha := .PostValues.Get "h-captcha-response"}}
+		{{$verification := VerifyCaptcha $captcha}}
+		{{if $verification.Error}}
+			{{$verificationErrors = $verification.Error}}
 		{{else}}
-			<script>
-				window.open("/post/{{$post.ID}}","_self");
-			</script>		
+			{{if $verification.Success}}
+				{{$content := .PostValues.Get "content"}}
+				{{$post := SubmitPost .Global.Username $topic $subject $content 0}}
+				{{if $post.Error}}
+					<h1>Error while submitting your post.</h1>
+					<span style="white-space: pre-wrap">{{$post.Error}}</span>
+				{{else}}
+					<script>
+						window.open("/post/{{$post.ID}}","_self");
+					</script>		
+				{{end}}
+			{{else}}
+				{{$verificationErrors = "Captcha failed."}}
+			{{end}}
 		{{end}}
+
 	{{end}}
 	<h1>Create a post in {{Capitalize $topic}}</h1>
 	<strikethough>You can use markdown to flair your posts.</strikethough> Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
-	<form method='get' action='/topic/{{$topic}}/submit'>
+	<form method='post' action='/topic/{{$topic}}/submit'>
 		<b>Subject:</b><br>
 		<input type='text' name='subject' value='{{$subject}}'><br><br>
 		<b>Content:</b><br>
 		<textarea style="width: 100%; height: 100%; display:block;" name='content' value='{{$content}}'></textarea>
+		<h3>{{$verificationErrors}}</h3>
+		<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
 		<input type='submit'>
 	</form>
 {{else}}

@@ -68,7 +68,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}()
 	// How are we trying to access the site?
 	switch r.Method {
-	case http.MethodGet, http.MethodHead: // These methods are allowed. continue.
+	case http.MethodGet, http.MethodHead, http.MethodPost: // These methods are allowed. continue.
 	default: // Send them an error for other ones.
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
@@ -110,25 +110,20 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// Get the session relating to the user
 	var Info struct {
-		Values 	[]string
-		Query  	url.Values
-		Global 	GlobalValues
-		IP 		string
+		Values 			[]string
+		Query  			url.Values
+		Global 			GlobalValues
+		PostValues 		url.Values
 	}
 	Info.Values = values
 	Info.Query = r.URL.Query()
 	Info.Global.Session = getSession(r)
 
-	ip := r.RemoteAddr
-	ipOnly := strings.Split(ip,":")[0]
-	if(ipOnly[0:3] == "127" || ipOnly[0:3] == "192") {
-		ip = r.Header.Get("X-Forwarded-For")
-		if(ip != "") {
-			ipParts := strings.Split(ip, ",")
-			ipOnly = strings.Join(ipParts, ",")
-		}
-	}
-	Info.IP = ipOnly
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), 500)
+	} 
+
+	Info.PostValues = r.PostForm
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {

@@ -1,5 +1,7 @@
 {{ template "header.html" .}}
 
+{{ $verificationErrors := "" }}
+
 {{if eq (len .Values) 0}}
 	you have me nothing you fuckwad
 {{else}}
@@ -15,22 +17,22 @@
 		{{if eq $post.ID 0}}
 			<h1>Non-existent post.</h1>
 		{{else}}
+
 			{{$sectioninf := GetSectionInfo $post.Topic}}
 			{{if $sectioninf.Error}}
 				{{$sectioninf.Error.Error}}
 			{{else}}
-			{{if (HTMLEscape .Global.Username)}}
-				{{$contents := HTMLEscape (index .Query "contents")}}
-				{{if ge (len $contents) 1}}
+				{{$content := HTMLEscape (.Query.Get "contents")}}
+				{{if ge (len $content) 1}}
 					{{$allowed := true}}
-					{{if eq $sectioninf.AdminOnly 2}}
-						{{if .Global.Me.Admin}}
-						{{else}}
-							$allowed = false
+					{{if (eq $sectioninf.AdminOnly 2)}}
+						{{if not .Global.Admin}}
+							{{$allowed = false}}
 						{{end}}
+					{{else if not .Global.Username}}
+						{{$allowed = false}}
 					{{end}}
-					{{if $allowed = true}}
-						{{$content := HTMLEscape (index $contents 0)}}
+					{{if $allowed}}
 						{{$reply := SubmitPost .Global.Username (HTMLEscape $post.Topic) (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
 						{{if $reply.Error}}
 							<h1>Error while submitting your post.</h1>
@@ -45,8 +47,9 @@
 					{{end}}
 				{{end}}
 			{{end}}
-			<span class='post-vbox'>
-				<span class='hbox-1'>
+
+			<span class='vbox'>
+				<span class='hbox'>
 					<span class='box authorbox'>
 						{{$author := GetUsernameByID $post.Author}}
 						{{if $author.Error}}
@@ -67,23 +70,26 @@
 						{{Markdown $post.Contents}}
 					</span>
 				</span>
-				<span class='hbox-2'>
 				{{if .Global.Username}}
-					{{if eq $sectioninf.AdminOnly 2}}
-						{{if .Global.Me.Admin}}
-							<form method='get'>
-								<textarea name='contents' placeholder='Reply'></textarea>
-								<input type= 'submit' value='Post'>
-							</form>
-						{{end}}
-					{{else}}
-						<form method='get'>
-							<textarea name='contents' placeholder='Reply'></textarea>
-							<input type='submit' value='Post'>
-						</form>
-					{{end}}
+					<form class='vbox' method='post'>
+						<span style='flex: 4' class='hbox'>
+							{{if eq $sectioninf.AdminOnly 2}}
+								{{if .Global.Me.Admin}}
+									<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
+									<h3>{{$verificationErrors}}</h3>
+									<input style='flex: 1' type= 'submit' value='Post'>
+								{{end}}
+							{{else}}
+								<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
+								<h3>{{$verificationErrors}}</h3>
+								<input style='flex: 1' type='submit' value='Post'>
+							{{end}}
+						</span>
+						<span class='vbox'>
+							<div style='align-self:flex-end' class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
+						</span>
+					</form>
 				{{end}}
-				</span>
 			</span>
 			<hr>
 			<table class='replies'>
@@ -94,5 +100,4 @@
 			</table>
 		{{end}}
 	{{end}}
-{{end}}
 {{ template "footer.html" .}}

@@ -319,3 +319,8 @@ table.replies .contents {
 	width: 80%!important;
 	float: right;
 }
+
+@media (prefers-color-scheme: dark) {
+	/* fuck your dark mode the site isn't that bright */
+	body {color: black!important;}
+}

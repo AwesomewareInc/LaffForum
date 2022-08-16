@@ -31,6 +31,8 @@ var funcMap = template.FuncMap{
 
 	"HTMLEscape": HTMLEscape,
 	"Markdown": Markdown,
+
+	"VerifyCaptcha": VerifyCaptcha,
 }
 // function map for post.html which needs unescaped html
 var textTemplateFuncMap = texttemplate.FuncMap {
@@ -57,4 +59,6 @@ var textTemplateFuncMap = texttemplate.FuncMap {
 	"String": String,
 	"IsString": IsString,
 	"IsInt": IsInt,
+
+	"VerifyCaptcha": VerifyCaptcha,
 }
