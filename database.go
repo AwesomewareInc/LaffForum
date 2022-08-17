@@ -542,7 +542,7 @@ func GetPostsInReplyTo(id int) (result GetPostsByCriteriaResult) {
 		return
 	}
 	for _, v := range posts.Posts {
-		posts_ := GetPostsByCriteria("WHERE replyto = ?;", v.ID)
+		posts_ := GetPostsInReplyTo(v.ID)
 		if posts_.Error != nil {
 			return posts_
 		}

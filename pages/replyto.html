@@ -54,13 +54,14 @@
 	{{$contents := .Query.Get "content"}}
 	{{if ge (len $contents) 1}}
 		{{$post := SubmitPost .Global.Username $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
+		{{$post}}
 		{{if $post.Error}}
 			<h1>Error while submitting your reply.</h1>
 			<span style="white-space: pre-wrap">{{$post.Error}}</span>
 		{{else}}
-			<script>
+			<!---<script>
 				window.open("/post/{{$backto}}","_self");
-			</script>		
+			</script>--->		
 		{{end}}
 	{{else}}
 	{{$replyee := GetUsernameByID $postinfo.Author}}
