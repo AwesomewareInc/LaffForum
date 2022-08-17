@@ -32,16 +32,14 @@ func getSession(r *http.Request) *Session {
 	ua := r.UserAgent()
 	ipOnly := strings.Split(ip, ":")[0]
 
-	if len(ipOnly) >= 3 {
-		if ipOnly[0:3] == "127" || ipOnly[0:3] == "192" {
-			ip = r.Header.Get("X-Forwarded-For")
-			if ip != "" {
-				ipParts := strings.Split(ip, ",")
-				ipPartParts := strings.Split(ipParts[1], ":")
-				ipOnly = ""
-				for _, v := range ipPartParts[0:2] {
-					ipOnly += v
-				}
+	if ipOnly[0:3] == "127" || ipOnly[0:3] == "192" {
+		ip = r.Header.Get("X-Forwarded-For")
+		if ip != "" {
+			ipParts := strings.Split(ip, ",")
+			ipPartParts := strings.Split(ipParts[1], ":")
+			ipOnly = ""
+			for _, v := range ipPartParts[0][0:2] {
+				ipOnly += string(v)
 			}
 		}
 	}
