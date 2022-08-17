@@ -37,7 +37,11 @@ func getSession(r *http.Request) *Session {
 			ip = r.Header.Get("X-Forwarded-For")
 			if ip != "" {
 				ipParts := strings.Split(ip, ",")
-				ipOnly = ipParts[1]
+				ipPartParts := strings.Split(ipParts[1], ":")
+				ipOnly = ""
+				for _, v := range ipPartParts[0:2] {
+					ipOnly += v
+				}
 			}
 		}
 	}
