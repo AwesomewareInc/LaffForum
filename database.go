@@ -518,7 +518,7 @@ func GetPostsBySectionName(name string) (result GetPostsByCriteriaResult) {
 	}
 	id := id_.Result.(int64)
 
-	result = GetPostsByCriteria("WHERE topic = ? AND replyto = 0;", id)
+	result = GetPostsByCriteria("WHERE topic = ? AND replyto = 0 ORDER BY id DESC;", id)
 
 	return
 }
@@ -531,7 +531,7 @@ func GetPostsFromUser(name string) (result GetPostsByCriteriaResult) {
 	}
 	id := id_.Result.(int64)
 
-	result = GetPostsByCriteria("WHERE id = ?;", id)
+	result = GetPostsByCriteria("WHERE author = ? ORDER BY id DESC;", id)
 
 	return
 }
