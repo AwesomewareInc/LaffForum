@@ -25,19 +25,21 @@ var funcMap = template.FuncMap{
 
 	"PrettyTime": PrettyTime,
 
-	"String": String,
+	"String":   String,
 	"IsString": IsString,
-	"IsInt": IsInt,
+	"IsInt":    IsInt,
 
 	"HTMLEscape": HTMLEscape,
-	"Markdown": Markdown,
+	"Markdown":   Markdown,
 
 	"VerifyCaptcha": VerifyCaptcha,
+
+	"DeletePost":  DeletePost,
+	"RestorePost": RestorePost,
 }
+
 // function map for post.html which needs unescaped html
-var textTemplateFuncMap = texttemplate.FuncMap {
-	"HTMLEscape": HTMLEscape,
-	"Markdown": Markdown,
+var textTemplateFuncMap = texttemplate.FuncMap{
 	"Capitalize": Capitalize,
 
 	"CreateUser":     CreateUser,
@@ -56,9 +58,15 @@ var textTemplateFuncMap = texttemplate.FuncMap {
 
 	"PrettyTime": PrettyTime,
 
-	"String": String,
+	"String":   String,
 	"IsString": IsString,
-	"IsInt": IsInt,
+	"IsInt":    IsInt,
+
+	"HTMLEscape": HTMLEscape,
+	"Markdown":   Markdown,
 
 	"VerifyCaptcha": VerifyCaptcha,
+
+	"DeletePost":  DeletePost,
+	"RestorePost": RestorePost,
 }

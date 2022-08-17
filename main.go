@@ -26,7 +26,7 @@ func main() {
 
 	// initialize text/template too
 	texttmpl = texttemplate.New("")
-	texttmpl.Funcs(textTemplateFuncMap) 
+	texttmpl.Funcs(textTemplateFuncMap)
 
 	_, err := tmpl.ParseFS(pages, "pages/*")
 	if err != nil {
@@ -61,8 +61,8 @@ func main() {
 func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	// Handle panics and send them to the user instead of sending them to me.
 	defer func() {
-		if recover() != nil {
-			http.Error(w, recover().(string), http.StatusInternalServerError)
+		if what := recover(); what != nil {
+			http.Error(w, fmt.Sprint(what), http.StatusInternalServerError)
 			return
 		}
 	}()
@@ -110,10 +110,10 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// Get the session relating to the user
 	var Info struct {
-		Values 			[]string
-		Query  			url.Values
-		Global 			GlobalValues
-		PostValues 		url.Values
+		Values     []string
+		Query      url.Values
+		Global     GlobalValues
+		PostValues url.Values
 	}
 	Info.Values = values
 	Info.Query = r.URL.Query()
@@ -121,23 +121,23 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, err.Error(), 500)
-	} 
+	}
 
 	Info.PostValues = r.PostForm
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
 		// On some pages, html escaping needs to be disabled.
-		switch(pagename) {
-			case "post":
-				if err := texttmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
-					http.Error(w, err.Error(), 500)
-				}
-			default:
-				if err := tmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
-					http.Error(w, err.Error(), 500)
-				}
-		} 
+		switch pagename {
+		case "post":
+			if err := texttmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
+				http.Error(w, err.Error(), 500)
+			}
+		default:
+			if err := tmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
+				http.Error(w, err.Error(), 500)
+			}
+		}
 
 	} else {
 		page, err := os.ReadFile(filename)

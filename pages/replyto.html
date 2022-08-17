@@ -16,13 +16,12 @@
 
 {{$postid := 0}}
 {{if $allowed}}
-	{{$postvalues := index .Query "post"}}
-	{{if le (len $postvalues) 0}}
-		stop.<br>
-		{{$allowed = false}}
-	{{else}}
-		{{$postid = index $postvalues 0}}
-	{{end}}
+	{{$postid = .Query.Get "post"}}
+{{end}}
+
+{{$backto := 0}}
+{{if $allowed}}
+	{{$backto = .Query.Get "backto"}}
 {{end}}
 
 {{$postinfo := ""}}
@@ -52,18 +51,15 @@
 {{end}}
 
 {{if $allowed}}
-	{{$contentsValues := index .Query "content"}}
-	{{$contents := ""}}
-	{{$postid}}
-	{{if ge (len $contentsValues) 1}}
-		{{$contents = index $contentsValues 0}}
+	{{$contents := .Query.Get "content"}}
+	{{if ge (len $contents) 1}}
 		{{$post := SubmitPost .Global.Username $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
 		{{if $post.Error}}
 			<h1>Error while submitting your reply.</h1>
 			<span style="white-space: pre-wrap">{{$post.Error}}</span>
 		{{else}}
 			<script>
-				window.open("/post/{{$postinfo.ReplyTo}}","_self");
+				window.open("/post/{{$backto}}","_self");
 			</script>		
 		{{end}}
 	{{else}}
@@ -75,7 +71,8 @@
 	<strikethough>You can use markdown to flair your posts.</strikethough> Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
 	<form method='get' action='/replyto'>
 		<input type='hidden' name='post' value='{{$postid}}'>
-		<textarea style="width: 100%; height: 100%; display:block;" name='content' value='{{$contents}}'></textarea>
+		<input type='hidden' name='backto' value='{{$backto}}'>
+		<textarea style="width: 100%; height: 25%; display:block;" name='content' value='{{$contents}}'></textarea>
 		<input type='submit'>
 	</form>
 	{{end}}

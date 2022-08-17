@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS "posts" (
     "author" INTEGER,
     "replyto" INTEGER,
     "timestamp" INTEGER,
-    "deleted" INTEGER,
+    "deleted" INTEGER DEFAULT (0),
     PRIMARY KEY("id" AUTOINCREMENT)
 )
 

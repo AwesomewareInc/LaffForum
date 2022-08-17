@@ -16,39 +16,42 @@ func init() {
 }
 
 type SessionsStruct struct {
-	sessions 	map[string]*Session
-	mutex 		sync.Mutex
+	sessions map[string]*Session
+	mutex    sync.Mutex
 }
+
 var Sessions SessionsStruct
 
 type Session struct {
-	values 		map[string]string
-	mutex 		sync.Mutex
+	values map[string]string
+	mutex  sync.Mutex
 }
 
-func getSession(r *http.Request) (*Session) {
+func getSession(r *http.Request) *Session {
 	ip := r.RemoteAddr
 	ua := r.UserAgent()
-	ipOnly := strings.Split(ip,":")[0]
+	ipOnly := strings.Split(ip, ":")[0]
 
-	if(ipOnly[0:3] == "127" || ipOnly[0:3] == "192") {
-		ip = r.Header.Get("X-Forwarded-For")
-		if(ip != "") {
-			ipParts := strings.Split(ip, ",")
-			ipOnly = ipParts[1]
+	if len(ipOnly) >= 3 {
+		if ipOnly[0:3] == "127" || ipOnly[0:3] == "192" {
+			ip = r.Header.Get("X-Forwarded-For")
+			if ip != "" {
+				ipParts := strings.Split(ip, ",")
+				ipOnly = ipParts[1]
+			}
 		}
 	}
 
-	identifier := string(alphabetOnly.ReplaceAll([]byte(ipOnly+ua),[]byte("")))
+	identifier := string(alphabetOnly.ReplaceAll([]byte(ipOnly+ua), []byte("")))
 
 	return Sessions.get(identifier)
 }
 
-func (s *SessionsStruct) get(id string) (*Session) {
+func (s *SessionsStruct) get(id string) *Session {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	result, ok := s.sessions[id]
-	if(!ok) {
+	if !ok {
 		s.sessions[id] = new(Session)
 		s.sessions[id].values = make(map[string]string)
 		result = s.sessions[id]
@@ -56,7 +59,7 @@ func (s *SessionsStruct) get(id string) (*Session) {
 	return result
 }
 
-func (s *Session) get(key string) (string) {
+func (s *Session) get(key string) string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	return s.values[key]
@@ -66,7 +69,7 @@ func (s *Session) set(key string, value string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	_, ok := s.values[key]
-	if(!ok) {
+	if !ok {
 		s.values = make(map[string]string)
 	}
 	s.values[key] = value

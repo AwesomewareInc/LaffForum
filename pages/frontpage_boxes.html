@@ -1,0 +1,30 @@
+{{define "announcementsbox"}}
+<span class='box announcements'>
+	<span class='box heading' style='
+		background: #A0C99C;
+		'>
+		Announcements
+	</span>
+	{{$posts := GetPostsBySectionName "announcements"}}
+	{{range $i, $v := $posts.Posts}}
+		<h3><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></h3>
+	{{end}}
+</span>
+{{end}}
+{{define "sectionsbox"}}
+<span class='box sections'>
+	<span class='box heading' style='
+		background: #f9c56c;
+		'>
+		Sections
+	</span>
+	{{$sections := GetSections}}
+	{{if $sections.Error}}
+		{{$sections.Error.Error}}
+	{{else}}
+		{{range $i, $v := $sections.Results}}
+			<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a><br>
+		{{end}}
+	{{end}}
+</span>
+{{end}}

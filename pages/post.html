@@ -1,6 +1,9 @@
 {{ template "header.html" .}}
 
 {{ $verificationErrors := "" }}
+{{ $username := .Global.Username }}
+{{ $isadmin := .Global.Me.Admin }}
+{{ $postid := 0}}
 
 {{if eq (len .Values) 0}}
 	you have me nothing you fuckwad
@@ -17,23 +20,22 @@
 		{{if eq $post.ID 0}}
 			<h1>Non-existent post.</h1>
 		{{else}}
-
 			{{$sectioninf := GetSectionInfo $post.Topic}}
 			{{if $sectioninf.Error}}
 				{{$sectioninf.Error.Error}}
 			{{else}}
-				{{$content := HTMLEscape (.Query.Get "contents")}}
+				{{$content := HTMLEscape (.PostValues.Get "contents")}}
 				{{if ge (len $content) 1}}
 					{{$allowed := true}}
 					{{if (eq $sectioninf.AdminOnly 2)}}
-						{{if not .Global.Admin}}
+						{{if not $isadmin}}
 							{{$allowed = false}}
 						{{end}}
-					{{else if not .Global.Username}}
+					{{else if not $username}}
 						{{$allowed = false}}
 					{{end}}
 					{{if $allowed}}
-						{{$reply := SubmitPost .Global.Username (HTMLEscape $post.Topic) (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
+						{{$reply := SubmitPost $username $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
 						{{if $reply.Error}}
 							<h1>Error while submitting your post.</h1>
 							<span style="white-space: pre-wrap">{{$reply.Error}}</span>
@@ -70,11 +72,11 @@
 						{{Markdown $post.Contents}}
 					</span>
 				</span>
-				{{if .Global.Username}}
+				{{if $username}}
 					<form class='vbox' method='post'>
 						<span style='flex: 4' class='hbox'>
 							{{if eq $sectioninf.AdminOnly 2}}
-								{{if .Global.Me.Admin}}
+								{{if $isadmin}}
 									<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
 									<input style='flex: 1' type= 'submit' value='Post'>
 								{{end}}
@@ -89,10 +91,81 @@
 			<hr>
 			<table class='replies'>
 				<tbody>
-				{{template "replies.html" $post.ID}}
+				{{$posts := GetPostsInReplyTo $post.ID}}
+				{{if $posts.Error}}
+					{{$posts.Error.Error}}
+				{{else}}
+					{{range $i, $n := $posts.Posts}}
+						{{$deletedClass := ""}}
+						{{if $n.Deleted}}
+							{{$deletedClass = "deleted"}}
+						{{end}}
+							<td class='from {{$deletedClass}}'>
+							{{if or (not $n.Deleted) ($isadmin) }}
+								{{$author := GetUsernameByID $n.Author}}
+								{{if $author.Error}}
+									Could not get author; {{$author.Error.Error}}
+								{{else}}
+									<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
+								{{end}}
+							{{end}}
+							</td>
+							<td class='contents {{$deletedClass}}'>
+							{{if or (not $n.Deleted) ($isadmin) }}
+							<b>
+								{{$timestamp := PrettyTime $n.Timestamp}}
+								{{if $timestamp.Error}}
+									Could not parse; {{$timestamp.Error.Error}}
+								{{else}}
+									{{$timestamp.Result}}
+								{{end}}
+							</b><br>
+							{{if ne $n.ReplyTo $post.ID}}
+								{{$post_ := GetPostInfo (String $n.ReplyTo)}}
+								{{if not $post_.Error}}
+									{{if or (not $post_.Deleted) ($isadmin) }}
+										<span class='original-post'>{{Markdown $post_.Contents}}</span>
+									{{else}}
+										<span class='original-post'><p>Deleted by a moderator</p></span>
+									{{end}}
+								{{end}}
+							{{end}}
+							{{Markdown $n.Contents}}
+							<span class='actions'>
+								{{if $username}}
+									<form action='/replyto'>
+										<input type='hidden' name='backto' value='{{$post.ID}}'>
+										<input type='hidden' name='post' value='{{$n.ID}}'>
+										<input type='submit' value='Reply'>
+									</form>
+								{{end}}
+								{{if $isadmin}}
+									{{if $n.Deleted}}
+										<form action='/undelete'>
+											<input type='hidden' name='backto' value='{{$post.ID}}'>
+											<input type='hidden' name='post' value='{{$n.ID}}'>
+											<input type='submit' value='Restore'>
+										</form>
+									{{else}}
+										<form action='/delete'>
+											<input type='hidden' name='backto' value='{{$post.ID}}'>
+											<input type='hidden' name='post' value='{{$n.ID}}'>
+											<input type='submit' value='Delete'>
+										</form>
+									{{end}}
+								{{end}}
+							</span>
+							{{else}}
+								<em>Deleted by a moderator</em>
+							{{end}}
+							</td>
+						</tr>
+					{{end}}
 				{{end}}
 				</tbody>
 			</table>
 		{{end}}
 	{{end}}
+{{end}}
+
 {{ template "footer.html" .}}

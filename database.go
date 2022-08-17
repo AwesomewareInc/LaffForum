@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"runtime"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"sort"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -57,22 +57,21 @@ func init() {
 
 	// Try and create the database.
 	file, err := os.Open("tableStructure.sql")
-	if(err != nil) {
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	var sql []byte
 	_, err = file.Read(sql)
-	if(err != nil) {
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	err = ExecuteDirect(string(sql))
-	// if we get an error from something this basic here, 
-	if(err != nil) {
+	// if we get an error from something this basic here,
+	if err != nil {
 
 	}
-
 
 	usernameCheck = regexp.MustCompile(`[^A-z0-9_-]`)
 
@@ -172,7 +171,7 @@ func PublicFacingError(msg string, err error) error {
 	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v", msg, filename, line, funcname, err.Error(), stacktrace)
 }
 
-func SQLSanitize(val string) (string) {
+func SQLSanitize(val string) string {
 	return SQLEscape.Replace(val)
 }
 
@@ -299,7 +298,7 @@ func CreateUser(username, prettyname, pass1, pass2 string) string {
 
 func GetUserIDByName(name string) (result GenericResult) {
 	result.Result = -1
-	err := ExecuteReturn("SELECT count(id) from `users` WHERE username = ?;", []interface{}{name}, &result.Result)
+	err := ExecuteReturn("SELECT id from `users` WHERE username = ?;", []interface{}{name}, &result.Result)
 	if err != nil {
 		result.Error = PublicFacingError("Error while getting user id by name;", err)
 		return
@@ -425,25 +424,44 @@ type Post struct {
 	Author    int
 	ReplyTo   int
 	Timestamp int
+	deleted   interface{}
 
 	Error error
 }
 
-func GetPostInfo(id_ string) (result Post) {
-	id, err := strconv.Atoi(id_)
-	if err != nil {
-		result.Error = PublicFacingError("Error while getting post info;", err)
-		return
+func (p Post) Deleted() bool {
+	if p.deleted == nil {
+		return false
+	} else {
+		return (p.deleted.(int64) == 1)
+	}
+}
+
+func GetPostInfo(id interface{}) (result Post) {
+	var postID int
+	var err error
+	switch v := id.(type) {
+	case string:
+		postID_ := id.(string)
+		postID, err = strconv.Atoi(postID_)
+		if err != nil {
+			result.Error = PublicFacingError("Error while getting post info;", err)
+			return
+		}
+	case int:
+		postID = id.(int)
+	default:
+		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
 
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp from `posts` WHERE id = ? LIMIT 1;")
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted from `posts` WHERE id = ? LIMIT 1;")
 	if err != nil {
 		result.Error = PublicFacingError("Error while getting post info;", err)
 		return
 	}
 	defer statement.Close()
 
-	rows, err := statement.Query(id)
+	rows, err := statement.Query(postID)
 	for rows.Next() {
 		if err := rows.Scan(&result.ID,
 			&result.Topic,
@@ -451,7 +469,8 @@ func GetPostInfo(id_ string) (result Post) {
 			&result.Contents,
 			&result.Author,
 			&result.ReplyTo,
-			&result.Timestamp); err != nil {
+			&result.Timestamp,
+			&result.deleted); err != nil {
 			result.Error = PublicFacingError("Error while getting post info;", err)
 		}
 	}
@@ -465,7 +484,7 @@ type GetPostsByCriteriaResult struct {
 }
 
 func GetPostsByCriteria(criteria string, value any) (result GetPostsByCriteriaResult) {
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp FROM `posts` " + criteria)
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted FROM `posts` " + criteria)
 	if err != nil {
 		result.Error = fmt.Errorf("Couldn't get posts following the relevant criteria; " + err.Error())
 		return
@@ -481,11 +500,12 @@ func GetPostsByCriteria(criteria string, value any) (result GetPostsByCriteriaRe
 		var author int
 		var replyto int
 		var timestamp int
-		if err := rows.Scan(&id, &topic, &subject, &contents, &author, &replyto, &timestamp); err != nil {
+		var deleted interface{}
+		if err := rows.Scan(&id, &topic, &subject, &contents, &author, &replyto, &timestamp, &deleted); err != nil {
 			result.Error = PublicFacingError("Error getting posts by section name; ", err)
 			return
 		}
-		result.Posts = append(result.Posts, Post{int(id.(int64)), topic, subject, contents, author, replyto, timestamp, nil})
+		result.Posts = append(result.Posts, Post{int(id.(int64)), topic, subject, contents, author, replyto, timestamp, deleted, nil})
 	}
 	return
 }
@@ -518,28 +538,56 @@ func GetPostsFromUser(name string) (result GetPostsByCriteriaResult) {
 
 func GetPostsInReplyTo(id int) (result GetPostsByCriteriaResult) {
 	posts := GetPostsByCriteria("WHERE replyto = ?;", id)
-	if(posts.Error != nil) {
+	if posts.Error != nil {
 		return
 	}
 	for _, v := range posts.Posts {
 		posts_ := GetPostsByCriteria("WHERE replyto = ?;", v.ID)
-		if(posts_.Error != nil) {
+		if posts_.Error != nil {
 			return posts_
 		}
 		for _, v_ := range posts_.Posts {
 			posts.Posts = append(posts.Posts, v_)
 		}
 	}
-	sort.Slice(posts.Posts[:], func (i, j int) bool {
+	sort.Slice(posts.Posts[:], func(i, j int) bool {
 		return posts.Posts[i].Timestamp < posts.Posts[j].Timestamp
 	})
 	return posts
 }
 
+func DeletePost(id interface{}, deletedBy string) (err error) {
+	return SetDeleteStatus(id, deletedBy, 1)
+}
+func RestorePost(id interface{}, deletedBy string) (err error) {
+	return SetDeleteStatus(id, deletedBy, 0)
+}
+func SetDeleteStatus(id interface{}, deletedBy string, deleteStatus int) (err error) {
+	var postID int
+	switch v := id.(type) {
+	case string:
+		postID_ := id.(string)
+		postID, err = strconv.Atoi(postID_)
+		if err != nil {
+			return
+		}
+	case int:
+		postID = id.(int)
+	default:
+		return fmt.Errorf("Invalid type '%v' given.", v)
+	}
+
+	err = ExecuteDirect("UPDATE `posts` SET deleted = ? WHERE id = ?", deleteStatus, postID)
+	if err != nil {
+		return
+	}
+	return nil
+}
+
 type SubmitPostResult struct {
-	ID  		int64
-	Result 		Post
-	Error 		error
+	ID     int64
+	Result Post
+	Error  error
 }
 
 func SubmitPost(username string, topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
@@ -574,7 +622,7 @@ func SubmitPost(username string, topic interface{}, subject string, content stri
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
 
-	// 
+	//
 
 	// Check for invalid length of things
 	if len(subject) == 0 {

@@ -1,0 +1,61 @@
+{{ template "header.html" . }}
+
+{{$allowed := true}}
+{{if not .Global.Username}}
+	You aren't logged in.<br>
+	{{$allowed = false}}
+{{else if not .Global.Me.Admin}}
+	Permission denied bozo.<br>
+	{{$allowed = false}}
+{{end}}
+
+{{if $allowed}}
+	{{if eq (len .Values) 0}}
+		.<br>
+		{{$allowed = false}}
+	{{end}}
+{{end}}
+
+{{$postid := 0}}
+{{if $allowed}}
+	{{$postid = .Query.Get "post"}}
+{{end}}
+
+{{$backto := 0}}
+{{if $allowed}}
+	{{$backto = .Query.Get "backto"}}
+{{end}}
+
+{{$postinfo := ""}}
+{{if $allowed}}
+	{{$postinfo = GetPostInfo $postid}}
+	{{if $postinfo.Error}}
+		{{$postinfo.Error.Error}}<br>
+		{{$allowed = false}}
+	{{end}}
+{{end}}
+
+{{if $allowed}}
+	{{$confirm := .Query.Get "confirm"}}
+	{{if $confirm}}
+		{{$error := RestorePost $postid .Global.Username}}
+		{{if $error}}
+			<b>{{$error}}</b>
+		{{else}}
+			<script>
+				window.open("/post/{{$backto}}","_self");
+			</script>
+		{{end}}
+	{{end}}
+{{end}}
+
+{{if $allowed}}
+	<em>> {{$postinfo.Contents}}</em><br>
+	<b>Restore?</b>
+	<form method='get'>
+		<input type='hidden' name='backto' value='{{$backto}}'>
+		<input type='hidden' name='post' value='{{$postid}}'>
+		<input type='hidden' name='confirm' value='1'>
+		<input type='submit' value='Yes'>
+	</form>
+{{end}}
