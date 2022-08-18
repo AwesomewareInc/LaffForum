@@ -8,39 +8,29 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"math/big"
 	"net/http"
-	"regexp"
 	"strings"
-	"sync"
 	"time"
 )
 
 // Files for creaeting and working with "sessions"
 
-// sessions
-type SessionsStruct struct {
-	sessions map[string]*Session
-	mutex    sync.Mutex
-}
 type Session struct {
-	genKey 		string
 	pubKey 		string
 	Username 	string
 
 	Error error
 }
-var sessions SessionsStruct
-
-func init() {
-	sessions = SessionsStruct{}
-	sessions.sessions = make(map[string]*Session)
-	alphabetOnly = *regexp.MustCompile(`[^A-z0-9]`)
-}
 
 // Function for creating a new session
-func NewSession(r *http.Request, username string) (error) {
+func NewSession(w http.ResponseWriter, username string) (error) {
 	// create the identifier key
-	identifier := createIdentifier(r)
+	identifier, err := createIdentifier(w)
+	if(err != nil) {
+		return err
+	}
+
 	// create the key pair to go along with it.
 	privKeyRaw, err := rsa.GenerateKey(rand.Reader, 2048)
 	if(err != nil) {
@@ -58,16 +48,13 @@ func NewSession(r *http.Request, username string) (error) {
 	}
 
 	err = ExecuteDirect("INSERT INTO `sessions` ('genkey', 'pubkey', 'privkey', 'username', 'timestamp') VALUES (?, ?, ?, ?, ?)",
-																				identifier,
+																				fmt.Sprint(identifier),
 																				string(privKey),
 																				string(pubKey),
 																				username,
 																				time.Now().Unix())
 
-	if(err != nil) {
-		return err
-	}
-	return nil
+	return err
 }
 
 type SessionResult struct {
@@ -77,48 +64,56 @@ type SessionResult struct {
 
 // Function for getting a session based on the user's information.
 func GetSession(r *http.Request) (result SessionResult) {
-	id := createIdentifier(r)
+	result.Session = new(Session)
+	id_, err := r.Cookie("Token")
+	if(err != nil) {
+		result.Session.Username = ""
+		result.Session.pubKey = ""
+		return
+	}
+	id := strings.Replace(id_.String(),"Token=","",1)
 	var pubKey string
 	var username string
-	err := ExecuteReturn("SELECT pubkey, username FROM `sessions` WHERE genkey = ?;",[]any{id},&pubKey,&username)
+	err = ExecuteReturn("SELECT pubkey, username FROM `sessions` WHERE genkey = ?;",[]any{id},&pubKey,&username)
 	if(err != nil) {
 		result.Error = err
 		return
 	}
-	result.Session = new(Session)
-	result.Session.genKey = id
 	result.Session.pubKey = pubKey
 	result.Session.Username = username
 	return
 }
 
-// regex for stripping a string to letters/numbers only
-var alphabetOnly regexp.Regexp
-
-// function for creating an identifier based on the user's permenant section of their IP, and their user agent.
-func createIdentifier(r *http.Request) (string) {
-	ip := r.RemoteAddr
-	ua := r.UserAgent()
-	ipOnly := strings.Split(ip, ":")[0]
-
-	if ipOnly[0] != '[' {
-		if ipOnly[0:3] == "127" || ipOnly[0:3] == "192" {
-			ip = r.Header.Get("X-Forwarded-For")
-			if ip != "" {
-				ipParts := strings.Split(ip, ",")
-				ipPartParts := strings.Split(ipParts[1], ".")
-				ipOnly = ipPartParts[0][0:2][:]
-			}
-		}
-	}
-
-	return string(alphabetOnly.ReplaceAll([]byte(ipOnly+ua), []byte("")))
+// allowed characters in cookie headers
+var allowedChars = []rune{
+	'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S',
+	'T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
 }
 
+// function for creating an identifier and sending it to the user as a cookie.
+func createIdentifier(w http.ResponseWriter) (str string, err error) {
+	var token string
+	for i := 0; i < 32; i++ {
+		randomRange := big.NewInt(int64(len(allowedChars)))
+		char, err := rand.Int(rand.Reader,randomRange)
+		if(err != nil) {
+			return "", err
+		}
+		token += string(allowedChars[int(char.Int64())])
+	}
+	http.SetCookie(w,&http.Cookie{Name:"Token",Value:token,Expires:time.Now().Add(time.Hour*8760)})
+	return token, nil
+}
 // Function for a session to check itself against the database
-func (session *Session) Verify() (error) {
+func (session *Session) Verify(r *http.Request) (error) {
+	id_, err := r.Cookie("Token")
+	if(err != nil) {
+		return err
+	}
+	id := strings.Replace(id_.String(),"Token=","",1)
+
 	var privKey string
-	err := ExecuteReturn("SELECT privkey FROM `sessions` WHERE genkey = ?;",[]any{session.genKey},&privKey)
+	err = ExecuteReturn("SELECT privkey FROM `sessions` WHERE genkey = ?;",[]any{id},&privKey)
 	if(err != nil) {
 		return err
 	}
@@ -132,7 +127,7 @@ func (session *Session) Verify() (error) {
 	}
 	if privKeyRaw_, ok := privKeyRaw.(rsa.PrivateKey); ok {
 		lol := pubKeyRaw.(rsa.PublicKey)
-		cipher, err := rsa.EncryptPKCS1v15(rand.Reader, &lol, []byte(session.genKey))
+		cipher, err := rsa.EncryptPKCS1v15(rand.Reader, &lol, []byte(id))
 		if(err != nil) {
 			return fmt.Errorf("Couldn't encrypt genKey: %v",err)
 		}
@@ -142,12 +137,12 @@ func (session *Session) Verify() (error) {
 		}
 	}
 	if privKeyRaw_, ok := privKeyRaw.(ecdsa.PrivateKey); ok {
-		r, s, err := ecdsa.Sign(rand.Reader, &privKeyRaw_, []byte(session.genKey))
+		r, s, err := ecdsa.Sign(rand.Reader, &privKeyRaw_, []byte(id))
 		if(err != nil) {
 			return fmt.Errorf("Couldn't encrypt genKey: %v",err)
 		}
 		lol := pubKeyRaw.(ecdsa.PublicKey)
-		valid := ecdsa.Verify(&lol, []byte(session.genKey), r, s)
+		valid := ecdsa.Verify(&lol, []byte(id), r, s)
 		if(!valid) {
 			return fmt.Errorf("Keys don't match")
 		}
@@ -165,9 +160,17 @@ func (session *Session) Me() UserInfo {
 }
 
 // Function for clearing a session, effectively logging out.
-func (session *Session) Clear() string {
-	err := ExecuteDirect("DELETE FROM `sessions` WHERE genkey = ?;",session.genKey)
-	return err.Error()
+func (session *Session) Clear(r *http.Request) string {
+	id_, err := r.Cookie("Token")
+	if(err != nil) {
+		return err.Error()
+	}
+	id := strings.Replace(id_.String(),"Token=","",1)
+	err = ExecuteDirect("DELETE FROM `sessions` WHERE genkey = ?;",id)
+	if(err != nil) {
+		return err.Error()
+	}
+	return ""
 }
 
 func PrivKeyToString(key *rsa.PrivateKey) (string) {

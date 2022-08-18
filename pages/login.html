@@ -42,7 +42,7 @@
 
 		{{ template "footer.html" .}}
 	{{else}}
-		{{NewSession .Request $username}}
+		{{NewSession .ResponseWriter $username}}
 		{{Redirect "/" 303}}
 	{{end}}
 {{end}}

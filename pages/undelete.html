@@ -38,11 +38,11 @@
 {{if $allowed}}
 	{{$confirm := .Query.Get "confirm"}}
 	{{if $confirm}}
-		{{$error := .Session.RestorePost $postid .Session.Username}}
+		{{$error := .Session.RestorePost .Request $postid .Session.Username}}
 		{{if $error}}
 			<b>{{$error}}</b>
 		{{else}}
-			{{Redirect (String "/post/" $backto) 303}}
+			{{Redirect (print "/post/" $backto) 303}}
 		{{end}}
 	{{end}}
 {{end}}

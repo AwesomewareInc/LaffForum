@@ -40,9 +40,7 @@ var funcMap = template.FuncMap{
 
 	// misc
 	"VerifyCaptcha": 				VerifyCaptcha,
-	"Redirect": 					func() (string) {
-		return "lol"
-	},
+	"Redirect":						func(url string, code int) (string) {return ""},
 }
 
 // function map for post.html which needs unescaped html

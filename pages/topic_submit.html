@@ -27,12 +27,12 @@
 		{{else}}
 			{{if $verification.Success}}
 				{{$content = .PostValues.Get "content"}}
-				{{$post := .Session.SubmitPost $topic $subject $content 0}}
+				{{$post := .Session.SubmitPost .Request $topic $subject $content 0}}
 				{{if $post.Error}}
 					<h1>Error while submitting your post.</h1>
 					<span style="white-space: pre-wrap">{{$post.Error}}</span>
 				{{else}}
-					{{Redirect (String "/post/" $post.ID) 303}}		
+					{{Redirect (print "/post/" $post.ID) 303}}		
 				{{end}}
 			{{else}}
 				{{$verificationErrors = "Captcha failed."}}

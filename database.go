@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
 	"sort"
@@ -514,15 +515,15 @@ func GetLastTenPostsMadeAtAll() (result GetPostsByCriteriaResult) {
 	return GetPostsByCriteria("ORDER BY id DESC LIMIT 10;",nil)
 }
 
-func (session *Session) DeletePost(id interface{}, deletedBy string) (err error) {
-	return session.SetDeleteStatus(id, deletedBy, 1)
+func (session *Session) DeletePost(r *http.Request, id interface{}, deletedBy string) (err error) {
+	return session.SetDeleteStatus(r, id, deletedBy, 1)
 }
-func (session *Session) RestorePost(id interface{}, deletedBy string) (err error) {
-	return session.SetDeleteStatus(id, deletedBy, 0)
+func (session *Session) RestorePost(r *http.Request, id interface{}, deletedBy string) (err error) {
+	return session.SetDeleteStatus(r, id, deletedBy, 0)
 }
-func (session *Session) SetDeleteStatus(id interface{}, deletedBy string, deleteStatus int) (err error) {
+func (session *Session) SetDeleteStatus(r *http.Request, id interface{}, deletedBy string, deleteStatus int) (err error) {
 	// Check the "session" that wants to modify this post.
-	err = session.Verify()
+	err = session.Verify(r)
 	if(err != nil) {
 		return
 	}
@@ -554,11 +555,11 @@ type SubmitPostResult struct {
 	Error  error
 }
 
-func (session *Session) SubmitPost(topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
+func (session *Session) SubmitPost(r *http.Request, topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
 	result = new(SubmitPostResult)
 
 	// Check the "session" that submitted this post.
-	err := session.Verify()
+	err := session.Verify(r)
 	if(err != nil) {
 		result.Error = fmt.Errorf("Verification error; %v",err)
 		return

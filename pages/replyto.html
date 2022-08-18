@@ -53,13 +53,13 @@
 {{if $allowed}}
 	{{$contents := .Query.Get "content"}}
 	{{if ge (len $contents) 1}}
-		{{$post := .Session.SubmitPost .Session.Username $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
+		{{$post := .Session.SubmitPost .Request $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
 		{{$post}}
 		{{if $post.Error}}
 			<h1>Error while submitting your reply.</h1>
 			<span style="white-space: pre-wrap">{{$post.Error}}</span>
 		{{else}}
-			{{Redirect (String "/post/" $backto) 303}}	
+			{{Redirect (print "/post/" $backto) 303}}	
 		{{end}}
 	{{else}}
 	{{$replyee := GetUsernameByID $postinfo.Author}}

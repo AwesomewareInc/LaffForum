@@ -116,6 +116,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 		Session    	*Session
 		PostValues 	url.Values
 		Request 	*http.Request
+		ResponseWriter http.ResponseWriter
 	}
 	// url values sepereated by /
 	Info.Values = values
@@ -124,6 +125,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// relevant session
 	Info.Request = r
+	Info.ResponseWriter = w
 	sess := GetSession(r)
 	if(sess.Error != nil) {
 		http.Error(w, sess.Error.Error(), 500)
@@ -154,7 +156,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 			// By writing it to a buffer first and then writing it to the page, 
 			// any redirects that we should do get processed before headers are set.
 			b := bytes.NewBuffer(nil)
-			if err := texttmpl.ExecuteTemplate(b, pagename+".html", &Info); err != nil {
+			if err := texttmpl.Funcs(tempFuncMap).ExecuteTemplate(b, pagename+".html", &Info); err != nil {
 				http.Error(w, err.Error(), 500)
 				return
 			}

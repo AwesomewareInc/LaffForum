@@ -1,2 +1,2 @@
-{{.Session.Clear}}
-{{Redirect "/" 307}}
+{{.Session.Clear .Request}}
+{{.Redirect "/" 307}}

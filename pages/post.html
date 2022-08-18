@@ -13,7 +13,13 @@
 	{{if $post.Error}}
 		{{HTMLEscape $post.Error.Error}}
 	{{else if ne $post.ReplyTo 0}}
-		{{Redirect (String "/post/" HTMLEscape $post.ReplyTo "#" HTMLEscape $post.ID) 303}}
+		{{Redirect 
+			(print "/post/" 
+					(print $post.ReplyTo 
+						(print "#" $post.ID)
+					)
+			) 
+			303}}
 	{{else}}
 		{{if eq $post.ID 0}}
 			<h1>Non-existent post.</h1>
@@ -33,13 +39,17 @@
 						{{$allowed = false}}
 					{{end}}
 					{{if $allowed}}
-						{{$reply := .Session.SubmitPost $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
+						{{$reply := .Session.SubmitPost .Request $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
 						{{if $reply.Error}}
 							<h1>Error while submitting your post.</h1>
 							<span style="white-space: pre-wrap">{{$reply.Error}}</span>
 						{{else}}
 							<script>
-								window.open("/post/{{$post.Topic}}","_self");
+							{{Redirect 
+								(print "/post/" 
+										(print $post.Topic)
+								) 
+								303}}
 							</script>		
 						{{end}}
 					{{else}}
@@ -119,7 +129,7 @@
 								{{end}}
 							</b><br>
 							{{if ne $n.ReplyTo $post.ID}}
-								{{$post_ := GetPostInfo (String $n.ReplyTo)}}
+								{{$post_ := GetPostInfo (print $n.ReplyTo)}}
 								{{if not $post_.Error}}
 									{{if or (not $post_.Deleted) ($isadmin) }}
 										<span class='original-post'>{{Markdown $post_.Contents}}</span>
