@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"strings"
 	texttemplate "text/template"
 	"time"
@@ -62,7 +64,14 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	// Handle panics and send them to the user instead of sending them to me.
 	defer func() {
 		if what := recover(); what != nil {
-			http.Error(w, fmt.Sprint(what), http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "text/html")
+			w.Header().Set("Content-Name", "500.html")
+			http.Error(w, fmt.Sprintf(`
+				<h1>Error 500.</h1>
+				There was a <b>fatal</b> error on the backend. There's not much else we can say about a fatal error, so please send this to a developer or our support email with a detailed description of what you were doing.<br>
+				<hr>
+				<pre>%v</pre>`,PublicFacingErrorUnstripped(what.(error)).Error()), 
+				http.StatusInternalServerError)
 			return
 		}
 	}()
@@ -103,27 +112,45 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Name", filename)
 	w.WriteHeader(200)
 
 	// Get the session relating to the user
 	var Info struct {
-		Values     []string
-		Query      url.Values
-		Global     GlobalValues
-		PostValues url.Values
+		Values     	[]string
+		Query      	url.Values
+		Session    	*Session
+		PostValues 	url.Values
+		Request 	*http.Request
 	}
+	// url values sepereated by /
 	Info.Values = values
+	// url queries that come ater ?
 	Info.Query = r.URL.Query()
-	Info.Global.Session = getSession(r)
 
+	// relevant session
+	Info.Request = r
+	sess := GetSession(r)
+	if(sess.Error != nil) {
+		http.Error(w, sess.Error.Error(), 500)
+		return
+	}
+	Info.Session = sess.Session
+
+	// Post values
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, err.Error(), 500)
 	}
-
 	Info.PostValues = r.PostForm
+
+	// Lastly, we want the redirect function; annoyingly we have to declare that here, inline.
+	tempFuncMap := template.FuncMap{
+		"Redirect": func(url string, code int) (string) {
+			http.Redirect(w,r,url,code)
+			return ":3"
+		},
+	}
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
@@ -134,7 +161,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), 500)
 			}
 		default:
-			if err := tmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
+			if err := tmpl.Funcs(tempFuncMap).ExecuteTemplate(w, pagename+".html", &Info); err != nil {
 				http.Error(w, err.Error(), 500)
 			}
 		}
@@ -223,4 +250,68 @@ func PrettyTime(unixTime int) (result GenericResult) {
 	}
 	result.Result = fmt.Sprintf("%0.f seconds ago", unixTimeDur.Seconds())
 	return
+}
+
+func PublicFacingErrorUnstripped(err error) error {
+	// stack trace
+	stacktrace := string(debug.Stack())
+
+	pc, filename, line, _ := runtime.Caller(1)
+
+	funcname_ := runtime.FuncForPC(pc).Name()
+	funcnames := strings.Split(funcname_, ".")
+	funcname := funcnames[len(funcnames)-1]
+
+	return fmt.Errorf("At %v:%v in %v():\n%v. \n\n%v", filename, line, funcname, err.Error(), stacktrace)
+
+}
+
+func PublicFacingError(msg string, err error) error {
+
+	// stack trace
+	stacktrace := string(debug.Stack())
+
+	pc, filename_, line, _ := runtime.Caller(1)
+
+	// manipulate the stacktrace.
+	stacktraceParts := strings.Split(stacktrace, "\n")[3:] // the first three lines are guaranteed to be part of this call.
+	var relevant bool                                      // whether we've begun encountering lines that are part of this project
+	var maxStackDetail int                                 // the point at which we stop encountering those lines.
+	// for each part of the stacktrace...
+	for i, v := range stacktraceParts {
+		// does it many slashes in it?
+		if strings.Count(v, string(os.PathSeparator)) >= 2 {
+			// how many tabs in it?
+			tabcount := strings.Count(v, "	")
+			// split it into parts and filter the line to only the last part
+			stacktracePartParts := strings.Split(v, string(os.PathSeparator))
+			// make sure it retains the amount of tabs
+			var newString string
+			for i := 0; i < tabcount; i++ {
+				newString += "	"
+			}
+			newString += stacktracePartParts[len(stacktracePartParts)-1]
+			stacktraceParts[i] = newString
+		}
+		if strings.Contains(v, "LaffForum") {
+			if relevant == false {
+				relevant = true
+			} else {
+				maxStackDetail = i + 3
+				break
+			}
+		}
+	}
+
+	// and reduce the stacktrace to fit in the scope we want.
+	stacktrace = strings.Join(stacktraceParts[0:maxStackDetail], "\n")
+	stacktrace += "\n(...continues entering system files...)"
+	filenameParts := strings.Split(filename_, "/")
+	filename := filenameParts[len(filenameParts)-1]
+
+	funcname_ := runtime.FuncForPC(pc).Name()
+	funcnames := strings.Split(funcname_, ".")
+	funcname := funcnames[len(funcnames)-1]
+
+	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v", msg, filename, line, funcname, err.Error(), stacktrace)
 }

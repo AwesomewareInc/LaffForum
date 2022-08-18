@@ -1,10 +1,10 @@
 {{ template "header.html" . }}
 
 {{$allowed := true}}
-{{if not .Global.Username}}
+{{if not .Session.Username}}
 	You aren't logged in.<br>
 	{{$allowed = false}}
-{{else if not .Global.Me.Admin}}
+{{else if not .Session.Me.Admin}}
 	Permission denied bozo.<br>
 	{{$allowed = false}}
 {{end}}
@@ -38,7 +38,7 @@
 {{if $allowed}}
 	{{$confirm := .Query.Get "confirm"}}
 	{{if $confirm}}
-		{{$error := RestorePost $postid .Global.Username}}
+		{{$error := .Session.RestorePost $postid .Session.Username}}
 		{{if $error}}
 			<b>{{$error}}</b>
 		{{else}}

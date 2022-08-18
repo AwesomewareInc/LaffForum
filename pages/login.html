@@ -39,12 +39,6 @@
 
 	{{ template "footer.html" .}}
 {{else}}
-	{{.Global.SetUsername $username}}
-	<script>
-		window.open("/","_self");
-	</script>
+	{{NewSession .Request $username}}
+	{{Redirect "/" 307}}
 {{end}}
-
-
-
-

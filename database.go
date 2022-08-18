@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"runtime"
-	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -56,22 +54,31 @@ func init() {
 	}
 
 	// Try and create the database.
-	file, err := os.Open("tableStructure.sql")
+	file, err := os.Open("./tableStructure.sql")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	var sql []byte
+	sql := make([]byte,2048)
 	_, err = file.Read(sql)
+
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	err = ExecuteDirect(string(sql))
-	// if we get an error from something this basic here,
-	if err != nil {
 
+	statements := strings.Split(string(sql),";")
+	for _, v := range statements {
+		err = ExecuteDirect(v)
+		if err != nil {
+			// If-oh. fuck.
+			if(!strings.Contains(err.Error(),"duplicate")) {
+				fmt.Println(err)
+				os.Exit(1)
+			} 
+		}
 	}
+
 
 	usernameCheck = regexp.MustCompile(`[^A-z0-9_-]`)
 
@@ -96,7 +103,6 @@ func CommandListenerThread() {
 // =============
 
 func ExecuteDirect(query string, args ...any) error {
-	fmt.Printf(strings.Replace(query, "?", "%v", 99)+"\n", args[:]...)
 	_, err = database.Exec(query, args[:]...)
 	return err
 }
@@ -118,57 +124,6 @@ func ExecuteReturn(query string, args []any, dest ...any) error {
 type GenericResult struct {
 	Result any
 	Error  error
-}
-
-func PublicFacingError(msg string, err error) error {
-
-	// stack trace
-	stacktrace := string(debug.Stack())
-
-	// code into
-	pc, filename_, line, _ := runtime.Caller(1)
-
-	// manipulate the stacktrace.
-	stacktraceParts := strings.Split(stacktrace, "\n")[3:] // the first three lines are guaranteed to be part of this call.
-	var relevant bool                                      // whether we've begun encountering lines that are part of this project
-	var maxStackDetail int                                 // the point at which we stop encountering those lines.
-	// for each part of the stacktrace...
-	for i, v := range stacktraceParts {
-		// does it many slashes in it?
-		if strings.Count(v, string(os.PathSeparator)) >= 2 {
-			// how many tabs in it?
-			tabcount := strings.Count(v, "	")
-			// split it into parts and filter the line to only the last part
-			stacktracePartParts := strings.Split(v, string(os.PathSeparator))
-			// make sure it retains the amount of tabs
-			var newString string
-			for i := 0; i < tabcount; i++ {
-				newString += "	"
-			}
-			newString += stacktracePartParts[len(stacktracePartParts)-1]
-			stacktraceParts[i] = newString
-		}
-		if strings.Contains(v, "LaffForum") {
-			if relevant == false {
-				relevant = true
-			} else {
-				maxStackDetail = i + 3
-				break
-			}
-		}
-	}
-
-	// and reduce the stacktrace to fit in the scope we want.
-	stacktrace = strings.Join(stacktraceParts[0:maxStackDetail], "\n")
-	stacktrace += "\n(...continues entering system files...)"
-	filenameParts := strings.Split(filename_, "/")
-	filename := filenameParts[len(filenameParts)-1]
-
-	funcname_ := runtime.FuncForPC(pc).Name()
-	funcnames := strings.Split(funcname_, ".")
-	funcname := funcnames[len(funcnames)-1]
-
-	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v", msg, filename, line, funcname, err.Error(), stacktrace)
 }
 
 func SQLSanitize(val string) string {
@@ -243,10 +198,7 @@ func UserExists(username string) string {
 }
 
 func CreateUser(username, prettyname, pass1, pass2 string) string {
-
-	// Check if the username is allowed
-
-	// Check if somebody with that name exists.
+	// Check if somebody with that username exists.
 	err_ := UserExists(username)
 	if err_ != "" {
 		return err_
@@ -266,19 +218,18 @@ func CreateUser(username, prettyname, pass1, pass2 string) string {
 		return "Username cannot be over 21 characters."
 	}
 
-	// Check if the password is allowed
-
-	// Check if they're blank
+	// Check if the password is blank
 	if len(pass1) == 0 || len(pass2) == 0 {
 		return "Passwords cannot be blank!"
 	}
-	// Check if the two fields match.
+	// Check if the two password fields match.
 	err_ = TwoPasswordsMatch(pass1, pass2)
 	if err_ != "" {
 		return err_
 	}
 
 	// Those are the main checks for now, now create the user.
+
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(pass1), 10)
 	if err != nil {
 		return "Couldn't generate password; " + err.Error()
@@ -516,6 +467,9 @@ func GetPostsBySectionName(name string) (result GetPostsByCriteriaResult) {
 		result.Error = PublicFacingError("Error getting posts by section name; ", id_.Error)
 		return
 	}
+	if(id_.Result == nil) {
+		return
+	}
 	id := id_.Result.(int64)
 
 	result = GetPostsByCriteria("WHERE topic = ? AND replyto = 0 ORDER BY id DESC;", id)
@@ -556,13 +510,23 @@ func GetPostsInReplyTo(id int) (result GetPostsByCriteriaResult) {
 	return posts
 }
 
-func DeletePost(id interface{}, deletedBy string) (err error) {
-	return SetDeleteStatus(id, deletedBy, 1)
+func GetLastTenPostsMadeAtAll() (result GetPostsByCriteriaResult) {
+	return GetPostsByCriteria("ORDER BY id DESC LIMIT 10;",nil)
 }
-func RestorePost(id interface{}, deletedBy string) (err error) {
-	return SetDeleteStatus(id, deletedBy, 0)
+
+func (session *Session) DeletePost(id interface{}, deletedBy string) (err error) {
+	return session.SetDeleteStatus(id, deletedBy, 1)
 }
-func SetDeleteStatus(id interface{}, deletedBy string, deleteStatus int) (err error) {
+func (session *Session) RestorePost(id interface{}, deletedBy string) (err error) {
+	return session.SetDeleteStatus(id, deletedBy, 0)
+}
+func (session *Session) SetDeleteStatus(id interface{}, deletedBy string, deleteStatus int) (err error) {
+	// Check the "session" that wants to modify this post.
+	err = session.Verify()
+	if(err != nil) {
+		return
+	}
+
 	var postID int
 	switch v := id.(type) {
 	case string:
@@ -590,9 +554,18 @@ type SubmitPostResult struct {
 	Error  error
 }
 
-func SubmitPost(username string, topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
+func (session *Session) SubmitPost(topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
 	result = new(SubmitPostResult)
 
+	// Check the "session" that submitted this post.
+	err := session.Verify()
+	if(err != nil) {
+		result.Error = fmt.Errorf("Verification error; %v",err)
+		return
+	}
+
+	
+	
 	// topic/reply IDs from string, if we have to.
 	var topicID int
 	switch v := topic.(type) {
@@ -643,7 +616,7 @@ func SubmitPost(username string, topic interface{}, subject string, content stri
 	defer statement.Close()
 
 	// Get the necessary values.
-	userid_ := GetUserIDByName(username)
+	userid_ := GetUserIDByName(session.Username)
 	if userid_.Error != nil {
 		result.Error = PublicFacingError("", userid_.Error)
 		return

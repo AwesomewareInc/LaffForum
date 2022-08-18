@@ -4,7 +4,7 @@
 {{$post := ""}}
 {{$id := -1}}
 {{$verificationErrors := ""}}
-{{if .Global.Username}}
+{{if .Session.Username}}
 	{{$allowed := true}}
 	{{$sectioninf := GetSectionInfo $topic}}
 	{{if $sectioninf.Error}}
@@ -12,7 +12,7 @@
 		{{$allowed = false}}
 	{{else}}
 		{{if eq $sectioninf.AdminOnly 1}}
-			{{if .Global.Me.Admin}}
+			{{if .Session.Me.Admin}}
 			{{else}}
 				$allowed = false
 			{{end}}
@@ -26,8 +26,8 @@
 			{{$verificationErrors = $verification.Error}}
 		{{else}}
 			{{if $verification.Success}}
-				{{$content := .PostValues.Get "content"}}
-				{{$post := SubmitPost .Global.Username $topic $subject $content 0}}
+				{{$content = .PostValues.Get "content"}}
+				{{$post := .Session.SubmitPost $topic $subject $content 0}}
 				{{if $post.Error}}
 					<h1>Error while submitting your post.</h1>
 					<span style="white-space: pre-wrap">{{$post.Error}}</span>

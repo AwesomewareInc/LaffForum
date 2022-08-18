@@ -1,8 +1,8 @@
 {{ template "header.html" .}}
 
 {{ $verificationErrors := "" }}
-{{ $username := .Global.Username }}
-{{ $isadmin := .Global.Me.Admin }}
+{{ $username := .Session.Username }}
+{{ $isadmin := .Session.Me.Admin }}
 {{ $postid := 0}}
 
 {{if eq (len .Values) 0}}
@@ -35,7 +35,7 @@
 						{{$allowed = false}}
 					{{end}}
 					{{if $allowed}}
-						{{$reply := SubmitPost $username $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
+						{{$reply := .Session.SubmitPost $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
 						{{if $reply.Error}}
 							<h1>Error while submitting your post.</h1>
 							<span style="white-space: pre-wrap">{{$reply.Error}}</span>

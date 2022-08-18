@@ -1,7 +1,7 @@
 {{ template "header.html" . }}
 
 {{$allowed := true}}
-{{if .Global.Username}}
+{{if .Session.Username}}
 {{else}}
 	You aren't logged in.<br>
 	{{$allowed = false}}
@@ -41,7 +41,7 @@
 		{{$allowed = false}}
 	{{else}}
 		{{if eq $sectioninfo.AdminOnly 2}}
-			{{if .Global.Me.Admin}}
+			{{if .Session.Me.Admin}}
 			{{else}}
 				<h1>Permission denied</h1>
 				$allowed = false
@@ -53,7 +53,7 @@
 {{if $allowed}}
 	{{$contents := .Query.Get "content"}}
 	{{if ge (len $contents) 1}}
-		{{$post := SubmitPost .Global.Username $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
+		{{$post := .Session.SubmitPost .Session.Username $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
 		{{$post}}
 		{{if $post.Error}}
 			<h1>Error while submitting your reply.</h1>

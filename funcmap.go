@@ -7,66 +7,50 @@ import (
 
 // function map
 var funcMap = template.FuncMap{
-	"Capitalize": Capitalize,
+	// working with strings
+	"Capitalize": 					Capitalize,
+	"HTMLEscape": 					HTMLEscape,
+	"Markdown":   					Markdown,
+	"PrettyTime": 					PrettyTime,
 
-	"CreateUser":     CreateUser,
-	"VerifyPassword": VerifyPassword,
+	// working with user data
+	"CreateUser":     				CreateUser,
+	"VerifyPassword": 				VerifyPassword,
+	"GetUsernameByID":				GetUsernameByID,
+	"GetUserInfo":      			GetUserInfo,
 
-	"GetSections":           GetSections,
-	"GetPostsBySectionName": GetPostsBySectionName,
-	"GetPostsFromUser":      GetPostsFromUser,
-	"GetPostsInReplyTo":     GetPostsInReplyTo,
-	"GetUsernameByID":       GetUsernameByID,
-	"GetPostInfo":           GetPostInfo,
-	"GetUserInfo":           GetUserInfo,
-	"GetSectionInfo":        GetSectionInfo,
+	// working with posts
+	"GetPostsBySectionName": 		GetPostsBySectionName,
+	"GetPostsFromUser":      		GetPostsFromUser,
+	"GetPostsInReplyTo":     		GetPostsInReplyTo,
+	"GetPostInfo":           		GetPostInfo,
+	"GetLastTenPostsMadeAtAll": 	GetLastTenPostsMadeAtAll,
 
-	"SubmitPost": SubmitPost,
+	// working with sections/topics
+	"GetSections":           		GetSections,
+	"GetSectionInfo":        		GetSectionInfo,
 
-	"PrettyTime": PrettyTime,
+	// working with sessions
+	"NewSession": 					NewSession,
 
-	"String":   String,
-	"IsString": IsString,
-	"IsInt":    IsInt,
+	// type conversion/checking 
+	"String":   					String,
+	"IsString": 					IsString,
+	"IsInt":    					IsInt,
 
-	"HTMLEscape": HTMLEscape,
-	"Markdown":   Markdown,
-
-	"VerifyCaptcha": VerifyCaptcha,
-
-	"DeletePost":  DeletePost,
-	"RestorePost": RestorePost,
+	// misc
+	"VerifyCaptcha": 				VerifyCaptcha,
+	"Redirect": 					func() (string) {
+		return "lol"
+	},
 }
 
 // function map for post.html which needs unescaped html
-var textTemplateFuncMap = texttemplate.FuncMap{
-	"Capitalize": Capitalize,
+var textTemplateFuncMap texttemplate.FuncMap
 
-	"CreateUser":     CreateUser,
-	"VerifyPassword": VerifyPassword,
-
-	"GetSections":           GetSections,
-	"GetPostsBySectionName": GetPostsBySectionName,
-	"GetPostsFromUser":      GetPostsFromUser,
-	"GetPostsInReplyTo":     GetPostsInReplyTo,
-	"GetUsernameByID":       GetUsernameByID,
-	"GetPostInfo":           GetPostInfo,
-	"GetUserInfo":           GetUserInfo,
-	"GetSectionInfo":        GetSectionInfo,
-
-	"SubmitPost": SubmitPost,
-
-	"PrettyTime": PrettyTime,
-
-	"String":   String,
-	"IsString": IsString,
-	"IsInt":    IsInt,
-
-	"HTMLEscape": HTMLEscape,
-	"Markdown":   Markdown,
-
-	"VerifyCaptcha": VerifyCaptcha,
-
-	"DeletePost":  DeletePost,
-	"RestorePost": RestorePost,
+func init() {
+	textTemplateFuncMap = make(texttemplate.FuncMap)
+	for k, v := range funcMap {
+		textTemplateFuncMap[k] = v
+	}
 }

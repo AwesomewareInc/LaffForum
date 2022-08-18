@@ -9,9 +9,9 @@
 		'>
 		Threads in {{Capitalize $topic}} 
 	</span>
-	{{if .Global.Username}}
+	{{if .Session.Username}}
 		{{if ge $sectioninf.AdminOnly 1}}
-			{{if .Global.Me.Admin}}
+			{{if .Session.Me.Admin}}
 				<a href='/topic/{{$topic}}/submit' class='box make-post'>Submit a topic</a>
 			{{end}}
 		{{else}}

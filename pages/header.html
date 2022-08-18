@@ -16,8 +16,8 @@
 					</span>
 					--->
 					<span class='user'>
-						{{if .Global.Username}}
-							<a href="/user/{{.Global.Username}}">{{.Global.Username}}</a> | <a href='/logout'>Logout</a>
+						{{if .Session.Username}}
+							<a href="/user/{{.Session.Username}}">{{.Session.Username}}</a> | <a href='/logout'>Logout</a>
 						{{else}}
 							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
 						{{end}}
