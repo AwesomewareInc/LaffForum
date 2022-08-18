@@ -1,7 +1,6 @@
 -- Describe POSTS
 CREATE TABLE IF NOT EXISTS "posts" (
-    "id" INTEGER PRIMARY KEY,
-    PRIMARY KEY("id" AUTOINCREMENT)
+    "id" INTEGER PRIMARY KEY
 );
 
 ALTER TABLE "posts" ADD "topic"             INTEGER;
@@ -14,8 +13,7 @@ ALTER TABLE "posts" ADD "deleted"           INTEGER DEFAULT (0);
 
 -- Describe SECTIONS
 CREATE TABLE IF NOT EXISTS "sections" (
-    "id" INTEGER PRIMARY KEY,
-    PRIMARY KEY("id" AUTOINCREMENT)
+    "id" INTEGER PRIMARY KEY
 );
 
 ALTER TABLE "posts" ADD "name"              TEXT;
@@ -23,8 +21,7 @@ ALTER TABLE "posts" ADD "adminonly"         INTEGER DEFAULT 0;
 
 -- Describe USERS
 CREATE TABLE IF NOT EXISTS "users" (
-    "id" INTEGER PRIMARY KEY,
-    PRIMARY KEY("id" AUTOINCREMENT)
+    "id" INTEGER PRIMARY KEY
 );
 
 ALTER TABLE "users" ADD "id"                INTEGER;
@@ -36,8 +33,7 @@ ALTER TABLE "users" ADD "bio"               TEXT;
 ALTER TABLE "users" ADD "admin"             INTEGER;
 
 CREATE TABLE IF NOT EXISTS "sessions" (
-    "id" INTEGER PRIMARY KEY,
-    PRIMARY KEY("id" AUTOINCREMENT)
+    "id" INTEGER PRIMARY KEY
 );
 
 ALTER TABLE "sessions" ADD "genkey"         TEXT;
