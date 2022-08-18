@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -32,12 +32,12 @@ func main() {
 
 	_, err := tmpl.ParseFS(pages, "pages/*")
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return
 	}
 	_, err = texttmpl.ParseFS(pages, "pages/*")
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return
 	}
 	// initialize the main server
@@ -51,12 +51,15 @@ func main() {
 	// If panics can't be handled by the handler function then something is very wrong.
 	// But we don't want the server to go down because of it, so we have to ignore it.
 	defer func() {
-		if recover() != nil {
-			fmt.Println(recover())
+		for {
+			if recover() != nil {
+				fmt.Println(recover())
+			}
 		}
 	}()
 	if err := s.ListenAndServe(); err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		return
 	}
 }
 
@@ -106,16 +109,6 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// get the mime-type.
-	contentType, err := GetContentType(file)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	w.Header().Set("Content-Type", contentType)
-	w.Header().Set("Content-Name", filename)
-	w.WriteHeader(200)
-
 	// Get the session relating to the user
 	var Info struct {
 		Values     	[]string
@@ -141,6 +134,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	// Post values
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, err.Error(), 500)
+		return
 	}
 	Info.PostValues = r.PostForm
 
@@ -148,7 +142,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	tempFuncMap := template.FuncMap{
 		"Redirect": func(url string, code int) (string) {
 			http.Redirect(w,r,url,code)
-			return ":3"
+			return ""
 		},
 	}
 
@@ -157,16 +151,34 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 		// On some pages, html escaping needs to be disabled.
 		switch pagename {
 		case "post":
-			if err := texttmpl.ExecuteTemplate(w, pagename+".html", &Info); err != nil {
+			// By writing it to a buffer first and then writing it to the page, 
+			// any redirects that we should do get processed before headers are set.
+			b := bytes.NewBuffer(nil)
+			if err := texttmpl.ExecuteTemplate(b, pagename+".html", &Info); err != nil {
 				http.Error(w, err.Error(), 500)
+				return
 			}
+			w.Write(b.Bytes())
 		default:
-			if err := tmpl.Funcs(tempFuncMap).ExecuteTemplate(w, pagename+".html", &Info); err != nil {
+			// By writing it to a buffer first and then writing it to the page, 
+			// any redirects that we should do get processed before headers are set.
+			b := bytes.NewBuffer(nil)
+			if err := tmpl.Funcs(tempFuncMap).ExecuteTemplate(b, pagename+".html", &Info); err != nil {
 				http.Error(w, err.Error(), 500)
+				return
 			}
+			w.Write(b.Bytes())
 		}
-
 	} else {
+		// get the mime-type.
+		contentType, err := GetContentType(file)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Name", filename)
+		w.WriteHeader(200)
 		page, err := os.ReadFile(filename)
 		if err != nil {
 			http.Error(w, err.Error(), 500)

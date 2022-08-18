@@ -59,9 +59,7 @@
 			<h1>Error while submitting your reply.</h1>
 			<span style="white-space: pre-wrap">{{$post.Error}}</span>
 		{{else}}
-			<script>
-				window.open("/post/{{$backto}}","_self");
-			</script>	
+			{{Redirect (String "/post/" $backto) 303}}	
 		{{end}}
 	{{else}}
 	{{$replyee := GetUsernameByID $postinfo.Author}}

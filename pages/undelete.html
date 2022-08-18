@@ -42,9 +42,7 @@
 		{{if $error}}
 			<b>{{$error}}</b>
 		{{else}}
-			<script>
-				window.open("/post/{{$backto}}","_self");
-			</script>
+			{{Redirect (String "/post/" $backto) 303}}
 		{{end}}
 	{{end}}
 {{end}}

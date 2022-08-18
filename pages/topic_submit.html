@@ -32,9 +32,7 @@
 					<h1>Error while submitting your post.</h1>
 					<span style="white-space: pre-wrap">{{$post.Error}}</span>
 				{{else}}
-					<script>
-						window.open("/post/{{$post.ID}}","_self");
-					</script>		
+					{{Redirect (String "/post/" $post.ID) 303}}		
 				{{end}}
 			{{else}}
 				{{$verificationErrors = "Captcha failed."}}

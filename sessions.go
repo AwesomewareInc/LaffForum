@@ -42,7 +42,7 @@ func NewSession(r *http.Request, username string) (error) {
 	// create the identifier key
 	identifier := createIdentifier(r)
 	// create the key pair to go along with it.
-	privKeyRaw, err := rsa.GenerateKey(rand.Reader, 512)
+	privKeyRaw, err := rsa.GenerateKey(rand.Reader, 2048)
 	if(err != nil) {
 		return err
 	}
@@ -106,11 +106,8 @@ func createIdentifier(r *http.Request) (string) {
 			ip = r.Header.Get("X-Forwarded-For")
 			if ip != "" {
 				ipParts := strings.Split(ip, ",")
-				ipPartParts := strings.Split(ipParts[1], ":")
-				ipOnly = ""
-				for _, v := range ipPartParts[0][0:2] {
-					ipOnly += string(v)
-				}
+				ipPartParts := strings.Split(ipParts[1], ".")
+				ipOnly = ipPartParts[0][0:2][:]
 			}
 		}
 	}
