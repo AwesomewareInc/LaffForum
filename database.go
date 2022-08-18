@@ -73,7 +73,7 @@ func init() {
 		err = ExecuteDirect(v)
 		if err != nil {
 			// If-oh. fuck.
-			if(!strings.Contains(err.Error(),"duplicate")) {
+			if(!strings.Contains(err.Error(),"duplicate") && !strings.Contains(err.Error(),"more than one primary key")) {
 				fmt.Println(err)
 				os.Exit(1)
 			} 
