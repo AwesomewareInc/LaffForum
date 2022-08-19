@@ -24,7 +24,9 @@ var funcMap = template.FuncMap{
 	"GetPostsFromUser":      		GetPostsFromUser,
 	"GetPostsInReplyTo":     		GetPostsInReplyTo,
 	"GetPostInfo":           		GetPostInfo,
-	"GetLastTenPostsMadeAtAll": 	GetLastTenPostsMadeAtAll,
+	"GetLastFivePosts": 			GetLastFivePosts,
+	"GetUnreadReplyingTo": 			GetUnreadReplyingTo,
+	"GetReadReplyingTo": 			GetReadReplyingTo,
 
 	// working with sections/topics
 	"GetSections":           		GetSections,

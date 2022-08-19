@@ -8,9 +8,11 @@
 			<p>Official news and discussion regarding the Funny Wars comic</p>
 		</span>
 	</span>
+</span>
+<span class='vbox'>
 	<span class='hbox'>
 		{{ template "announcementsbox" .}}
-		<span class='whitespace'></span>
+		{{ template "last5posts" .}}
 	</span>
 </span>
 {{ template "footer.html" .}}

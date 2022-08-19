@@ -1,0 +1,55 @@
+{{ template "header.html" . }}
+{{$session := .Session}}
+{{$request := .Request}}
+{{if $session.Username}}
+	{{$result := GetUnreadReplyingTo .Session.Username}}
+	{{if $result.Error}}
+		Couldn't get notifications: <b>{{$result.Error}}</b>
+	{{else}}
+		<span style='width: 75%; display: block; margin: 0 auto;'>
+			<h2>{{len $result.Posts}} notifications</h2>
+			<hr><br><br>
+			{{if le (len $result.Posts) 0}}
+				<em><h3>Past notifications:</h3></em>
+				{{$result = GetReadReplyingTo .Session.Username}}
+				{{if $result.Error}}
+					Couldn't get previous notifications: <b>{{$result.Error}}</b>
+				{{end}}
+			{{end}}
+			{{range $i, $v := $result.Posts}}
+				<p>
+				{{$timestamp := PrettyTime $v.Timestamp}}
+				{{if $timestamp.Error}}
+					<em style='{{$timestamp.Error}}'>at some point</em>
+				{{else}}
+					{{$timestamp.Result}}
+				{{end}}
+				</p><p>
+				<b>
+				{{$replier := GetUsernameByID $v.Author}}
+				{{if $replier.Error}}
+					<em style='{{$replier.Error}}'>unknown</em>
+				{{else}}
+					<b><a href='/user/{{$replier.Result}}'>{{$replier.Result}}</a></b>
+				{{end}}
+				replied to your
+				{{$ogpost := GetPostInfo $v.ReplyTo}}
+				{{if $ogpost.Error}}
+					<em style='{{$ogpost.Error}}'>???: </em>
+					<a href='/post/{{$v.ID}}'>{{$v.Subject}}</a>
+				{{else}}
+					{{if eq $ogpost.ReplyTo 0}}
+						post:
+					{{else}}
+						reply:
+					{{end}}
+					 <a href='/post/{{$ogpost.ID}}'>{{$ogpost.Subject}}</a>
+				{{end}}
+				</b></p>
+				{{$session.HasRead $request $v.ID}}
+				<hr>
+			{{end}}
+		</span>
+	{{end}}
+{{end}}
+{{ template "footer.html" }}

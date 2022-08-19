@@ -5,10 +5,12 @@
 		'>
 		Announcements
 	</span>
-	{{$posts := GetPostsBySectionName "announcements"}}
-	{{range $i, $v := $posts.Posts}}
-		<h3><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></h3>
-	{{end}}
+	<span class='contents'>
+		{{$posts := GetPostsBySectionName "announcements"}}
+		{{range $i, $v := $posts.Posts}}
+			<h3><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></h3>
+		{{end}}
+	</span>
 </span>
 {{end}}
 {{define "sectionsbox"}}
@@ -18,13 +20,48 @@
 		'>
 		Sections
 	</span>
-	{{$sections := GetSections}}
-	{{if $sections.Error}}
-		{{$sections.Error.Error}}
-	{{else}}
-		{{range $i, $v := $sections.Results}}
-			<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a><br>
+	<span class='contents'>
+		{{$sections := GetSections}}
+		{{if $sections.Error}}
+			{{$sections.Error.Error}}
+		{{else}}
+			{{range $i, $v := $sections.Results}}
+				<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a><br>
+			{{end}}
 		{{end}}
-	{{end}}
+	</span>
+</span>
+{{end}}
+{{define "last5posts"}}
+<span class='box last5'>
+	<span class='box heading' style='
+		background: #fcdbb8;
+		'>
+		Recently Posted
+	</span>
+	<span class='contents'>
+		{{$posts := GetLastFivePosts}}
+		{{if $posts.Error}}
+			{{$posts.Error.Error}}
+		{{else}}
+			{{range $i, $v := $posts.Posts}}
+				<span class='item'>
+					<b><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></b> by 
+					{{$result := GetUsernameByID $v.Author}}
+					{{if $result.Error}}
+						<em style='{{$result.Error}}'>unknown</em>
+					{{else}}
+						<a href='/user/{{$result.Result}}'>{{$result.Result}}</a>
+					{{end}}
+					{{$result = PrettyTime $v.Timestamp}}
+					{{if $result.Error}}
+						<em style='{{$result.Error}}'>(couldn't get time posted)</em>
+					{{else}}
+						{{$result.Result}}
+					{{end}}
+				</span>
+			{{end}}
+		{{end}}
+	</span>
 </span>
 {{end}}

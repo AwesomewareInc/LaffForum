@@ -444,6 +444,7 @@ func GetPostsByCriteria(criteria string, value any) (result GetPostsByCriteriaRe
 	defer statement.Close()
 
 	rows, err := statement.Query(value)
+
 	for rows.Next() {
 		var id interface{}
 		var topic int
@@ -511,8 +512,62 @@ func GetPostsInReplyTo(id int) (result GetPostsByCriteriaResult) {
 	return posts
 }
 
-func GetLastTenPostsMadeAtAll() (result GetPostsByCriteriaResult) {
-	return GetPostsByCriteria("ORDER BY id DESC LIMIT 10;",nil)
+func GetLastFivePosts() (result GetPostsByCriteriaResult) {
+	result_ := GetPostsByCriteria("WHERE replyto = ? ORDER BY id DESC LIMIT 5;", 0)
+	if result_.Error != nil {
+		result.Error = result_.Error
+		return
+	}
+	result.Posts = result_.Posts
+	return
+}
+
+func GetReadReplyingTo(username string) (result GetPostsByCriteriaResult) {
+	usersPosts := GetPostsFromUser(username)
+	if(usersPosts.Error != nil) {
+		return usersPosts
+	}
+	var results []Post
+	for _, v := range usersPosts.Posts {
+		posts := GetPostsByCriteria("WHERE replyto = ? AND unread = 0 ORDER BY id DESC;", v.ID)
+		if posts.Error != nil {
+			return posts
+		}
+		for _, n := range posts.Posts {
+			results = append(results, n)
+		}
+	}
+	return GetPostsByCriteriaResult{results,nil}
+}
+
+func GetUnreadReplyingTo(username string) (result GetPostsByCriteriaResult) {
+	usersPosts := GetPostsFromUser(username)
+	if(usersPosts.Error != nil) {
+		return usersPosts
+	}
+	var results []Post
+	for _, v := range usersPosts.Posts {
+		posts := GetPostsByCriteria("WHERE replyto = ? AND unread = 1 ORDER BY id DESC;", v.ID)
+		if posts.Error != nil {
+			return posts
+		}
+		for _, n := range posts.Posts {
+			results = append(results, n)
+		}
+	}
+	return GetPostsByCriteriaResult{results,nil}
+}
+
+func (session *Session) HasRead(r *http.Request, id int) (error) {
+	err := session.Verify(r)
+	if(err != nil) {
+		return err
+	}
+	err = ExecuteDirect("UPDATE `posts` SET unread = 0 WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (session *Session) DeletePost(r *http.Request, id interface{}, deletedBy string) (err error) {

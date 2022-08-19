@@ -10,14 +10,15 @@ ALTER TABLE "posts" ADD "author"            INTEGER;
 ALTER TABLE "posts" ADD "replyto"           INTEGER;
 ALTER TABLE "posts" ADD "timestamp"         INTEGER;
 ALTER TABLE "posts" ADD "deleted"           INTEGER DEFAULT (0);
+ALTER TABLE "posts" ADD "unread"            INTEGER DEFAULT (1);
 
 -- Describe SECTIONS
 CREATE TABLE IF NOT EXISTS "sections" (
     "id" INTEGER PRIMARY KEY
 );
 
-ALTER TABLE "posts" ADD "name"              TEXT;
-ALTER TABLE "posts" ADD "adminonly"         INTEGER DEFAULT 0;
+ALTER TABLE "sections" ADD "name"              TEXT;
+ALTER TABLE "sections" ADD "adminonly"         INTEGER DEFAULT 0;
 
 -- Describe USERS
 CREATE TABLE IF NOT EXISTS "users" (

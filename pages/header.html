@@ -17,6 +17,19 @@
 					--->
 					<span class='user'>
 						{{if .Session.Username}}
+							{{$result := GetUnreadReplyingTo .Session.Username}}
+							<a href='/notifications'>
+								{{if $result.Error}}
+									<em style='{{$result.Error}}'>(? Unread)</em>
+								{{else}}
+									{{$unread := (len $result.Posts)}}
+									{{if ge $unread 1}}
+										<span class='unread'>!! {{$unread}} Unread !! </span>
+									{{else}}
+										{{$unread}} Unread
+									{{end}}
+								{{end}}
+							</a> |
 							<a href="/user/{{.Session.Username}}">{{.Session.Username}}</a> | <a href='/logout'>Logout</a>
 						{{else}}
 							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
