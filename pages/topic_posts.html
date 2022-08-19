@@ -4,10 +4,13 @@
 {{if $sectioninf.Error}}
 	{{$sectioninf.Error.Error}}
 {{else}}
+	<title>Posts in {{Capitalize $topic}}</title>
+	<meta property="og:title" content="Posts in {{Capitalize $topic}}" />
+	<meta property="og:description" content="See the posts in {{Capitalize $topic}} on the Funny Wars Forum" />
 	<span class='box heading' style='
 		background: #f9c56c;
 		'>
-		Threads in {{Capitalize $topic}} 
+		Posts in {{Capitalize $topic}} 
 	</span>
 	{{if .Session.Username}}
 		{{if ge $sectioninf.AdminOnly 1}}

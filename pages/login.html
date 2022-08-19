@@ -1,48 +1,50 @@
 {{if .Session.Username}}
 	{{Redirect "/" 303}}
-{{else}}
-	{{$username := ""}}
-	{{$usernames := index .PostValues "username"}}
-	{{$proceed := false}}
-	{{$errors := ""}}
-	{{$verificationErrors := ""}}
-	{{if ge (len $usernames) 1}}
-		{{$username = index $usernames 0}}
-		{{$passwords := index .PostValues "password"}}
-		{{$password := index $passwords 0}}
+{{end}}
 
-		{{$errors = VerifyPassword $username $password}}
-		{{if eq $errors ""}}
-			{{$captcha := .PostValues.Get "h-captcha-response"}}
-			{{$verification := VerifyCaptcha $captcha}}
-			{{if $verification.Error}}
-				{{$verificationErrors = $verification.Error}}
+<title>Login</title>
+<meta property="og:title" content="Login" />
+{{$username := ""}}
+{{$usernames := index .PostValues "username"}}
+{{$proceed := false}}
+{{$errors := ""}}
+{{$verificationErrors := ""}}
+{{if ge (len $usernames) 1}}
+	{{$username = index $usernames 0}}
+	{{$passwords := index .PostValues "password"}}
+	{{$password := index $passwords 0}}
+
+	{{$errors = VerifyPassword $username $password}}
+	{{if eq $errors ""}}
+		{{$captcha := .PostValues.Get "h-captcha-response"}}
+		{{$verification := VerifyCaptcha $captcha}}
+		{{if $verification.Error}}
+			{{$verificationErrors = $verification.Error}}
+		{{else}}
+			{{if $verification.Success}}
+				{{$proceed = true}}
 			{{else}}
-				{{if $verification.Success}}
-					{{$proceed = true}}
-				{{else}}
-					{{$verificationErrors = "Captcha failed."}}
-				{{end}}
+				{{$verificationErrors = "Captcha failed."}}
 			{{end}}
 		{{end}}
 	{{end}}
+{{end}}
 
-	{{if eq $proceed false}}
-		{{ template "header.html" }}
-		<h1>Login</h1>
-		{{$errors}}
-		{{$verificationErrors}}
+{{if eq $proceed false}}
+	{{ template "header.html" }}
+	<h1>Login</h1>
+	{{$errors}}
+	{{$verificationErrors}}
 
-		<form method='post' action='/login'>
-			Username: <input type='text' name='username'><br><br>
-			Password: <input type='password' name='password'><br><br>
-			<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
-			<input type='submit' value='Login'>
-		</form>
+	<form method='post' action='/login'>
+		Username: <input type='text' name='username'><br><br>
+		Password: <input type='password' name='password'><br><br>
+		<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
+		<input type='submit' value='Login'>
+	</form>
 
-		{{ template "footer.html" .}}
-	{{else}}
-		{{NewSession .ResponseWriter $username}}
-		{{Redirect "/" 303}}
-	{{end}}
+	{{ template "footer.html" .}}
+{{else}}
+	{{NewSession .ResponseWriter $username}}
+	{{Redirect "/" 303}}
 {{end}}

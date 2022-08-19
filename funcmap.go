@@ -12,6 +12,7 @@ var funcMap = template.FuncMap{
 	"HTMLEscape": 					HTMLEscape,
 	"Markdown":   					Markdown,
 	"PrettyTime": 					PrettyTime,
+	"TrimForMeta": 					TrimForMeta,
 
 	// working with user data
 	"CreateUser":     				CreateUser,

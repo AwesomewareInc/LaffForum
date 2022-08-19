@@ -1,54 +1,56 @@
 {{if .Session.Username}}
 	{{Redirect "/" 303}}
-{{else}}
-	{{$username := ""}}
-	{{$usernames := index .PostValues "username"}}
-	{{$proceed := false}}
-	{{$errors := ""}}
-	{{$verificationErrors := ""}}
+{{end}}
 
-	{{if ge (len $usernames) 1}}
-		{{$username = index $usernames 0}}
-		{{$prettynames := index .PostValues "prettyname"}}
-		{{$pass1s := index .PostValues "pass1"}}
-		{{$pass2s := index .PostValues "pass2"}}
-		{{$prettyname := index $prettynames 0}}
-		{{$pass1 := index $pass1s 0}}
-		{{$pass2 := index $pass2s 0}}
+<meta property="og:title" content="Register for the Funny Wars Forum" />
+<title>Register</title>
+{{$username := ""}}
+{{$usernames := index .PostValues "username"}}
+{{$proceed := false}}
+{{$errors := ""}}
+{{$verificationErrors := ""}}
 
-		{{$errors = CreateUser $username $prettyname $pass1 $pass2}}
-		{{if eq $errors ""}}
-			{{$captchas := index .PostValues "h-captcha-response"}}
-			{{$captcha := index $captchas 0}}
-			{{$verification := VerifyCaptcha $captcha}}
-			{{if $verification.Error}}
-				{{$verificationErrors = $verification.Error}}
+{{if ge (len $usernames) 1}}
+	{{$username = index $usernames 0}}
+	{{$prettynames := index .PostValues "prettyname"}}
+	{{$pass1s := index .PostValues "pass1"}}
+	{{$pass2s := index .PostValues "pass2"}}
+	{{$prettyname := index $prettynames 0}}
+	{{$pass1 := index $pass1s 0}}
+	{{$pass2 := index $pass2s 0}}
+
+	{{$errors = CreateUser $username $prettyname $pass1 $pass2}}
+	{{if eq $errors ""}}
+		{{$captchas := index .PostValues "h-captcha-response"}}
+		{{$captcha := index $captchas 0}}
+		{{$verification := VerifyCaptcha $captcha}}
+		{{if $verification.Error}}
+			{{$verificationErrors = $verification.Error}}
+		{{else}}
+			{{if $verification.Success}}
+				{{$proceed = true}}
 			{{else}}
-				{{if $verification.Success}}
-					{{$proceed = true}}
-				{{else}}
-					{{$verificationErrors = "Captcha failed."}}
-				{{end}}
+				{{$verificationErrors = "Captcha failed."}}
 			{{end}}
 		{{end}}
 	{{end}}
+{{end}}
 
-	{{if eq $proceed false}}
-		{{ template "header.html" .}}
-		<h1>Register</h1>
-		{{$errors}}
-		{{$verificationErrors}}
-		<form method='post' action='/register'>
-			Username: <input type='text' name='username'><br><br>
-			Full Name: <input type='text' name='prettyname'><br><br>
-			Password: <input type='password' name='pass1'><br><br>
-			Confirm Password: <input type='password' name='pass2'><br><br>
-			<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
-			<input type='submit' value='Sign up'>
-		</form>
-		{{ template "footer.html" .}}
-	{{else}}
-		{{NewSession .ResponseWriter $username}}
-		{{Redirect "/" 303}}
-	{{end}}
+{{if eq $proceed false}}
+	{{ template "header.html" .}}
+	<h1>Register</h1>
+	{{$errors}}
+	{{$verificationErrors}}
+	<form method='post' action='/register'>
+		Username: <input type='text' name='username'><br><br>
+		Full Name: <input type='text' name='prettyname'><br><br>
+		Password: <input type='password' name='pass1'><br><br>
+		Confirm Password: <input type='password' name='pass2'><br><br>
+		<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
+		<input type='submit' value='Sign up'>
+	</form>
+	{{ template "footer.html" .}}
+{{else}}
+	{{NewSession .ResponseWriter $username}}
+	{{Redirect "/" 303}}
 {{end}}

@@ -24,6 +24,9 @@
 		{{if eq $post.ID 0}}
 			<h1>Non-existent post.</h1>
 		{{else}}
+			<title>{{$post.Subject}}</title>
+			<meta property="og:title" content="{{$post.Subject}}" />
+			<meta property="og:description" content="{{TrimForMeta $post.Contents}}" />
 			{{$sectioninf := GetSectionInfo $post.Topic}}
 			{{if $sectioninf.Error}}
 				{{$sectioninf.Error.Error}}
@@ -47,7 +50,7 @@
 							<script>
 							{{Redirect 
 								(print "/post/" 
-										(print $post.Topic)
+										(print $reply.ID)
 								) 
 								303}}
 							</script>		

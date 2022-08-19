@@ -40,6 +40,8 @@
 		{{end}}
 
 	{{end}}
+	<title>Create a post in {{Capitalize $topic}}</title>
+	<meta property="og:title" content="Create a post in {{Capitalize $topic}}" />
 	<h1>Create a post in {{Capitalize $topic}}</h1>
 	<strikethough>You can use markdown to flair your posts.</strikethough> Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
 	<form method='post' action='/topic/{{$topic}}/submit'>

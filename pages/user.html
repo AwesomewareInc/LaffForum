@@ -9,6 +9,9 @@
 	{{else if eq $user.ID 0}}
 		This user does not exist.
 	{{else}}
+		<title>{{$user.PrettyName}}'s page.</title>
+		<meta property="og:title" content="{{$user.PrettyName}}'s page." />
+		<meta property="og:description" content="See {{$user.PrettyName}}'s page on the Funny Wars Forum" />
 		<span class='box userinfo'>
 			{{if $user.Admin}}
 				<small><b style='float: right'>Admin</b></small>

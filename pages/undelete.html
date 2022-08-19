@@ -48,6 +48,8 @@
 {{end}}
 
 {{if $allowed}}
+	<title>Restoring post {{$postinfo.ID}}</title>
+	<meta property="og:title" content="Restoring post {{$postinfo.ID}}" />
 	<em>> {{$postinfo.Contents}}</em><br>
 	<b>Restore?</b>
 	<form method='get'>

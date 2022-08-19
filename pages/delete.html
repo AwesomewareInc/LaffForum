@@ -48,6 +48,8 @@
 {{end}}
 
 {{if $allowed}}
+	<title>Deleting post {{$postinfo.ID}}</title>
+	<meta property="og:title" content="Deleting post {{$postinfo.ID}}" />
 	<em>> {{$postinfo.Contents}}</em><br>
 	<b>Delete?</b>
 	<form method='get'>

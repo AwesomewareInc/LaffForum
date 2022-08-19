@@ -16,3 +16,8 @@ func Capitalize(value string) string {
 	}
 	return result
 }
+
+// Trim a string to 128 characters, for meta tags.
+func TrimForMeta(value string) string {
+	return value[:128]
+}
