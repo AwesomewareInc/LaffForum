@@ -94,6 +94,12 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	var file *os.File
 
+	// At this point we make a special case for rss, which isn't an internal page or regular page.
+	if(pagename == "rss") {
+		RSSServe(w,r,values)
+		return
+	}
+
 	// Check if it could refer to an internal page
 	if file, err = os.Open("pages/" + pagename + ".html"); err == nil {
 		filename = "pages/" + pagename + ".html"
