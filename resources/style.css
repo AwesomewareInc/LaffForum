@@ -263,7 +263,7 @@ table.posts .subject {
 	margin-left: 1%;
 	flex: 4;
 	align-self: flex-start;
-	white-space: pre;
+	white-space: pre-line;
 }
 
 table.replies {
