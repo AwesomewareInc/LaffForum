@@ -1,0 +1,30 @@
+{{$time := ""}}
+{{$result := PrettyTime .Session.Me.DeletedTime}}
+{{if not $result.Error}}
+	{{$time = $result.Result}}
+{{end}}
+
+{{if not .Session.Username}}
+	You aren't logged in.
+{{else}}
+	{{if .PostValues.Get "confirm"}}
+		{{$error := .Session.UndeleteProfile .Request (.PostValues.Get "password")}}
+		{{if $error}}
+			{{$error}}
+		{{else}}
+			{{Redirect "/" 303}}
+		{{end}}
+	{{end}}
+	<h1>You deactivated your account {{$time}}</h1>
+	<p>Would you like to reactivate it? You need to enter your password again to do so.</p>
+	<hr>
+	<form method='post'>
+		<input type='hidden' name='confirm' value='1'>
+		<input type='password' name='password'>
+		<input type='submit' value='Yes'>
+	</form>
+	<hr>
+	<form method='post' action='/logout'>
+		<input type='submit' value='No'>
+	</form>
+{{end}}

@@ -17,6 +17,8 @@ var funcMap = template.FuncMap{
 	// working with user data
 	"CreateUser":     				CreateUser,
 	"VerifyPassword": 				VerifyPassword,
+	"GetIDByUsername":				GetUserIDByName,
+	"GetUserIDByName": 				GetUserIDByName,
 	"GetUsernameByID":				GetUsernameByID,
 	"GetUserInfo":      			GetUserInfo,
 
@@ -32,6 +34,7 @@ var funcMap = template.FuncMap{
 	// working with sections/topics
 	"GetSections":           		GetSections,
 	"GetSectionInfo":        		GetSectionInfo,
+	"GetSectionNameByID": 			GetSectionNameByID,
 
 	// working with sessions
 	"NewSession": 					NewSession,
@@ -43,7 +46,9 @@ var funcMap = template.FuncMap{
 
 	// misc
 	"VerifyCaptcha": 				VerifyCaptcha,
+	// this is a dummy function that gets overriden in the handler method
 	"Redirect":						func(url string, code int) (string) {return ""},
+	"PrintThreeMonthsFromNow": 		PrintThreeMonthsFromNow,
 }
 
 // function map for post.html which needs unescaped html

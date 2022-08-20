@@ -1,0 +1,31 @@
+{{if not .Session.Username}}
+	You aren't logged in.
+{{else}}
+	{{if .PostValues.Get "confirm"}}
+		{{$error := .Session.DeleteProfile .Request (.PostValues.Get "password")}}
+		{{if $error}}
+			{{$error}}
+		{{else}}
+			{{Redirect "/logout" 303}}
+		{{end}}
+	{{end}}
+	<h1>Profile deactivation</h1>
+	<p>
+		You may choose to "deactivate" your profile here. The profile will be considered in a deactivated state for three months from the time you click the button below, during which you may log in and reverse your decision. If you do not log in before <b>{{PrintThreeMonthsFromNow}}</b> your profile will be irreversably deleted from the database.
+	</p>
+	<p>
+		<h3>EXCEPTIONS</h3>
+			<ul>
+				<li>Posts you made will no longer be attributed to you, but they will <b>still be on the website;</b> under the GDPR, they can be considered important for "historical research" <a href="https://gdpr.eu/right-to-be-forgotten/">as described here.</a></li>
+				<li>This site uses Cloudflare, which has a feature called "Always Online" which backs up the site every 30 days to the Internet Archive. We are not responsible for the Internet Archive's backup of the site (actually, we can't even prevent the Internet Archive from archiving the site because they've made their crawler extremely hard to detect). You will have to contact them yourselves if you want further data deleted.</li>
+				<li>Your name will not be scrubbed from existing posts. If replies to your posts or other posts mention your name, they will still mention your name. We refuse to edit other people's posts.</li>
+			</ul>
+		We're sorry if any of this bothers you, but account deletion should not muddle with the user experience here. If you're truly embarressed by what you've posted here, you can edit your posts to remove private information.
+	</p>
+	<b>Please enter your password to confirm.</b>
+	<form method='post'>
+		<input type='password' name='password'>
+		<input type='hidden' name='confirm' value='1'>
+		<input type='submit' name='Confirm'>
+	</form>
+{{end}}

@@ -4,9 +4,6 @@
 {{if not .Session.Username}}
 	You aren't logged in.<br>
 	{{$allowed = false}}
-{{else if not .Session.Me.Admin}}
-	Permission denied bozo.<br>
-	{{$allowed = false}}
 {{end}}
 
 {{if $allowed}}
@@ -33,6 +30,12 @@
 		{{$postinfo.Error.Error}}<br>
 		{{$allowed = false}}
 	{{end}}
+{{end}}
+
+{{$fuckyou := GetIDByUsername .Session.Username}}
+{{if and (not .Session.Me.Admin) (ne $postinfo.Author $fuckyou.Result )}}
+	Permission denied bozo.<br>
+	{{$allowed = false}}
 {{end}}
 
 {{if $allowed}}

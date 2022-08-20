@@ -20,7 +20,6 @@ func RSSServe(w http.ResponseWriter, r *http.Request, values []string) {
 
 	switch(values[1]) {
 		case "topic":
-			fmt.Println(len(values))
 			if(len(values) <= 2) {
 				w.Write([]byte(`<title>Must specify topic name</title>`))
 				break
@@ -84,7 +83,11 @@ func XMLShowPost(url string, post Post) ([]byte) {
 	if(author.Error != nil) {
 		authorname = author.Error.Error()
 	} else {
-		authorname = author.Result.(string)
+		if(author.Result != nil) {
+			authorname = author.Result.(string)
+		} else {
+			authorname = "[deleted]"
+		}
 	}
 	return []byte(`
 		<item>

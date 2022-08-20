@@ -1,0 +1,35 @@
+{{if .Session.Username}}
+	{{$prettynamechange := .PostValues.Get "prettyname"}}
+	{{$biochange := .PostValues.Get "bio"}}
+	{{if $prettynamechange}}
+		{{$error := .Session.EditProfile .Request $prettynamechange $biochange}}
+		{{if $error}}
+			{{$error}}
+		{{else}}
+			{{Redirect (print "/user/" .Session.Username) 303}} 
+		{{end}}
+	{{end}}
+	<span class='vbox'>
+		<h1>Edit your profile</h1>
+		<form method='post'>
+			<h3>Full name:</h3>
+			<input 
+				style='width: 100%' 
+				value='{{if $prettynamechange}}{{$prettynamechange}}{{else}}{{.Session.Me.PrettyName}}{{end}}' 
+				type='text' 
+				name='prettyname'>
+			<h3>About me:</h3>
+			<em>(Markdown is not supported)</em><br>
+			<textarea style='width: 100%' rows='5' name='bio'>{{if $biochange}}{{$biochange}}{{else}}{{.Session.Me.Bio}}{{end}}
+			</textarea>
+			<input type='Submit' value='Save Profile'>
+		</form>
+	</span>
+	<span class='vbox'>
+		<form method='post' action='/profile/deactivate'>
+			<input type='Submit' value='Deactivate Profile'>
+		</form>
+	</span>
+{{else}}
+	You're not logged in.
+{{end}}

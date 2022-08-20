@@ -13,13 +13,7 @@
 	{{if $post.Error}}
 		{{HTMLEscape $post.Error.Error}}
 	{{else if ne $post.ReplyTo 0}}
-		{{Redirect 
-			(print "/post/" 
-					(print $post.ReplyTo 
-						(print "#" $post.ID)
-					)
-			) 
-			303}}
+		{{Redirect (print "/post/" $post.ReplyTo $post.ID) 303}}
 	{{else}}
 		{{if eq $post.ID 0}}
 			<h1>Non-existent post.</h1>
@@ -27,6 +21,8 @@
 			<title>{{$post.Subject}}</title>
 			<meta property="og:title" content="{{$post.Subject}}" />
 			<meta property="og:description" content="{{TrimForMeta $post.Contents}}" />
+
+			{{$userid := (GetUserIDByName $username).Result}}
 			{{$sectioninf := GetSectionInfo $post.Topic}}
 			{{if $sectioninf.Error}}
 				{{$sectioninf.Error.Error}}
@@ -47,13 +43,7 @@
 							<h1>Error while submitting your post.</h1>
 							<span style="white-space: pre-wrap">{{$reply.Error}}</span>
 						{{else}}
-							<script>
-							{{Redirect 
-								(print "/post/" 
-										(print $reply.ID)
-								) 
-								303}}
-							</script>		
+							{{Redirect (print "/post/" $reply.ID) 303}}
 						{{end}}
 					{{else}}
 						<h1>Permission denied</h1>
@@ -68,7 +58,12 @@
 						{{if $author.Error}}
 							Could not get author; {{$author.Error.Error}}
 						{{else}}
-							Post by <a href='/user/{{$author.Result}}/'>{{$author.Result}}</a><br>
+							Post by
+							{{if $author.Result}}
+								<a href='/user/{{$author.Result}}/'>{{$author.Result}}</a>
+							{{else}}
+								<em>[deleted]</em>
+							{{end}}
 						{{end}}
 						<br>
 						{{$timestamp := PrettyTime $post.Timestamp}}
@@ -117,12 +112,16 @@
 								{{if $author.Error}}
 									Could not get author; {{$author.Error.Error}}
 								{{else}}
-									<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
+									{{if $author.Result}}
+										<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
+									{{else}}
+										<em>[deleted]</em>
+									{{end}}
 								{{end}}
 							{{end}}
 							</td>
 							<td class='contents {{$deletedClass}}'>
-							{{if or (not $n.Deleted) ($isadmin) }}
+							{{if or (not $n.Deleted) $isadmin (eq $userid $n.Author)}}
 							<b>
 								{{$timestamp := PrettyTime $n.Timestamp}}
 								{{if $timestamp.Error}}
@@ -150,7 +149,7 @@
 										<input type='submit' value='Reply'>
 									</form>
 								{{end}}
-								{{if $isadmin}}
+								{{if or $isadmin (eq $userid $n.Author)}}
 									{{if $n.Deleted}}
 										<form action='/undelete'>
 											<input type='hidden' name='backto' value='{{$post.ID}}'>
@@ -167,7 +166,7 @@
 								{{end}}
 							</span>
 							{{else}}
-								<em>Deleted by a moderator</em>
+								<em>[deleted]</em>
 							{{end}}
 							</td>
 						</tr>

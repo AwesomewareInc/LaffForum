@@ -40,6 +40,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	// initialize a thread in the back that checks for "deleted accounts" to scrub every once in awhile.
+	go DeletedAccountThread()
 	// initialize the main server
 	s := &http.Server{
 		Addr:           ":8083",

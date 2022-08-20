@@ -32,6 +32,8 @@ ALTER TABLE "users" ADD "prettyname"        TEXT;
 ALTER TABLE "users" ADD "timestamp"         TEXT;
 ALTER TABLE "users" ADD "bio"               TEXT;
 ALTER TABLE "users" ADD "admin"             INTEGER;
+ALTER TABLE "users" ADD "deleted"           INTEGER;
+ALTER TABLE "users" ADD "deletedtime"       INTEGER;
 
 CREATE TABLE IF NOT EXISTS "sessions" (
     "id" INTEGER PRIMARY KEY

@@ -2,8 +2,6 @@
 	{{Redirect "/" 303}}
 {{end}}
 
-<title>Login</title>
-<meta property="og:title" content="Login" />
 {{$username := ""}}
 {{$usernames := index .PostValues "username"}}
 {{$proceed := false}}
@@ -32,6 +30,8 @@
 
 {{if eq $proceed false}}
 	{{ template "header.html" }}
+	<title>Login</title>
+	<meta property="og:title" content="Login" />
 	<h1>Login</h1>
 	{{$errors}}
 	{{$verificationErrors}}
@@ -45,6 +45,6 @@
 
 	{{ template "footer.html" .}}
 {{else}}
-	{{NewSession .ResponseWriter $username}}
+	{{NewSession .Request .ResponseWriter $username}}
 	{{Redirect "/" 303}}
 {{end}}

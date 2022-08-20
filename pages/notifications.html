@@ -32,7 +32,11 @@
 				{{if $replier.Error}}
 					<em style='{{$replier.Error}}'>unknown</em>
 				{{else}}
-					<b><a href='/user/{{$replier.Result}}'>{{$replier.Result}}</a></b>
+					{{if $replier.Result}}
+						<b><a href='/user/{{$replier.Result}}'>{{$replier.Result}}</a></b>
+					{{else}}
+						<em>[deleted]</em>
+					{{end}}
 				{{end}}
 				replied to your
 				{{$ogpost := GetPostInfo $v.ReplyTo}}

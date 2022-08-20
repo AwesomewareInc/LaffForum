@@ -131,18 +131,60 @@ func SQLSanitize(val string) string {
 	return SQLEscape.Replace(val)
 }
 
+// thread that searches the database for deleted accounts routinely and deletes them
+func DeletedAccountThread() {
+	tick := time.NewTicker(time.Second)
+	defer tick.Stop()
+	for {
+		select {
+			case <-tick.C:
+				found := make([]string, 0)
+				statement, err := database.Prepare("SELECT username, deletedtime from `users` WHERE `deleted` = 1;")
+				if err != nil {
+					fmt.Println(err)
+				}
+				defer statement.Close()
+
+				rows, err := statement.Query()
+				for rows.Next() {
+					var username string
+					var deletedtime int64
+					if err := rows.Scan(&username,&deletedtime); err != nil {
+						fmt.Println(err)
+					}
+					deletedTimeParsed := time.Unix(deletedtime, 0)
+					if err != nil {
+						fmt.Println(err)
+					}
+					scheduledForDeletion := deletedTimeParsed.Add(time.Hour*2190)
+					if(time.Now().After(scheduledForDeletion)) {
+						found = append(found, username)
+					}
+				}
+				for _, v := range found {
+					err := ExecuteDirect("DELETE FROM `users` WHERE `username` = ?;",v)
+					if(err != nil) {
+						fmt.Println(err)
+					}
+					fmt.Printf("deleted %v",v)
+				}
+		}
+	}
+}
+
 // ==============
 // USER SHIT
 // ==============
 
 type UserInfo struct {
-	ID         int
-	Username   string
-	PrettyName string
-	Timestamp  int
-	bio        interface{}
-	admin      interface{}
-
+	ID         		int
+	Username   		string
+	PrettyName 		string
+	Timestamp  		int
+	bio        		interface{}
+	admin      		interface{}
+	deleted    		interface{}
+	deletedTime 	interface{}
 	Error error
 }
 
@@ -162,6 +204,21 @@ func (user UserInfo) Admin() bool {
 	}
 }
 
+func (user UserInfo) Deleted() bool {
+	if user.deleted == nil {
+		return false
+	} else {
+		return (int(user.deleted.(int64)) == 1)
+	}
+}
+func (user UserInfo) DeletedTime() int {
+	if user.deletedTime == nil {
+		return -1
+	} else {
+		return int(user.deletedTime.(int64))
+	}
+}
+
 func GetUserInfo(id interface{}) (result UserInfo) {
 	var userID int
 	switch v := id.(type) {
@@ -177,8 +234,8 @@ func GetUserInfo(id interface{}) (result UserInfo) {
 	default:
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
-	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin from `users` WHERE id = ?;", []interface{}{userID},
-		&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin)
+	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin, deleted, deletedtime from `users` WHERE id = ?;", []interface{}{userID},
+		&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin, &result.deleted, &result.deletedTime)
 	if err != nil {
 		result.Error = fmt.Errorf("Couldn't get user info; %v", err.Error())
 		return
@@ -267,6 +324,55 @@ func GetUsernameByID(id int) (result GenericResult) {
 	return
 }
 
+func (session *Session) EditProfile(r *http.Request, prettyname, bio string) (err error) {
+	err = session.Verify(r)
+	if(err != nil) {
+		return
+	}
+
+	statement, err := database.Prepare("UPDATE `users` SET prettyname = ?, bio = ? WHERE username = ?;")
+	if err != nil {
+		return fmt.Errorf("Couldn't prepare statement to edit user profile; " + err.Error())
+	}
+	defer statement.Close()
+	_, err = statement.Exec(SQLSanitize(prettyname), SQLSanitize(bio), SQLSanitize(session.Username))
+	if err != nil {
+		return fmt.Errorf("Couldn't edit user profile; " + err.Error())
+	}
+
+	return nil
+} 
+
+func (session *Session) DeleteProfile(r *http.Request, password string) (err error) {
+	return session.SetProfileDeleteStatus(r,password,1,time.Now().Unix())
+}
+func (session *Session) UndeleteProfile(r *http.Request, password string) (err error) {
+	return session.SetProfileDeleteStatus(r,password,0,-1)
+}
+
+func (session *Session) SetProfileDeleteStatus(r *http.Request, password string, status int, deletedTime int64) (err error) {
+	err = session.Verify(r)
+	if(err != nil) {
+		return
+	}
+
+	if passerr := VerifyPassword(session.Username, password); passerr != "" {
+		return fmt.Errorf(passerr)
+	}
+
+	statement, err := database.Prepare("UPDATE `users` SET deleted = ?, deletedtime = ? WHERE username = ?;")
+	if err != nil {
+		return fmt.Errorf("Couldn't prepare statement to deactivate/reactivate user; " + err.Error())
+	}
+	defer statement.Close()
+	_, err = statement.Exec(status,deletedTime,session.Username)
+	if err != nil {
+		return fmt.Errorf("Couldn't deactivate/reactivate user; " + err.Error())
+	}
+
+	return nil
+} 
+
 // ==============
 // PASSWORD SHIT
 // ==============
@@ -340,11 +446,17 @@ func GetSectionInfo(id interface{}) (result Section) {
 			result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v", id, j.Error.Error())
 			return
 		}
-		sectionID = int(j.Result.(int64))
+		if finalInt, ok := j.Result.(int64); ok {
+			sectionID = int(finalInt)
+		} else {
+			sectionID = -1
+		}
+		
 	case int:
 		sectionID = id.(int)
 	default:
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
+		return
 	}
 	err := ExecuteReturn("SELECT id, name, adminonly from `sections` WHERE id = ?;", []interface{}{sectionID},
 		&result.ID, &result.Name, &result.AdminOnly)
@@ -359,6 +471,15 @@ func GetSectionIDByName(name string) (result GenericResult) {
 	err := ExecuteReturn("SELECT id from `sections` WHERE name = ?;", []interface{}{name}, &result.Result)
 	if err != nil {
 		result.Error = PublicFacingError("Error while getting section id by name;", err)
+		return
+	}
+	return
+}
+
+func GetSectionNameByID(id int) (result GenericResult) {
+	err := ExecuteReturn("SELECT name from `sections` WHERE id = ?;", []interface{}{id}, &result.Result)
+	if err != nil {
+		result.Error = PublicFacingError("Error while getting section name by id;", err)
 		return
 	}
 	return
@@ -487,7 +608,7 @@ func GetPostsFromUser(name string) (result GetPostsByCriteriaResult) {
 	}
 	id := id_.Result.(int64)
 
-	result = GetPostsByCriteria("WHERE author = ? ORDER BY id DESC;", id)
+	result = GetPostsByCriteria("WHERE author = ? ORDER BY id DESC LIMIT 25;", id)
 
 	return
 }
@@ -558,6 +679,7 @@ func GetUnreadReplyingTo(username string) (result GetPostsByCriteriaResult) {
 	return GetPostsByCriteriaResult{results,nil}
 }
 
+// Mark posts as "read" by a session.
 func (session *Session) HasRead(r *http.Request, id int) (error) {
 	err := session.Verify(r)
 	if(err != nil) {

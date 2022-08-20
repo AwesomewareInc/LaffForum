@@ -24,27 +24,31 @@ type Session struct {
 }
 
 // Function for creating a new session
-func NewSession(w http.ResponseWriter, username string) (error) {
+func NewSession(r *http.Request, w http.ResponseWriter, username string) (result SessionResult) {
 	// create the identifier key
 	identifier, err := createIdentifier(w)
 	if(err != nil) {
-		return err
+		result.Error = err
+		return
 	}
 
 	// create the key pair to go along with it.
 	privKeyRaw, err := rsa.GenerateKey(rand.Reader, 2048)
 	if(err != nil) {
-		return err
+		result.Error = err
+		return
 	}
 	pubKeyRaw := &privKeyRaw.PublicKey
 
 	privKey := PrivKeyToString(privKeyRaw)
 	if(err != nil) {
-		return err
+		result.Error = err
+		return
 	}
 	pubKey, err := PubKeyToString(pubKeyRaw)
 	if(err != nil) {
-		return err
+		result.Error = err
+		return
 	}
 
 	err = ExecuteDirect("INSERT INTO `sessions` ('genkey', 'pubkey', 'privkey', 'username', 'timestamp') VALUES (?, ?, ?, ?, ?)",
@@ -54,7 +58,11 @@ func NewSession(w http.ResponseWriter, username string) (error) {
 																				username,
 																				time.Now().Unix())
 
-	return err
+	if(err != nil) {
+		result.Error = err
+		return
+	}
+	return GetSession(r)
 }
 
 type SessionResult struct {

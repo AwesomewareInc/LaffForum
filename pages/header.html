@@ -18,20 +18,24 @@
 					--->
 					<span class='user'>
 						{{if .Session.Username}}
-							{{$result := GetUnreadReplyingTo .Session.Username}}
-							<a href='/notifications'>
-								{{if $result.Error}}
-									<em style='{{$result.Error}}'>(? Unread)</em>
-								{{else}}
-									{{$unread := (len $result.Posts)}}
-									{{if ge $unread 1}}
-										<span class='unread'>!! {{$unread}} Unread !! </span>
+							{{if .Session.Me.Deleted}}
+								{{Redirect "/profile/reactivate" 303}}
+							{{else}}
+								{{$result := GetUnreadReplyingTo .Session.Username}}
+								<a href='/notifications'>
+									{{if $result.Error}}
+										<em style='{{$result.Error}}'>(? Unread)</em>
 									{{else}}
-										{{$unread}} Unread
+										{{$unread := (len $result.Posts)}}
+										{{if ge $unread 1}}
+											<span class='unread'>!! {{$unread}} Unread !! </span>
+										{{else}}
+											{{$unread}} Unread
+										{{end}}
 									{{end}}
-								{{end}}
-							</a> |
-							<a href="/user/{{.Session.Username}}">{{.Session.Username}}</a> | <a href='/logout'>Logout</a>
+								</a> |
+								<a href="/user/{{.Session.Username}}">{{.Session.Username}}</a> | <a href='/logout'>Logout</a>
+							{{end}}
 						{{else}}
 							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
 						{{end}}

@@ -40,7 +40,11 @@
 				{{if $author.Error}}
 					Could not get author; {{$author.Error.Error}}
 				{{else}}
-					<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
+					{{if $author.Result}}
+						<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
+					{{else}}
+						<em>[deleted]</em>
+					{{end}}
 				{{end}}
 				</td>
 				<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>

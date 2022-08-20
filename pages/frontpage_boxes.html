@@ -51,7 +51,11 @@
 					{{if $result.Error}}
 						<em style='{{$result.Error}}'>unknown</em>
 					{{else}}
-						<a href='/user/{{$result.Result}}'>{{$result.Result}}</a>
+						{{if not $result.Result}}
+							<em>[deleted]</em>
+						{{else}}
+							<a href='/user/{{$result.Result}}'>{{$result.Result}}</a>
+						{{end}}
 					{{end}}
 					{{$result = PrettyTime $v.Timestamp}}
 					{{if $result.Error}}

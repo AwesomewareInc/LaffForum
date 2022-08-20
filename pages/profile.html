@@ -1,0 +1,29 @@
+{{if eq (len .Values) 0}}
+	{{ Redirect (print "/user/" .Session.Username) 303 }}
+{{else}}
+	{{$subpage := ""}}
+	{{if ge (len .Values) 2}}
+		{{$subpage = index .Values 1}}
+	{{else}}
+		{{$subpage = ""}}
+	{{end}}
+
+	{{if eq $subpage ""}}
+		{{ Redirect (print "/user/" .Session.Username) 303 }}
+	{{end}}
+	{{if eq $subpage "edit"}}
+		{{ template "header.html" .}}
+		{{ template "profile_edit.html" .}}
+		{{ template "footer.html" .}}
+	{{end}}
+	{{if eq $subpage "deactivate"}}
+		{{ template "header.html" .}}
+		{{ template "profile_deactivate.html" .}}
+		{{ template "footer.html" .}}
+	{{end}}
+	{{if eq $subpage "reactivate"}}
+		{{ template "header.html" }}
+		{{ template "profile_reactivate.html" .}}
+		{{ template "footer.html" }}
+	{{end}}
+{{end}}

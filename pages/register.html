@@ -1,9 +1,6 @@
 {{if .Session.Username}}
 	{{Redirect "/" 303}}
 {{end}}
-
-<meta property="og:title" content="Register for the Funny Wars Forum" />
-<title>Register</title>
 {{$username := ""}}
 {{$usernames := index .PostValues "username"}}
 {{$proceed := false}}
@@ -38,6 +35,8 @@
 
 {{if eq $proceed false}}
 	{{ template "header.html" .}}
+	<meta property="og:title" content="Register for the Funny Wars Forum" />
+	<title>Register</title>
 	<h1>Register</h1>
 	{{$errors}}
 	{{$verificationErrors}}
@@ -51,6 +50,20 @@
 	</form>
 	{{ template "footer.html" .}}
 {{else}}
-	{{NewSession .ResponseWriter $username}}
-	{{Redirect "/" 303}}
+	{{$result := NewSession .Request .ResponseWriter $username}}
+
+	{{if $result}}
+		{{$result.Error}}
+	{{else}}
+		{{/* We want to clear any notifications to any post that's tied to this username, 
+			to make sure if somebody claims a username they don't see notifications not at them.*/}}
+		{{$result2 := GetUnreadReplyingTo $username}}
+		{{if not $result2.Error}}
+			{{range $i, $v := $result2.Posts}}
+				{{$result.HasRead .Request $v.ID}}
+			{{end}}
+		{{end}}
+		{{Redirect "/" 303}}
+	{{end}}
+	
 {{end}}

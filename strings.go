@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"time"
 )
 
 // Capitalize a string
@@ -26,4 +27,10 @@ func TrimForMeta(value string) string {
 		return value
 	}
 	return value[:128]+"..."
+}
+
+// Print the server date three months from now 
+func PrintThreeMonthsFromNow() string {
+	future := time.Now().Add(time.Hour*2190)
+	return future.Format("Jan 02 2006, 03:04:05PM -0700")
 }

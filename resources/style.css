@@ -212,6 +212,9 @@ table.posts tr {
 	padding: 5px;
 }
 
+table.posts .topic {
+	width: 20%;
+}
 table.posts .from {
 	width: 34%;
 }
@@ -260,24 +263,6 @@ table.posts .subject {
 	margin-left: 1%;
 	flex: 4;
 	align-self: flex-start;
-}
-
-.post-vbox .hbox-2 form {
-	width: 100%;
-	display: flex;
-}
-
-.post-vbox .hbox-2 textarea {
-	flex: 5;
-	align-self: flex-start;
-	margin: 1em;
-}
-
-.post-vbox .hbox-2 input {
-	display: inline-block;
-	margin: 1em;
-	flex: 1;
-	align-self: flex-end;
 }
 
 table.replies {
@@ -348,16 +333,21 @@ table.replies td .actions form {
 /* USER PAGE */
 
 .userinfo {
-	width: 15%;
-	height: 80%;
 	background: #DBEAFE;
 	border: 1px solid #60A5FA;
-	display: inline-block;
+	flex: 1;
+	min-height: 0px!important;
+	position: relative;
 }
 
-.posts.user {
-	width: 80%!important;
-	float: right;
+.userinfo + .posts {
+	flex: 5;
+}
+
+.userinfo .editprofilebutton {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
 }
 
 @media (prefers-color-scheme: dark) {
