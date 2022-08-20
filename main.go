@@ -26,22 +26,26 @@ func main() {
 	tmpl = template.New("")
 	tmpl.Funcs(funcMap) // "FuncMap" refers to a template.FuncMap in another file, that isn't included in this one.
 
-	// initialize text/template too
+	// initialize text/template alongside it for markdown.
 	texttmpl = texttemplate.New("")
 	texttmpl.Funcs(textTemplateFuncMap)
 
+	// Parse the templates.
 	_, err := tmpl.ParseFS(pages, "pages/*")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	_, err = texttmpl.ParseFS(pages, "pages/*")
+	// (re)parse post.html as an unescaped template
+	_, err = texttmpl.ParseFS(pages, "pages/post.html")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	// initialize a thread in the back that checks for "deleted accounts" to scrub every once in awhile.
+
+	// initialize a thread in the back that checks for "deactivated accounts" in the database that need to be scrubbed after three months.
 	go DeletedAccountThread()
+
 	// initialize the main server
 	s := &http.Server{
 		Addr:           ":8083",
@@ -50,15 +54,16 @@ func main() {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	// If panics can't be handled by the handler function then something is very wrong.
-	// But we don't want the server to go down because of it, so we have to ignore it.
+
+	// shut up, if the server crashes i don't want to wake up to several pings about it one morning.
+	// TODO maybe implementing a system for logging to a file.
 	defer func() {
-		for {
-			if recover() != nil {
-				fmt.Println(recover())
-			}
+		if what := recover(); what != nil {
+			fmt.Println(what)
 		}
 	}()
+
+	// Start the server.
 	if err := s.ListenAndServe(); err != nil {
 		fmt.Println(err)
 		return
@@ -66,7 +71,7 @@ func main() {
 }
 
 func handlerFunc(w http.ResponseWriter, r *http.Request) {
-	// Handle panics and send them to the user instead of sending them to me.
+	// Handle panics and send them to the user instead of sending them to me (same reason as above).
 	defer func() {
 		if what := recover(); what != nil {
 			w.Header().Set("Content-Type", "text/html")
@@ -80,12 +85,13 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}()
+
 	// How are we trying to access the site?
 	switch r.Method {
-	case http.MethodGet, http.MethodHead, http.MethodPost: // These methods are allowed. continue.
-	default: // Send them an error for other ones.
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
+		case http.MethodGet, http.MethodHead, http.MethodPost: // These methods are allowed. continue.
+		default: // Send them an error for other ones.
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
 	}
 
 	// Get the pagename.
@@ -96,7 +102,8 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	var file *os.File
 
-	// At this point we make a special case for rss, which isn't an internal page or regular page.
+	// Before doing anything else we make a special case for rss, which isn't an internal page or regular page,
+	// and it should be called before anything else is done to read/write objects. 
 	if(pagename == "rss") {
 		RSSServe(w,r,values)
 		return
@@ -106,8 +113,8 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	if file, err = os.Open("pages/" + pagename + ".html"); err == nil {
 		filename = "pages/" + pagename + ".html"
 		internal = true
-		// Otherwise, check if it could refer to a regular file.
 	} else {
+		// Otherwise, check if it could refer to a regular file.
 		if file, err = os.Open("./" + pagename); err == nil {
 			filename = "./" + pagename
 		} else {
@@ -123,17 +130,20 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 		Query      	url.Values
 		Session    	*Session
 		PostValues 	url.Values
-		Request 	*http.Request
+		Request 	*http.Request 			// TODO: we could probably merge this into the session object.
 		ResponseWriter http.ResponseWriter
 	}
+
 	// url values sepereated by /
 	Info.Values = values
 	// url queries that come ater ?
 	Info.Query = r.URL.Query()
 
-	// relevant session
+	// the arguments going to this function.
 	Info.Request = r
 	Info.ResponseWriter = w
+
+	// relevant session
 	sess := GetSession(r)
 	if(sess.Error != nil) {
 		http.Error(w, sess.Error.Error(), 500)
@@ -148,7 +158,9 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 	Info.PostValues = r.PostForm
 
-	// Lastly, we want the redirect function; annoyingly we have to declare that here, inline.
+	// Lastly, we want the redirect function; annoyingly we have to declare that right here, inline,
+	// because apparently "we're not supposed to do this in templating"
+	// (too bad, it's slower to do this with javascript)
 	tempFuncMap := template.FuncMap{
 		"Redirect": func(url string, code int) (string) {
 			http.Redirect(w,r,url,code)
@@ -158,20 +170,23 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
-		// On some pages, html escaping needs to be disabled.
+		// On some post.html escaping needs to be disabled so that Markdown can be displayed.
 		switch pagename {
 		case "post":
 			// By writing it to a buffer first and then writing it to the page, 
-			// any redirects that we should do get processed before headers are set.
+			// instead of writing it directly to the writer, any redirect that we
+			// should do get processed before headers are set.
 			b := bytes.NewBuffer(nil)
 			if err := texttmpl.Funcs(tempFuncMap).ExecuteTemplate(b, pagename+".html", &Info); err != nil {
 				http.Error(w, err.Error(), 500)
 				return
 			}
 			w.Write(b.Bytes())
+		// Every other page is normal.
 		default:
 			// By writing it to a buffer first and then writing it to the page, 
-			// any redirects that we should do get processed before headers are set.
+			// instead of writing it directly to the writer, any redirect that we
+			// should do get processed before headers are set.
 			b := bytes.NewBuffer(nil)
 			if err := tmpl.Funcs(tempFuncMap).ExecuteTemplate(b, pagename+".html", &Info); err != nil {
 				http.Error(w, err.Error(), 500)
@@ -198,6 +213,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Function for getting relevant values from a pagename.
 func getPagename(fullpagename string) (string, []string) {
 	// Split the pagename into sections
 	if fullpagename[0] == '/' && len(fullpagename) > 1 {
@@ -218,6 +234,7 @@ func getPagename(fullpagename string) (string, []string) {
 	return pagename, values
 }
 
+// Function for auto-detecting the content type of a file.
 func GetContentType(output *os.File) (string, error) {
 	ext := filepath.Ext(output.Name())
 	file := make([]byte, 1024)
@@ -239,57 +256,11 @@ func GetContentType(output *os.File) (string, error) {
 	}
 }
 
-func PrettyTime(unixTime int) (result GenericResult) {
-	unixTimeDur, err := time.ParseDuration(fmt.Sprintf("%vs", time.Now().Unix()-int64(unixTime)))
-	if err != nil {
-		result.Error = err
-		return
-	}
-
-	if unixTimeDur.Hours() >= 8760 {
-		result.Result = fmt.Sprintf("%0.f years ago", unixTimeDur.Hours()/8760)
-		return
-	}
-	if unixTimeDur.Hours() >= 730 {
-		result.Result = fmt.Sprintf("%0.f months ago", unixTimeDur.Hours()/730)
-		return
-	}
-	if unixTimeDur.Hours() >= 168 {
-		result.Result = fmt.Sprintf("%0.f weeks ago", unixTimeDur.Hours()/168)
-		return
-	}
-	if unixTimeDur.Hours() >= 24 {
-		result.Result = fmt.Sprintf("%0.f days ago", unixTimeDur.Hours()/24)
-		return
-	}
-	if unixTimeDur.Hours() >= 1 {
-		result.Result = fmt.Sprintf("%0.f hours ago", unixTimeDur.Hours())
-		return
-	}
-	if unixTimeDur.Minutes() >= 1 {
-		result.Result = fmt.Sprintf("%0.f minutes ago", unixTimeDur.Minutes())
-		return
-	}
-	result.Result = fmt.Sprintf("%0.f seconds ago", unixTimeDur.Seconds())
-	return
-}
-
-func PublicFacingErrorUnstripped(err error) error {
-	// stack trace
-	stacktrace := string(debug.Stack())
-
-	pc, filename, line, _ := runtime.Caller(1)
-
-	funcname_ := runtime.FuncForPC(pc).Name()
-	funcnames := strings.Split(funcname_, ".")
-	funcname := funcnames[len(funcnames)-1]
-
-	return fmt.Errorf("At %v:%v in %v():\n%v. \n\n%v", filename, line, funcname, err.Error(), stacktrace)
-
-}
-
+// Function for returning debug information about a function when
+// templating fails us; we strip it to the information we really need.
+// We also strip folder names out in the (admittedly rare) case that this
+// could give an attacker a hint on how to attack us.
 func PublicFacingError(msg string, err error) error {
-
 	// stack trace
 	stacktrace := string(debug.Stack())
 
@@ -336,4 +307,47 @@ func PublicFacingError(msg string, err error) error {
 	funcname := funcnames[len(funcnames)-1]
 
 	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v", msg, filename, line, funcname, err.Error(), stacktrace)
+}
+
+
+// Same as above, but we don't strip the stacktrace. Useful for
+// panic recovery where the entire stacktrace is important.
+func PublicFacingErrorUnstripped(err error) error {
+	// stack trace
+	stacktrace := string(debug.Stack())
+
+	// filename, line, and information we'll use later to get the scope.
+	pc, filename_, line, _ := runtime.Caller(1)
+
+	// manipulate the stacktrace.
+	stacktraceParts := strings.Split(stacktrace, "\n")
+	// for each part of the stacktrace...
+	for i, v := range stacktraceParts {
+		// does it many slashes in it?
+		if strings.Count(v, string(os.PathSeparator)) >= 2 {
+			// how many tabs in it?
+			tabcount := strings.Count(v, "	")
+			// split it into parts and filter the line to only the last part
+			stacktracePartParts := strings.Split(v, string(os.PathSeparator))
+			// make sure it retains the amount of tabs
+			var newString string
+			for i := 0; i < tabcount; i++ {
+				newString += "	"
+			}
+			newString += stacktracePartParts[len(stacktracePartParts)-1]
+			stacktraceParts[i] = newString
+		}
+	}
+
+	// reduce the filename to the part we care about.
+	filenameParts := strings.Split(filename_, "/")
+	filename := filenameParts[len(filenameParts)-1]
+
+	// get the function name
+	funcname_ := runtime.FuncForPC(pc).Name()
+	funcnames := strings.Split(funcname_, ".")
+	funcname := funcnames[len(funcnames)-1]
+
+	return fmt.Errorf("At %v:%v in %v():\n%v. \n\n%v", filename, line, funcname, err.Error(), stacktrace)
+
 }

@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-// Functions for working with types.
+// Functions for working with types in templates.
 
 func String(a int) (string) {
 	return fmt.Sprint(a)

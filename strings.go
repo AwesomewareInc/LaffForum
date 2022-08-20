@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"strings"
-	"time"
 	"text/template"
+	"time"
 
 	"github.com/gomarkdown/markdown"
 )
@@ -47,4 +48,40 @@ func Markdown(val string) (string) {
 
 func HTMLEscape(val string) (string) {
 	return template.HTMLEscapeString(val)
+}
+
+// Function for formatting a timestamp as "x hours ago"
+func PrettyTime(unixTime int) (result GenericResult) {
+	unixTimeDur, err := time.ParseDuration(fmt.Sprintf("%vs", time.Now().Unix()-int64(unixTime)))
+	if err != nil {
+		result.Error = err
+		return
+	}
+
+	if unixTimeDur.Hours() >= 8760 {
+		result.Result = fmt.Sprintf("%0.f years ago", unixTimeDur.Hours()/8760)
+		return
+	}
+	if unixTimeDur.Hours() >= 730 {
+		result.Result = fmt.Sprintf("%0.f months ago", unixTimeDur.Hours()/730)
+		return
+	}
+	if unixTimeDur.Hours() >= 168 {
+		result.Result = fmt.Sprintf("%0.f weeks ago", unixTimeDur.Hours()/168)
+		return
+	}
+	if unixTimeDur.Hours() >= 24 {
+		result.Result = fmt.Sprintf("%0.f days ago", unixTimeDur.Hours()/24)
+		return
+	}
+	if unixTimeDur.Hours() >= 1 {
+		result.Result = fmt.Sprintf("%0.f hours ago", unixTimeDur.Hours())
+		return
+	}
+	if unixTimeDur.Minutes() >= 1 {
+		result.Result = fmt.Sprintf("%0.f minutes ago", unixTimeDur.Minutes())
+		return
+	}
+	result.Result = fmt.Sprintf("%0.f seconds ago", unixTimeDur.Seconds())
+	return
 }
