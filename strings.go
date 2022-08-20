@@ -3,6 +3,9 @@ package main
 import (
 	"strings"
 	"time"
+	"text/template"
+
+	"github.com/gomarkdown/markdown"
 )
 
 // Capitalize a string
@@ -33,4 +36,15 @@ func TrimForMeta(value string) string {
 func PrintThreeMonthsFromNow() string {
 	future := time.Now().Add(time.Hour*2190)
 	return future.Format("Jan 02 2006, 03:04:05PM -0700")
+}
+
+// Parsing a markdown string.
+
+func Markdown(val string) (string) {
+	val = template.HTMLEscapeString(val)
+	return string(markdown.ToHTML([]byte(val),nil,nil))
+}
+
+func HTMLEscape(val string) (string) {
+	return template.HTMLEscapeString(val)
 }
