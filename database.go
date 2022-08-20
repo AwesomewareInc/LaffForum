@@ -143,7 +143,6 @@ func DeletedAccountThread() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				defer statement.Close()
 
 				rows, err := statement.Query()
 				for rows.Next() {
@@ -168,6 +167,7 @@ func DeletedAccountThread() {
 					}
 					fmt.Printf("deleted %v",v)
 				}
+				statement.Close()
 		}
 	}
 }
