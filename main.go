@@ -37,7 +37,7 @@ func main() {
 		return
 	}
 	// (re)parse post.html as an unescaped template
-	_, err = texttmpl.ParseFS(pages, "pages/post.html")
+	_, err = texttmpl.ParseFS(pages, "pages/*")
 	if err != nil {
 		fmt.Println(err)
 		return
