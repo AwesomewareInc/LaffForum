@@ -41,7 +41,7 @@
 {{if $allowed}}
 	{{$confirm := .Query.Get "confirm"}}
 	{{if $confirm}}
-		{{$error := .Session.DeletePost .Request $postid .Session.Username}}
+		{{$error := .Session.RestorePost  $postid .Session.Username}}
 		{{if $error}}
 			<b>{{$error}}</b>
 		{{else}}
@@ -51,10 +51,10 @@
 {{end}}
 
 {{if $allowed}}
-	<title>Deleting post {{$postinfo.ID}}</title>
-	<meta property="og:title" content="Deleting post {{$postinfo.ID}}" />
+	<title>Restoring post {{$postinfo.ID}}</title>
+	<meta property="og:title" content="Restoring post {{$postinfo.ID}}" />
 	<em>> {{$postinfo.Contents}}</em><br>
-	<b>Delete?</b>
+	<b>Restore?</b>
 	<form method='get'>
 		<input type='hidden' name='backto' value='{{$backto}}'>
 		<input type='hidden' name='post' value='{{$postid}}'>

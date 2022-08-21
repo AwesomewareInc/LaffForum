@@ -2,7 +2,7 @@
 	You aren't logged in.
 {{else}}
 	{{if .PostValues.Get "confirm"}}
-		{{$error := .Session.DeleteProfile .Request (.PostValues.Get "password")}}
+		{{$error := .Session.DeleteProfile  (.PostValues.Get "password")}}
 		{{if $error}}
 			{{$error}}
 		{{else}}

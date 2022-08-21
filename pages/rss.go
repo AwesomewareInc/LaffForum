@@ -1,8 +1,11 @@
-package main
+package pages
 
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/IoIxD/LaffForum/database"
+	"github.com/IoIxD/LaffForum/strings"
 )
 
 
@@ -24,9 +27,9 @@ func RSSServe(w http.ResponseWriter, r *http.Request, values []string) {
 				w.Write([]byte(`<title>Must specify topic name</title>`))
 				break
 			}
-			w.Write([]byte(`<title>`+Capitalize(values[2])+`</title>`))
-			w.Write([]byte(`<description> Posts in `+Capitalize(values[2])+`</description>`))
-			result := GetPostsBySectionName(values[2])
+			w.Write([]byte(`<title>`+strings.Capitalize(values[2])+`</title>`))
+			w.Write([]byte(`<description> Posts in `+strings.Capitalize(values[2])+`</description>`))
+			result := database.GetPostsBySectionName(values[2])
 			if(result.Error != nil) {
 				w.Write([]byte(`<item> 
 									<title>Error</title>
@@ -38,14 +41,14 @@ func RSSServe(w http.ResponseWriter, r *http.Request, values []string) {
 				w.Write([]byte(`
 					<item>
 						<title>`+v.Subject+`</title>
-						<description>`+TrimForMeta(v.Contents)+`</description>
+						<description>`+strings.TrimForMeta(v.Contents)+`</description>
 						<link>https://`+r.Host+`/post/`+fmt.Sprint(v.ID)+`</link>
 					</item>
 					`))
 			}
 		case "post":
 			// Try and get the post information.
-			result := GetPostInfo(values[2])
+			result := database.GetPostInfo(values[2])
 			if(result.Error != nil) {
 				w.Write([]byte(`<item> 
 									<title>Error</title>
@@ -60,7 +63,7 @@ func RSSServe(w http.ResponseWriter, r *http.Request, values []string) {
 			// Show the original post as the first result.
 			w.Write(XMLShowPost(`https://`+r.Host, result))
 
-			replies := GetPostsInReplyTo(result.ID)
+			replies := database.GetPostsInReplyTo(result.ID)
 			if(replies.Error != nil) {
 				w.Write([]byte(`<item> 
 									<title>Error</title>
@@ -77,8 +80,8 @@ func RSSServe(w http.ResponseWriter, r *http.Request, values []string) {
 		</rss>`))
 }
 
-func XMLShowPost(url string, post Post) ([]byte) {
-	author := GetUsernameByID(post.Author)
+func XMLShowPost(url string, post database.Post) ([]byte) {
+	author := database.GetUsernameByID(post.Author)
 	var authorname string
 	if(author.Error != nil) {
 		authorname = author.Error.Error()
@@ -92,7 +95,7 @@ func XMLShowPost(url string, post Post) ([]byte) {
 	return []byte(`
 		<item>
 			<title>`+authorname+`: "`+post.Subject+`"</title>
-			<description>`+TrimForMeta(post.Contents)+`</description>
+			<description>`+strings.TrimForMeta(post.Contents)+`</description>
 			<link>`+url+`/post/`+fmt.Sprint(post.ID)+`</link>
 		</item>
 	`)

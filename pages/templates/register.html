@@ -60,7 +60,7 @@
 		{{$result2 := GetUnreadReplyingTo $username}}
 		{{if not $result2.Error}}
 			{{range $i, $v := $result2.Posts}}
-				{{$result.HasRead .Request $v.ID}}
+				{{$result.HasRead  $v.ID}}
 			{{end}}
 		{{end}}
 		{{Redirect "/" 303}}

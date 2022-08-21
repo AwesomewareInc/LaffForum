@@ -1,4 +1,4 @@
-package main
+package strings
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/IoIxD/LaffForum/database"
 	"github.com/gomarkdown/markdown"
 )
 
@@ -51,7 +52,7 @@ func HTMLEscape(val string) (string) {
 }
 
 // Function for formatting a timestamp as "x hours ago"
-func PrettyTime(unixTime int) (result GenericResult) {
+func PrettyTime(unixTime int) (result database.GenericResult) {
 	unixTimeDur, err := time.ParseDuration(fmt.Sprintf("%vs", time.Now().Unix()-int64(unixTime)))
 	if err != nil {
 		result.Error = err

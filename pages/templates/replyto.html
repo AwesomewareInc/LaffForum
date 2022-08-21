@@ -53,7 +53,7 @@
 {{if $allowed}}
 	{{$contents := .Query.Get "content"}}
 	{{if ge (len $contents) 1}}
-		{{$post := .Session.SubmitPost .Request $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
+		{{$post := .Session.SubmitPost  $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
 		{{$post}}
 		{{if $post.Error}}
 			<h1>Error while submitting your reply.</h1>

@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"crypto"
@@ -17,8 +17,11 @@ import (
 // Files for creaeting and working with "sessions"
 
 type Session struct {
-	pubKey 		string
-	Username 	string
+	pubKey 			string
+	Username 		string
+
+	Request 		*http.Request
+	ResponseWriter 	http.ResponseWriter
 
 	Error error
 }
@@ -62,7 +65,7 @@ func NewSession(r *http.Request, w http.ResponseWriter, username string) (result
 		result.Error = err
 		return
 	}
-	return GetSession(r)
+	return GetSession(r,w)
 }
 
 type SessionResult struct {
@@ -71,7 +74,7 @@ type SessionResult struct {
 }
 
 // Function for getting a session based on the user's information.
-func GetSession(r *http.Request) (result SessionResult) {
+func GetSession(r *http.Request, w http.ResponseWriter) (result SessionResult) {
 	result.Session = new(Session)
 	id_, err := r.Cookie("Token")
 	if(err != nil) {
@@ -89,6 +92,8 @@ func GetSession(r *http.Request) (result SessionResult) {
 	}
 	result.Session.pubKey = pubKey
 	result.Session.Username = username
+	result.Session.Request = r
+	result.Session.ResponseWriter = w
 	return
 }
 
@@ -113,8 +118,8 @@ func createIdentifier(w http.ResponseWriter) (str string, err error) {
 	return token, nil
 }
 // Function for a session to check itself against the database
-func (session *Session) Verify(r *http.Request) (error) {
-	id_, err := r.Cookie("Token")
+func (session Session) Verify() (error) {
+	id_, err := session.Request.Cookie("Token")
 	if(err != nil) {
 		return err
 	}
@@ -168,8 +173,8 @@ func (session *Session) Me() UserInfo {
 }
 
 // Function for clearing a session, effectively logging out.
-func (session *Session) Clear(r *http.Request) string {
-	id_, err := r.Cookie("Token")
+func (session *Session) Clear() string {
+	id_, err := session.Request.Cookie("Token")
 	if(err != nil) {
 		return err.Error()
 	}

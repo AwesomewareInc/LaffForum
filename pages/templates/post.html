@@ -38,7 +38,7 @@
 						{{$allowed = false}}
 					{{end}}
 					{{if $allowed}}
-						{{$reply := .Session.SubmitPost .Request $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
+						{{$reply := .Session.SubmitPost  $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
 						{{if $reply.Error}}
 							<h1>Error while submitting your post.</h1>
 							<span style="white-space: pre-wrap">{{$reply.Error}}</span>

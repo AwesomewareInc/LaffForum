@@ -2,9 +2,8 @@
 <title>Notifications</title>
 <meta property="og:title" content="Notifications" />
 {{$session := .Session}}
-{{$request := .Request}}
 {{if $session.Username}}
-	{{$result := GetUnreadReplyingTo .Session.Username}}
+	{{$result := GetUnreadReplyingTo $session.Username}}
 	{{if $result.Error}}
 		Couldn't get notifications: <b>{{$result.Error}}</b>
 	{{else}}
@@ -13,7 +12,7 @@
 			<hr><br><br>
 			{{if le (len $result.Posts) 0}}
 				<em><h3>Past notifications:</h3></em>
-				{{$result = GetReadReplyingTo .Session.Username}}
+				{{$result = GetReadReplyingTo $session.Username}}
 				{{if $result.Error}}
 					Couldn't get previous notifications: <b>{{$result.Error}}</b>
 				{{end}}
@@ -52,7 +51,7 @@
 					 <a href='/post/{{$ogpost.ID}}'>{{$ogpost.Subject}}</a>
 				{{end}}
 				</b></p>
-				{{$session.HasRead $request $v.ID}}
+				{{$session.HasRead $v.ID}}
 				<hr>
 			{{end}}
 		</span>
