@@ -20,7 +20,6 @@
 			<h1>Non-existent post.</h1>
 		{{else}}
 			{{if not $post.Deleted}}
-			<h1>Deleted.</h1>
 			<title>{{$post.Subject}}</title>
 			<meta property="og:title" content="{{$post.Subject}}" />
 			<meta property="og:description" content="{{TrimForMeta $post.Contents}}" />
@@ -125,69 +124,69 @@
 						{{if $n.Deleted}}
 							{{$deletedClass = "deleted"}}
 						{{end}}
-							<td class='from {{$deletedClass}}'>
-							{{if or (not $n.Deleted) ($isadmin) }}
-								{{$author := GetUsernameByID $n.Author}}
-								{{if $author.Error}}
-									Could not get author; {{$author.Error.Error}}
+						<td class='from {{$deletedClass}}'>
+						{{if or (not $n.Deleted) ($isadmin) }}
+							{{$author := GetUsernameByID $n.Author}}
+							{{if $author.Error}}
+								Could not get author; {{$author.Error.Error}}
+							{{else}}
+								{{if $author.Result}}
+									<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
 								{{else}}
-									{{if $author.Result}}
-										<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
-									{{else}}
-										<em>[deleted]</em>
-									{{end}}
+									<em>[deleted]</em>
 								{{end}}
 							{{end}}
-							</td>
-							<td class='contents {{$deletedClass}}'>
-							{{if or (not $n.Deleted) $isadmin (eq $userid $n.Author)}}
-							<b>
-								{{$timestamp := PrettyTime $n.Timestamp}}
-								{{if $timestamp.Error}}
-									Could not parse; {{$timestamp.Error.Error}}
+						{{end}}
+						</td>
+						<td class='contents {{$deletedClass}}'>
+						{{if or (not $n.Deleted) $isadmin (eq $userid $n.Author)}}
+						<b>
+							{{$timestamp := PrettyTime $n.Timestamp}}
+							{{if $timestamp.Error}}
+								Could not parse; {{$timestamp.Error.Error}}
+							{{else}}
+								{{$timestamp.Result}}
+							{{end}}
+						</b><br>
+						{{if ne $n.ReplyTo $post.ID}}
+							{{$post_ := GetPostInfo (print $n.ReplyTo)}}
+							{{if not $post_.Error}}
+								{{if or (not $post_.Deleted) ($isadmin) }}
+									<span class='original-post'>{{Markdown $post_.Contents}}</span>
 								{{else}}
-									{{$timestamp.Result}}
-								{{end}}
-							</b><br>
-							{{if ne $n.ReplyTo $post.ID}}
-								{{$post_ := GetPostInfo (print $n.ReplyTo)}}
-								{{if not $post_.Error}}
-									{{if or (not $post_.Deleted) ($isadmin) }}
-										<span class='original-post'>{{Markdown $post_.Contents}}</span>
-									{{else}}
-										<span class='original-post'><p>Deleted by a moderator</p></span>
-									{{end}}
+									<span class='original-post'><p>Deleted by a moderator</p></span>
 								{{end}}
 							{{end}}
-							{{Markdown $n.Contents}}
-							<span class='actions'>
-								{{if $username}}
-									<form action='/replyto'>
+						{{end}}
+						{{Markdown $n.Contents}}
+						<span class='actions'>
+							{{if $username}}
+								<form action='/replyto'>
+									<input type='hidden' name='backto' value='{{$post.ID}}'>
+									<input type='hidden' name='post' value='{{$n.ID}}'>
+									<input type='submit' value='Reply'>
+								</form>
+							{{end}}
+							{{if or $isadmin (eq $userid $n.Author)}}
+								{{if $n.Deleted}}
+									<form action='/undelete'>
 										<input type='hidden' name='backto' value='{{$post.ID}}'>
 										<input type='hidden' name='post' value='{{$n.ID}}'>
-										<input type='submit' value='Reply'>
+										<input type='submit' value='Restore'>
+									</form>
+								{{else}}
+									<form action='/delete'>
+										<input type='hidden' name='backto' value='{{$post.ID}}'>
+										<input type='hidden' name='post' value='{{$n.ID}}'>
+										<input type='submit' value='Delete'>
 									</form>
 								{{end}}
-								{{if or $isadmin (eq $userid $n.Author)}}
-									{{if $n.Deleted}}
-										<form action='/undelete'>
-											<input type='hidden' name='backto' value='{{$post.ID}}'>
-											<input type='hidden' name='post' value='{{$n.ID}}'>
-											<input type='submit' value='Restore'>
-										</form>
-									{{else}}
-										<form action='/delete'>
-											<input type='hidden' name='backto' value='{{$post.ID}}'>
-											<input type='hidden' name='post' value='{{$n.ID}}'>
-											<input type='submit' value='Delete'>
-										</form>
-									{{end}}
-								{{end}}
-							</span>
-							{{else}}
-								<em>[deleted]</em>
 							{{end}}
-							</td>
+						</span>
+						{{else}}
+							<em>[deleted]</em>
+						{{end}}
+						</td>
 						</tr>
 					{{end}}
 				{{end}}
