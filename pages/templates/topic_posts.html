@@ -34,11 +34,7 @@
 		</thead>
 		<tbody>
 		{{range $i, $v := $posts.Posts}}
-			{{if or (not $v.Deleted) $admin }}
-				{{$deletedClass := ""}}
-				{{if $v.Deleted}}
-					{{$deletedClass = "deleted"}}
-				{{end}}
+			{{if not $v.Deleted}}
 				<tr>
 					<td class='from {{$deletedClass}}'>
 					{{$author := GetUsernameByID $v.Author}}
