@@ -36,7 +36,7 @@
 		{{range $i, $v := $posts.Posts}}
 			{{if not $v.Deleted}}
 				<tr>
-					<td class='from {{$deletedClass}}'>
+					<td class='from'>
 					{{$author := GetUsernameByID $v.Author}}
 					{{if $author.Error}}
 						Could not get author; {{$author.Error.Error}}
@@ -48,7 +48,7 @@
 						{{end}}
 					{{end}}
 					</td>
-					<td class='subject {{$deletedClass}}'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
+					<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
 				</tr>
 			{{end}}
 		{{end}}
