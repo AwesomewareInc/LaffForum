@@ -1,5 +1,5 @@
 {{$topic := index .Values 1}}
-
+{{$admin := .Session.Me.Admin}}
 {{$sectioninf := GetSectionInfo $topic}}
 {{if $sectioninf.Error}}
 	{{$sectioninf.Error.Error}}
@@ -14,7 +14,7 @@
 	</span>
 	{{if .Session.Username}}
 		{{if ge $sectioninf.AdminOnly 1}}
-			{{if .Session.Me.Admin}}
+			{{if $admin}}
 				<a href='/topic/{{$topic}}/submit' class='box make-post'>Submit a topic</a>
 			{{end}}
 		{{else}}
@@ -34,21 +34,27 @@
 		</thead>
 		<tbody>
 		{{range $i, $v := $posts.Posts}}
-			<tr>
-				<td class='from'>
-				{{$author := GetUsernameByID $v.Author}}
-				{{if $author.Error}}
-					Could not get author; {{$author.Error.Error}}
-				{{else}}
-					{{if $author.Result}}
-						<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
-					{{else}}
-						<em>[deleted]</em>
-					{{end}}
+			{{if or (not $v.Deleted) $admin }}
+				{{$deletedClass := ""}}
+				{{if $v.Deleted}}
+					{{$deletedClass = "deleted"}}
 				{{end}}
-				</td>
-				<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
-			</tr>
+				<tr>
+					<td class='from {{$deletedClass}}'>
+					{{$author := GetUsernameByID $v.Author}}
+					{{if $author.Error}}
+						Could not get author; {{$author.Error.Error}}
+					{{else}}
+						{{if $author.Result}}
+							<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
+						{{else}}
+							<em>[deleted]</em>
+						{{end}}
+					{{end}}
+					</td>
+					<td class='subject {{$deletedClass}}'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
+				</tr>
+			{{end}}
 		{{end}}
 		</tbody>
 	</table>

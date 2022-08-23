@@ -11,9 +11,8 @@ import (
 
 	// crackhead trollface goes here
 	"github.com/IoIxD/LaffForum/database"
-	"github.com/IoIxD/LaffForum/pages"
 	"github.com/IoIxD/LaffForum/debug"
-
+	"github.com/IoIxD/LaffForum/pages"
 )
 
 func main() {
@@ -54,7 +53,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 				<h1>Error 500.</h1>
 				There was a <b>fatal</b> error on the backend. There's not much else we can say about a fatal error, so please send this to a developer or our support email with a detailed description of what you were doing.<br>
 				<hr>
-				<pre>%v</pre>`,debug.PublicFacingErrorUnstripped(what.(error)).Error()), 
+				<pre>%v</pre>`, debug.PublicFacingErrorUnstripped(what.(error)).Error()),
 				http.StatusInternalServerError)
 			return
 		}
@@ -62,10 +61,10 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// How are we trying to access the site?
 	switch r.Method {
-		case http.MethodGet, http.MethodHead, http.MethodPost: // These methods are allowed. continue.
-		default: // Send them an error for other ones.
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
+	case http.MethodGet, http.MethodHead, http.MethodPost: // These methods are allowed. continue.
+	default: // Send them an error for other ones.
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	// Get the pagename.
@@ -78,9 +77,9 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	// Before doing anything else we make a special case for rss, which isn't an internal page or regular page,
-	// and it should be called before anything else is done to read/write objects. 
-	if(pagename == "rss") {
-		pages.RSSServe(w,r,values)
+	// and it should be called before anything else is done to read/write objects.
+	if pagename == "rss" {
+		pages.RSSServe(w, r, values)
 		return
 	}
 
@@ -100,8 +99,8 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// relevant session
-	sess := database.GetSession(r,w)
-	if(sess.Error != nil) {
+	sess := database.GetSession(r, w)
+	if sess.Error != nil {
 		http.Error(w, sess.Error.Error(), 500)
 		return
 	}
@@ -113,27 +112,27 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// Get the session relating to the user
 	var Info struct {
-		Values     			[]string
-		Query      			url.Values
-		Session    			*database.Session
-		PostValues 			url.Values
-		Request 			*http.Request
-		ResponseWriter 		http.ResponseWriter
+		Values         []string
+		Query          url.Values
+		Session        *database.Session
+		PostValues     url.Values
+		Request        *http.Request
+		ResponseWriter http.ResponseWriter
 	}
-	Info.Values = values;
-	Info.Query = r.URL.Query();
-	Info.Session = sess.Session;
-	Info.PostValues = r.PostForm;
+	Info.Values = values
+	Info.Query = r.URL.Query()
+	Info.Session = sess.Session
+	Info.PostValues = r.PostForm
 	Info.Request = r
 	Info.ResponseWriter = w
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
 		f, ok := pages.PageFunctions[pagename]
-		if(ok) {
-			f(w,r,&Info)
+		if ok {
+			f(w, r, &Info)
 		} else {
-			if err := pages.GenericTemplate(w,r,pagename,&Info); err != nil {
+			if err := pages.GenericTemplate(w, r, pagename, &Info); err != nil {
 				http.Error(w, err.Error(), 500)
 				return
 			}

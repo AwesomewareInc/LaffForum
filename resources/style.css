@@ -291,7 +291,7 @@ table.replies tr input[type="submit"] {
 	float: right;
 }
 
-table.replies .deleted {
+table.replies .deleted, table.posts .deleted {
 	opacity: 0.5;
 }
 

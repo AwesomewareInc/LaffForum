@@ -8,21 +8,22 @@
 {{if eq (len .Values) 0}}
 	you have me nothing you fuckwad
 {{else}}
+	{{$userid := (GetUserIDByName $username).Result}}
 	{{$postid := HTMLEscape (index .Values 1)}}
 	{{$post := GetPostInfo $postid}}
 	{{if $post.Error}}
 		{{HTMLEscape $post.Error.Error}}
 	{{else if ne $post.ReplyTo 0}}
-		{{Redirect (print "/post/" $post.ReplyTo $post.ID) 303}}
+		{{Redirect (print "/post/" $post.ReplyTo "#" $post.ID) 303}}
 	{{else}}
 		{{if eq $post.ID 0}}
 			<h1>Non-existent post.</h1>
 		{{else}}
+			{{if not $post.Deleted}}
+			<h1>Deleted.</h1>
 			<title>{{$post.Subject}}</title>
 			<meta property="og:title" content="{{$post.Subject}}" />
 			<meta property="og:description" content="{{TrimForMeta $post.Contents}}" />
-
-			{{$userid := (GetUserIDByName $username).Result}}
 			{{$sectioninf := GetSectionInfo $post.Topic}}
 			{{if $sectioninf.Error}}
 				{{$sectioninf.Error.Error}}
@@ -94,6 +95,24 @@
 					</form>
 				{{end}}
 			</span>
+			{{else}}
+				<em>[deleted]</em>
+			{{end}}
+			{{if or $isadmin (eq $userid $post.Author)}}
+				{{if $post.Deleted}}
+					<form action='/undelete'>
+						<input type='hidden' name='backto' value='{{$post.ID}}'>
+						<input type='hidden' name='post' value='{{$post.ID}}'>
+						<input type='submit' value='Restore'>
+					</form>
+				{{else}}
+					<form action='/delete'>
+						<input type='hidden' name='backto' value='{{$post.ID}}'>
+						<input type='hidden' name='post' value='{{$post.ID}}'>
+						<input type='submit' value='Delete'>
+					</form>
+				{{end}}
+			{{end}}
 			<hr>
 			<table class='replies'>
 				<tbody>
