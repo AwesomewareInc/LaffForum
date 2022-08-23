@@ -8,7 +8,9 @@
 	<span class='contents'>
 		{{$posts := GetPostsBySectionName "announcements"}}
 		{{range $i, $v := $posts.Posts}}
-			<h3><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></h3>
+			{{if not $v.Deleted}}
+				<h3><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></h3>
+			{{end}}
 		{{end}}
 	</span>
 </span>
@@ -45,25 +47,27 @@
 			{{$posts.Error.Error}}
 		{{else}}
 			{{range $i, $v := $posts.Posts}}
-				<span class='item'>
-					<b><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></b> by 
-					{{$result := GetUsernameByID $v.Author}}
-					{{if $result.Error}}
-						<em style='{{$result.Error}}'>unknown</em>
-					{{else}}
-						{{if not $result.Result}}
-							<em>[deleted]</em>
+				{{if not $v.Deleted}}
+					<span class='item'>
+						<b><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></b> by 
+						{{$result := GetUsernameByID $v.Author}}
+						{{if $result.Error}}
+							<em style='{{$result.Error}}'>unknown</em>
 						{{else}}
-							<a href='/user/{{$result.Result}}'>{{$result.Result}}</a>
+							{{if not $result.Result}}
+								<em>[deleted]</em>
+							{{else}}
+								<a href='/user/{{$result.Result}}'>{{$result.Result}}</a>
+							{{end}}
 						{{end}}
-					{{end}}
-					{{$result = PrettyTime $v.Timestamp}}
-					{{if $result.Error}}
-						<em style='{{$result.Error}}'>(couldn't get time posted)</em>
-					{{else}}
-						{{$result.Result}}
-					{{end}}
-				</span>
+						{{$result = PrettyTime $v.Timestamp}}
+						{{if $result.Error}}
+							<em style='{{$result.Error}}'>(couldn't get time posted)</em>
+						{{else}}
+							{{$result.Result}}
+						{{end}}
+					</span>
+				{{end}}
 			{{end}}
 		{{end}}
 	</span>
