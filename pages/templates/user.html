@@ -1,82 +1,43 @@
-{{ template "header.html" .}}
-{{if eq (len .Values) 0}}
-	what
-{{else}}
-	{{$name := ""}}
-	{{$userid := index .Values 1}}
-	{{$user := GetUserInfo $userid}}
-	{{if $user.Error}}
-		{{$user.Error.Error}}
-	{{else if eq $user.ID 0}}
-		This user does not exist.
-	{{else if $user.Deleted}}
-		This user has deactivated their account.
-	{{else}}
-		{{if $user.PrettyName}}
-			{{$name = $user.PrettyName}}
-		{{else}} 
-			{{$name = $user.Username}}
-		{{end}}
-		<title>{{$name}}'s page.</title>
-		<meta property="og:title" content="{{$name}}'s page." />
-		<meta property="og:description" content="See {{$name}}'s page on the Funny Wars Forum" />
-		<span class='vbox'>
-			<span class='hbox'>
-				<span class='box userinfo'>
-					{{if $user.Admin}}
-						<small><b style='float: right'>Admin</b></small>
-					{{end}}
-					<h3>{{$name}}</h3>
-					<p>{{$user.Bio}}</p>
-					{{$timestamp := PrettyTime $user.Timestamp}}
-					{{if $timestamp.Error}}
-						Couldn't get timestamp; {{$timestamp.Error.Error}}
-					{{else}}
-						A member since {{$timestamp.Result}}
-					{{end}}
-					{{if eq $user.Username .Session.Username}}
-						<br><br>
-						<form method='post' action='/profile/edit'>
-							<input type='submit' class='editprofilebutton' value='Edit Profile'>
-						</form>
-					{{end}}
-				</span>
-				<span class='box posts'>
-					{{$posts := GetPostsFromUser $user.Username}}
-					{{if $posts.Error}}
-						{{$posts.Error.Error}}
-					{{else}}
-						{{if ge (len $posts.Posts) 1}}
-						<table class='posts user'>
-							<thead>
-								<tr>
-									<th>Topic</th>
-									<th>{{$user.Username}}'s posts</th>
-								</tr>
-							</thead>
-							<tbody>
-							{{range $i, $v := $posts.Posts}}
-								{{if not $v.Deleted}}
-									<tr>
-										<td class='topic'>
-											{{$topic := GetSectionNameByID $v.Topic}}
-											{{if $topic.Error}}
-												(couldn't get topic name; {{$topic.Error}})
-											{{else}}
-												<a href='/topic/{{$topic.Result}}'>{{Capitalize $topic.Result}}</a>
-											{{end}}
-										</td>
-										<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
-									</tr>
-								{{end}}
-							{{end}}
-							</tbody>
-						</table>
-						{{end}}
-					{{end}}
-				</span>
-			</span>
+<title>{{.Name}}'s page.</title>
+<meta property="og:title" content="{{.Name}}'s page." />
+<meta property="og:description" content="See {{.Name}}'s page on the Funny Wars Forum" />
+<span class='vbox'>
+	<span class='hbox'>
+		<span class='box userinfo'>
+			{{if .IsAdmin}}
+				<small><b style='float: right'>Admin</b></small>
+			{{end}}
+			<h3>{{.Name}}</h3>
+			<p>{{.Bio}}</p>
+			A member since {{.CreatedAt}}
+			{{if .CanEdit}}
+				<br><br>
+				<form method='post' action='/profile/edit'>
+					<input type='submit' class='editprofilebutton' value='Edit Profile'>
+				</form>
+			{{end}}
 		</span>
-	{{end}}
-{{end}}
-{{ template "footer.html" .}}
+		<span class='box posts'>
+			<table class='posts user'>
+				<thead>
+					<tr>
+						<th>Topic</th>
+						<th>{{.Name}}'s posts</th>
+					</tr>
+				</thead>
+				<tbody>
+				{{range $i, $v := .Posts}}
+					{{if not $v.Deleted}}
+						<tr>
+							<td class='topic'>
+								<a href='/topic/{{$v.Topic}}'>{{Capitalize $v.Topic}}</a>
+							</td>
+							<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
+						</tr>
+					{{end}}
+				{{end}}
+				</tbody>
+			</table>
+		</span>
+	</span>
+</span>

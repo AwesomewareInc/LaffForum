@@ -120,7 +120,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
-		f, ok := pages.PageFunctions[pagename]
+		f, ok := pages.PageFunctions.Get(pagename)
 		if ok {
 			f(w, r, *info)
 		} else {

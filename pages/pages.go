@@ -3,9 +3,11 @@ package pages
 import (
 	"embed"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
-	"html/template"
+	"sync"
+	"time"
 
 	"github.com/IoIxD/LaffForum/database"
 	"github.com/IoIxD/LaffForum/pages/funcmap"
@@ -14,7 +16,12 @@ import (
 //go:embed templates/*.*
 var pages embed.FS
 var tmpl *template.Template
-var PageFunctions map[string]func(w http.ResponseWriter, r *http.Request, info InfoStruct)
+
+type PageFunctionsStruct struct {
+	sync.Mutex
+	f map[string]func(w http.ResponseWriter, r *http.Request, info InfoStruct)
+} 
+var PageFunctions PageFunctionsStruct
 
 func init() {
 	// initialize the template shit
@@ -28,7 +35,7 @@ func init() {
 		return
 	}
 
-	PageFunctions = make(map[string]func(w http.ResponseWriter, r *http.Request, info InfoStruct))
+	PageFunctions.f = make(map[string]func(w http.ResponseWriter, r *http.Request, info InfoStruct))
 }
 
 type InfoStruct struct {
@@ -38,4 +45,28 @@ type InfoStruct struct {
 	PostValues 			url.Values
 	Request 			*http.Request
 	ResponseWriter 		http.ResponseWriter
+}
+
+// Safely add a function to the page functions
+
+func AddPageFunction(name string, f func(w http.ResponseWriter, r *http.Request, info InfoStruct)) {
+	if(PageFunctions.f == nil) {
+		go func() {
+			for {
+				time.Sleep(150 * time.Millisecond)
+				if(PageFunctions.f == nil) {
+					PageFunctions.Lock()
+					PageFunctions.f[name] = f
+					PageFunctions.Unlock()
+				}
+			}
+		}()
+	} else {
+		PageFunctions.f[name] = f
+	}
+}
+
+func (pagestruct *PageFunctionsStruct) Get(name string) (func(w http.ResponseWriter, r *http.Request, info InfoStruct), bool) {
+	what, ok := pagestruct.f[name]
+	return what, ok
 }

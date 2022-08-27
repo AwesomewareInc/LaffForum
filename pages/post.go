@@ -59,7 +59,7 @@ type PostField struct {
 }
 
 func init() {
-	PageFunctions["post"] = PostPageServe
+	AddPageFunction("post",PostPageServe)
 }
 
 func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
@@ -193,7 +193,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 	}
 
 	if (post.ReplyTo != 0) {
-		http.Redirect(w,r,fmt.Sprintf("/post/%v%v",post.ReplyTo,post.ID), 303)
+		http.Redirect(w,r,fmt.Sprintf("/post/%v#%v",post.ReplyTo,post.ID), 303)
 	}
 
 	if (post.ID == 0) {
