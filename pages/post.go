@@ -14,6 +14,8 @@ import (
 
 var Unescaper = str.NewReplacer(
 	"\n","<br>",
+	"&#39;", "'",
+	"&#34;", "\"",
 )
 
 type PostPageVariables struct {
@@ -91,7 +93,7 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 	// Also whitespace: pre-wrap ruins the padding for some reason so here is where we
 	// replace newlines with <br>
 	if(!toPass.Deleted) {
-		contents := str.Replace(strings.Markdown(toPass.PostContents),"\n","<br>",9999)
+		contents := Unescaper.Replace(strings.Markdown(toPass.PostContents))
 		buf.Write([]byte(contents))
 	} else {
 		if(toPass.DeletedBy == toPass.Author) {
@@ -142,7 +144,7 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 		}
 
 		if(!v.Deleted) {
-			contents := str.Replace(strings.Markdown(v.Contents),"\n","<br>",9999)
+			contents := Unescaper.Replace(strings.Markdown(v.Contents))
 			templateString += contents
 		} else {
 			templateString += deletedString
