@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"text/template"
+	"html/template"
 
 	"github.com/IoIxD/LaffForum/database"
 	"github.com/IoIxD/LaffForum/pages/funcmap"
@@ -14,7 +14,7 @@ import (
 //go:embed templates/*.*
 var pages embed.FS
 var tmpl *template.Template
-var PageFunctions map[string]func(w http.ResponseWriter, r *http.Request, data any)
+var PageFunctions map[string]func(w http.ResponseWriter, r *http.Request, info InfoStruct)
 
 func init() {
 	// initialize the template shit
@@ -28,12 +28,14 @@ func init() {
 		return
 	}
 
-	PageFunctions = make(map[string]func(w http.ResponseWriter, r *http.Request, data any))
+	PageFunctions = make(map[string]func(w http.ResponseWriter, r *http.Request, info InfoStruct))
 }
 
-type Info struct {
-	Values     	[]string
-	Query      	url.Values
-	Session    	*database.Session
-	PostValues 	url.Values
+type InfoStruct struct {
+	Values     			[]string
+	Query      			url.Values
+	Session    			*database.Session
+	PostValues 			url.Values
+	Request 			*http.Request
+	ResponseWriter 		http.ResponseWriter
 }

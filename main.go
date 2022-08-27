@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,9 +10,8 @@ import (
 
 	// crackhead trollface goes here
 	"github.com/IoIxD/LaffForum/database"
-	"github.com/IoIxD/LaffForum/pages"
 	"github.com/IoIxD/LaffForum/debug"
-
+	"github.com/IoIxD/LaffForum/pages"
 )
 
 func main() {
@@ -112,28 +110,21 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the session relating to the user
-	var Info struct {
-		Values     			[]string
-		Query      			url.Values
-		Session    			*database.Session
-		PostValues 			url.Values
-		Request 			*http.Request
-		ResponseWriter 		http.ResponseWriter
-	}
-	Info.Values = values;
-	Info.Query = r.URL.Query();
-	Info.Session = sess.Session;
-	Info.PostValues = r.PostForm;
-	Info.Request = r
-	Info.ResponseWriter = w
+	info := new(pages.InfoStruct)
+	info.Values = values
+	info.Query = r.URL.Query()
+	info.Session = sess.Session
+	info.PostValues = r.PostForm
+	info.Request = r
+	info.ResponseWriter = w
 
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
 		f, ok := pages.PageFunctions[pagename]
 		if(ok) {
-			f(w,r,&Info)
+			f(w,r,*info)
 		} else {
-			if err := pages.GenericTemplate(w,r,pagename,&Info); err != nil {
+			if err := pages.GenericTemplate(w,r,pagename,*info); err != nil {
 				http.Error(w, err.Error(), 500)
 				return
 			}

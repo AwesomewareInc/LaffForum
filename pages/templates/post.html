@@ -1,181 +1,78 @@
-{{ template "header.html" .}}
+{{ define "posts_part1" }}
+	<title>{{.PostSubject}}</title>
+	<meta property="og:title" content="{{.PostSubject}}" />
+	<meta property="og:description" content="{{.PostContents}}" />
 
-{{ $verificationErrors := "" }}
-{{ $username := .Session.Username }}
-{{ $isadmin := .Session.Me.Admin }}
-{{ $postid := 0}}
-
-{{if eq (len .Values) 0}}
-	you have me nothing you fuckwad
-{{else}}
-	{{$postid := HTMLEscape (index .Values 1)}}
-	{{$post := GetPostInfo $postid}}
-	{{if $post.Error}}
-		{{HTMLEscape $post.Error.Error}}
-	{{else if ne $post.ReplyTo 0}}
-		{{Redirect (print "/post/" $post.ReplyTo $post.ID) 303}}
-	{{else}}
-		{{if eq $post.ID 0}}
-			<h1>Non-existent post.</h1>
-		{{else}}
-			<title>{{$post.Subject}}</title>
-			<meta property="og:title" content="{{$post.Subject}}" />
-			<meta property="og:description" content="{{TrimForMeta $post.Contents}}" />
-
-			{{$userid := (GetUserIDByName $username).Result}}
-			{{$sectioninf := GetSectionInfo $post.Topic}}
-			{{if $sectioninf.Error}}
-				{{$sectioninf.Error.Error}}
-			{{else}}
-				{{$content := HTMLEscape (.PostValues.Get "contents")}}
-				{{if ge (len $content) 1}}
-					{{$allowed := true}}
-					{{if (eq $sectioninf.AdminOnly 2)}}
-						{{if not $isadmin}}
-							{{$allowed = false}}
-						{{end}}
-					{{else if not $username}}
-						{{$allowed = false}}
-					{{end}}
-					{{if $allowed}}
-						{{$reply := .Session.SubmitPost  $post.Topic (HTMLEscape (print "RE: " $post.Subject)) $content $post.ID}}
-						{{if $reply.Error}}
-							<h1>Error while submitting your post.</h1>
-							<span style="white-space: pre-wrap">{{$reply.Error}}</span>
-						{{else}}
-							{{Redirect (print "/post/" $reply.ID) 303}}
-						{{end}}
-					{{else}}
-						<h1>Permission denied</h1>
-					{{end}}
-				{{end}}
-			{{end}}
-
-			<span class='vbox'>
-				<span class='hbox'>
-					<span class='box authorbox'>
-						{{$author := GetUsernameByID $post.Author}}
-						{{if $author.Error}}
-							Could not get author; {{$author.Error.Error}}
-						{{else}}
-							Post by
-							{{if $author.Result}}
-								<a href='/user/{{$author.Result}}/'>{{$author.Result}}</a>
-							{{else}}
-								<em>[deleted]</em>
-							{{end}}
-						{{end}}
-						<br>
-						{{$timestamp := PrettyTime $post.Timestamp}}
-						{{if $timestamp.Error}}
-							Couldn't get timestamp; {{$timestamp.Error.Error}}
-						{{else}}
-							<small style='font-weight: normal;'>posted {{$timestamp.Result}}</small>
-						{{end}}
-					</span>
-					<span class='box postinfo'>
-						<h1>{{Markdown $post.Subject}}</h1>
-						{{Markdown $post.Contents}}
-					</span>
-				</span>
-				{{if $username}}
-					<form class='vbox' method='post'>
-						<span style='flex: 4' class='hbox'>
-							{{if eq $sectioninf.AdminOnly 2}}
-								{{if $isadmin}}
-									<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
-									<input style='flex: 1' type= 'submit' value='Post'>
-								{{end}}
-							{{else}}
-								<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
-								<input style='flex: 1' type='submit' value='Post'>
-							{{end}}
-						</span>
-					</form>
-				{{end}}
-			</span>
-			<hr>
-			<table class='replies'>
-				<tbody>
-				{{$posts := GetPostsInReplyTo $post.ID}}
-				{{if $posts.Error}}
-					{{$posts.Error.Error}}
-				{{else}}
-					{{range $i, $n := $posts.Posts}}
-						{{$deletedClass := ""}}
-						{{if $n.Deleted}}
-							{{$deletedClass = "deleted"}}
-						{{end}}
-							<td class='from {{$deletedClass}}'>
-							{{if or (not $n.Deleted) ($isadmin) }}
-								{{$author := GetUsernameByID $n.Author}}
-								{{if $author.Error}}
-									Could not get author; {{$author.Error.Error}}
-								{{else}}
-									{{if $author.Result}}
-										<a href='/user/{{$author.Result}}'>{{$author.Result}}</a>
-									{{else}}
-										<em>[deleted]</em>
-									{{end}}
-								{{end}}
-							{{end}}
-							</td>
-							<td class='contents {{$deletedClass}}'>
-							{{if or (not $n.Deleted) $isadmin (eq $userid $n.Author)}}
-							<b>
-								{{$timestamp := PrettyTime $n.Timestamp}}
-								{{if $timestamp.Error}}
-									Could not parse; {{$timestamp.Error.Error}}
-								{{else}}
-									{{$timestamp.Result}}
-								{{end}}
-							</b><br>
-							{{if ne $n.ReplyTo $post.ID}}
-								{{$post_ := GetPostInfo (print $n.ReplyTo)}}
-								{{if not $post_.Error}}
-									{{if or (not $post_.Deleted) ($isadmin) }}
-										<span class='original-post'>{{Markdown $post_.Contents}}</span>
-									{{else}}
-										<span class='original-post'><p>Deleted by a moderator</p></span>
-									{{end}}
-								{{end}}
-							{{end}}
-							{{Markdown $n.Contents}}
-							<span class='actions'>
-								{{if $username}}
-									<form action='/replyto'>
-										<input type='hidden' name='backto' value='{{$post.ID}}'>
-										<input type='hidden' name='post' value='{{$n.ID}}'>
-										<input type='submit' value='Reply'>
-									</form>
-								{{end}}
-								{{if or $isadmin (eq $userid $n.Author)}}
-									{{if $n.Deleted}}
-										<form action='/undelete'>
-											<input type='hidden' name='backto' value='{{$post.ID}}'>
-											<input type='hidden' name='post' value='{{$n.ID}}'>
-											<input type='submit' value='Restore'>
-										</form>
-									{{else}}
-										<form action='/delete'>
-											<input type='hidden' name='backto' value='{{$post.ID}}'>
-											<input type='hidden' name='post' value='{{$n.ID}}'>
-											<input type='submit' value='Delete'>
-										</form>
-									{{end}}
-								{{end}}
-							</span>
-							{{else}}
-								<em>[deleted]</em>
-							{{end}}
-							</td>
-						</tr>
-					{{end}}
-				{{end}}
-				</tbody>
-			</table>
-		{{end}}
+	{{if .PassiveErrorHeading}}
+		<h1>{{.PassiveErrorHeading}}</h1>
+		<span style="white-space: pre-wrap">{{.PassiveErrorDescription}}</span>
 	{{end}}
+	<span class='vbox'>
+		<span class='hbox'>
+			<span class='box authorbox'>
+				{{if .Author}}
+					Post by <a href='/{{.Author}}'>{{.Author}}</a>
+				{{else}}
+					<em>[deleted]</em>
+				{{end}}
+				<br>
+				<small style='font-weight: normal;'>posted {{.Timestamp}}</small>
+
+			</span>
+			<span class='box postinfo'>
+				<h1>{{Markdown .PostSubject}}</h1>
+				{{Markdown .PostContents}}
 {{end}}
 
-{{ template "footer.html" .}}
+{{define "actionsbox"}}
+				<span class='actions'>
+					<form action='/replyto'>
+						<input type='hidden' name='backto' value='{{.BackTo}}'>
+						<input type='hidden' name='post' value='{{.PostID}}'>
+						<input type='submit' value='Reply'>
+					</form>
+					{{if .CanDelete}}
+						{{if .Deleted}}
+							<form action='/undelete'>
+								<input type='hidden' name='backto' value='{{.BackTo}}'>
+								<input type='hidden' name='post' value='{{.PostID}}'>
+								<input type='submit' value='Restore'>
+							</form>
+						{{else}}
+							<form action='/delete'>
+								<input type='hidden' name='backto' value='{{.BackTo}}'>
+								<input type='hidden' name='post' value='{{.PostID}}'>
+								<input type='submit' value='Delete'>
+							</form>
+						{{end}}
+					{{end}}
+				</span>
+{{end}}
+
+{{ define "posts_part2" }}
+			</span>
+		</span>
+		{{if .CanReply}}
+			<form class='vbox' method='post'>
+				<span style='flex: 4' class='hbox'>
+					<form class='vbox' method='post'>
+						<span style='flex: 4' class='hbox'>
+							<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
+							<input style='flex: 1' type= 'submit' value='Post'>
+						</span>
+					</form>
+				</span>
+			</form>
+		{{end}}
+		</span>
+	<hr>
+	<table class='replies'>
+		<tbody>
+{{end}}
+
+{{define "posts_part3"}}
+		</tbody>
+	</table>
+</span>
+{{end}}
+
