@@ -19,26 +19,37 @@
 				<small style='font-weight: normal;'>posted {{.Timestamp}}</small>
 			</span>
 			<span class='box postinfo'>
-				<h1>{{Markdown .PostSubject}}</h1>
-				{{Markdown .PostContents}}
+			{{if not .Deleted}}
+				<h1>{{.PostSubject}}</h1>
+			{{end}}
+{{end}}
+
+
+{{ define "posts_part2" }}
+			</span>
+		</span>
+	</span>
+	<hr>
+	<table class='replies'>
+		<tbody>
 {{end}}
 
 {{define "actionsbox"}}
 				<span class='actions'>
-					<form action='/replyto'>
+					<form class='replyto' action='/replyto'>
 						<input type='hidden' name='backto' value='{{.BackTo}}'>
 						<input type='hidden' name='post' value='{{.PostID}}'>
 						<input type='submit' value='Reply'>
 					</form>
 					{{if .CanDelete}}
 						{{if .Deleted}}
-							<form action='/undelete'>
+							<form class='delete' action='/undelete'>
 								<input type='hidden' name='backto' value='{{.BackTo}}'>
 								<input type='hidden' name='post' value='{{.PostID}}'>
 								<input type='submit' value='Restore'>
 							</form>
 						{{else}}
-							<form action='/delete'>
+							<form class='delete' action='/delete'>
 								<input type='hidden' name='backto' value='{{.BackTo}}'>
 								<input type='hidden' name='post' value='{{.PostID}}'>
 								<input type='submit' value='Delete'>
@@ -48,30 +59,8 @@
 				</span>
 {{end}}
 
-{{ define "posts_part2" }}
-			</span>
-		</span>
-		{{if .CanReply}}
-			<form class='vbox' method='post'>
-				<span style='flex: 4' class='hbox'>
-					<form class='vbox' method='post'>
-						<span style='flex: 4' class='hbox'>
-							<textarea rows='5' style='flex: 4' name='contents' placeholder='Reply'></textarea>
-							<input style='flex: 1' type= 'submit' value='Post'>
-						</span>
-					</form>
-				</span>
-			</form>
-		{{end}}
-		</span>
-	<hr>
-	<table class='replies'>
-		<tbody>
-{{end}}
-
 {{define "posts_part3"}}
 		</tbody>
 	</table>
-</span>
 {{end}}
 

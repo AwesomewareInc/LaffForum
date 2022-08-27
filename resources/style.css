@@ -259,12 +259,33 @@ table.posts .subject {
 }
 
 .postinfo {
-	display: inline-block;
-	margin-left: 1%;
 	flex: 4;
 	align-self: flex-start;
-	white-space: pre-line;
+	position: relative;
 }
+
+.actions {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+}
+
+.actions .replyto, .actions .delete {
+    position: absolute;
+    width: 64px;
+    top: 0;
+}
+.actions input {
+	width: 64px;
+}
+.actions .replyto {
+	right: 0;
+}
+.actions .delete {
+	right: 74px;
+}
+
+
 
 table.replies {
 	font-size: 120%;
@@ -273,7 +294,7 @@ table.replies {
     overflow-wrap: break-word;
     word-break: break-word;
     width: 100%;
-    margin: 4em 0;
+    margin: 0;
 }
 
 table.replies td {
@@ -319,17 +340,6 @@ table.replies .contents p {
 .original-post p:before {
 	content: "> ";
 }
-
-table.replies td .actions {
-	position: absolute;
-	top: 5px;
-	right: 5px;
-}
-
-table.replies td .actions form {
-	display: inline-block;
-}
-
 
 /* USER PAGE */
 

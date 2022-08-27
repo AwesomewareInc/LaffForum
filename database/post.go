@@ -11,16 +11,19 @@ import (
 
 
 type Post struct {
-	ID        int
-	Topic     int
-	Subject   string
-	Contents  string
-	Author    int
-	ReplyTo   int
-	Timestamp int
-	deleted   interface{}
+	ID        		int
+	Topic     		int
+	Subject   		string
+	Contents  		string
+	Author    		int
+	ReplyTo   		int
+	Timestamp 		int
 
-	Error error
+	deleted   		interface{}
+	deletedtime 	interface{}
+	deletedby 		interface{}
+
+	Error 			error
 }
 
 func (p Post) Deleted() bool {
@@ -28,6 +31,22 @@ func (p Post) Deleted() bool {
 		return false
 	} else {
 		return (p.deleted.(int64) == 1)
+	}
+}
+
+func (p Post) DeletedTime() string {
+	if p.deletedtime == nil {
+		return "0"
+	} else {
+		return p.deletedtime.(string)
+	}
+}
+
+func (p Post) DeletedBy() string {
+	if p.deletedby == nil {
+		return "nobody"
+	} else {
+		return p.deletedby.(string)
 	}
 }
 
@@ -48,7 +67,7 @@ func GetPostInfo(id interface{}) (result Post) {
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
 
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted from `posts` WHERE id = ? LIMIT 1;")
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted, deletedtime, deletedby from `posts` WHERE id = ? LIMIT 1;")
 	if err != nil {
 		result.Error = debug.PublicFacingError("Error while getting post info;", err)
 		return
@@ -64,7 +83,9 @@ func GetPostInfo(id interface{}) (result Post) {
 			&result.Author,
 			&result.ReplyTo,
 			&result.Timestamp,
-			&result.deleted); err != nil {
+			&result.deleted,
+			&result.deletedtime,
+			&result.deletedby); err != nil {
 			result.Error = debug.PublicFacingError("Error while getting post info;", err)
 		}
 	}
@@ -78,7 +99,7 @@ type GetPostsByCriteriaResult struct {
 }
 
 func GetPostsByCriteria(criteria string, values ...any) (result GetPostsByCriteriaResult) {
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted FROM `posts` " + criteria)
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted, deletedtime, deletedby FROM `posts` " + criteria)
 	if err != nil {
 		result.Error = fmt.Errorf("Couldn't get posts following the relevant criteria; " + err.Error())
 		return
@@ -96,11 +117,14 @@ func GetPostsByCriteria(criteria string, values ...any) (result GetPostsByCriter
 		var replyto int
 		var timestamp int
 		var deleted interface{}
-		if err := rows.Scan(&id, &topic, &subject, &contents, &author, &replyto, &timestamp, &deleted); err != nil {
+		var deletedtime interface{}
+		var deletedby interface{}
+		if err := rows.Scan(&id, &topic, &subject, &contents, &author, &replyto, &timestamp, &deleted, &deletedtime, &deletedby); err != nil {
 			result.Error = debug.PublicFacingError("Error getting posts by section name; ", err)
 			return
 		}
-		result.Posts = append(result.Posts, Post{int(id.(int64)), topic, subject, contents, author, replyto, timestamp, deleted, nil})
+
+		result.Posts = append(result.Posts, Post{int(id.(int64)), topic, subject, contents, author, replyto, timestamp, deleted, deletedtime, deletedby, nil})
 	}
 	return
 }
@@ -255,7 +279,7 @@ func (session *Session) SetDeleteStatus(id interface{}, deletedBy string, delete
 		return fmt.Errorf("Invalid type '%v' given.", v)
 	}
 
-	err = ExecuteDirect("UPDATE `posts` SET deleted = ? WHERE id = ?", deleteStatus, postID)
+	err = ExecuteDirect("UPDATE `posts` SET deleted = ?, deletedby = ?, deletedtime = ? WHERE id = ?", deleteStatus, deletedBy, time.Now().Unix(), postID)
 	if err != nil {
 		return
 	}

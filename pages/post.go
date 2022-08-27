@@ -6,8 +6,14 @@ import (
 	"html/template"
 	"net/http"
 
+	str "strings"
+
 	"github.com/IoIxD/LaffForum/database"
 	"github.com/IoIxD/LaffForum/strings"
+)
+
+var Unescaper = str.NewReplacer(
+	"\n","<br>",
 )
 
 type PostPageVariables struct {
@@ -16,6 +22,9 @@ type PostPageVariables struct {
 	CanReply bool
 	Author string
 	Timestamp string
+
+	Deleted bool
+	DeletedBy string
 
 	PassiveErrorHeading string
 	PassiveErrorDescription string
@@ -27,6 +36,7 @@ type PostPageVariables struct {
 	BackTo int
 	PostID int
 	CanDelete bool
+	ShowReply bool
 }
 
 type PostField struct {
@@ -34,6 +44,8 @@ type PostField struct {
 	Timestamp 	string
 	Contents 	string
 	Deleted 	bool
+	DeletedBy string
+
 	ParentContents string
 
 	BackTo int
@@ -46,18 +58,48 @@ func init() {
 }
 
 func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
+	// Buffer for the final page.
 	buf := bytes.NewBuffer(nil)
 
+	// header
 	err := tmpl.ExecuteTemplate(buf,"header.html",info)
 	if(err != nil) {
 		tmpl.Execute(buf,err.Error())
 	}
 	
+	// Get all the values to pass to the future templates.
 	toPass := PostPageGen(w,r,info.Values,info)
+
+	// if we got an error from that, do not continue.
+	if(toPass.FatalError != "") {
+		buf.Write([]byte(`<span style="white-space: pre-wrap">`+
+							template.HTMLEscaper(toPass.FatalError)+
+						`</span>`))
+		err = tmpl.ExecuteTemplate(buf,"footer.html",info)
+		if(err != nil) {
+			tmpl.Execute(buf,err.Error())
+		}
+	}
 
 	err = tmpl.ExecuteTemplate(buf,"posts_part1",toPass)
 	if(err != nil) {
 		tmpl.Execute(buf,err.Error())
+	}
+
+	// The contents of the post are displayed here to bypass html/template's html escaping.
+	// (template.HTML(...) doesn't work for us)
+	// Also whitespace: pre-wrap ruins the padding for some reason so here is where we
+	// replace newlines with <br>
+	if(!toPass.Deleted) {
+		contents := str.Replace(strings.Markdown(toPass.PostContents),"\n","<br>",9999)
+		buf.Write([]byte(contents))
+	} else {
+		if(toPass.DeletedBy == toPass.Author) {
+			buf.Write([]byte("<em>[deleted]</em>"))
+		} else {
+			buf.Write([]byte("<em>[removed]</em>"))
+		}
+		
 	}
 
 	if(info.Session.Username != "") {
@@ -73,58 +115,47 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 	}
 
 	for _, v := range toPass.PostFields {	
-		
-		templateString, deletedString := "", ""
+		templateString, deletedClassString, deletedString := "", "", ""
 
 		if(v.Deleted) {
-			deletedString = " deleted"
+			deletedClassString = " deleted"
 		}
 
-		templateString = `
-		<tr>
-			<td class='from`+deletedString+`'>`;
-
-		if(v.Author != "") {
-			templateString += `
-				<a href='/user/`+v.Author+`'>`+v.Author+`</a>`
+		if(v.DeletedBy == v.Author) {
+			deletedString = "<em>[deleted by "+v.DeletedBy+"; "+v.Author+"]</em>"
 		} else {
-			templateString += `
-				<em>[deleted]</em>`
+			deletedString = "<em>[removed by "+v.DeletedBy+"; "+v.Author+"]</em>"
 		}
-		templateString += `
-			</td>
-			<td class='contents`+deletedString+`'>
-				<b>`+v.Timestamp+`</b><br>`
+
+		templateString = `<tr><td class='from`+deletedClassString+`'>`;
+
+		if(v.Author != "" && !v.Deleted) {
+			templateString += `<a href='/user/`+v.Author+`'>`+v.Author+`</a>`
+		} else {
+			templateString += deletedString
+		}
+
+		templateString += `</td><td class='contents`+deletedClassString+`'><b>`+v.Timestamp+`</b><br>`
 
 		if(v.ParentContents != "") {
-			templateString += `
-				<span class='original-post'>
-					`+strings.Markdown(v.ParentContents)+
-				`</span>
-				`
+			templateString += `<span class='original-post'>`+strings.Markdown(v.ParentContents)+`</span>`
 		}
 
 		if(!v.Deleted) {
-			templateString += 
-				strings.Markdown(v.Contents)
+			contents := str.Replace(strings.Markdown(v.Contents),"\n","<br>",9999)
+			templateString += contents
 		} else {
-			templateString += `
-				<em>[deleted]</em>`
+			templateString += deletedString
 		}
-		tmpl.Execute(buf,template.HTML(templateString))
-		fmt.Print(templateString)
+		buf.Write([]byte(templateString))
+
 		if(info.Session.Username != "") {
 			err = tmpl.ExecuteTemplate(buf,"actionsbox",v)
 			if(err != nil) {
 				tmpl.Execute(buf,err.Error())
 			}
 		}
-		templateString = `
-			</td>
-		</tr>`;
-		fmt.Print(templateString)
-		tmpl.Execute(buf,template.HTML(templateString))
-		fmt.Print("\n")
+		buf.Write([]byte(`</td></tr>`));
 	}
 
 	err = tmpl.ExecuteTemplate(buf,"posts_part3",toPass)
@@ -165,8 +196,14 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		return
 	}
 	
-	toPass.PostSubject = post.Subject
-	toPass.PostContents = post.Contents
+	toPass.Deleted = post.Deleted()
+
+	// redundant check to make sure that if the post is deleted, the post contents aren't even *processed*.
+	if(!toPass.Deleted) {
+		toPass.PostSubject = post.Subject
+		toPass.PostContents = post.Contents
+	}
+
 
 	userid := database.GetUserIDByName(username).Result
 	sectioninf := database.GetSectionInfo(post.Topic)
@@ -209,12 +246,14 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		toPass.Timestamp = timestamp.Result.(string)
 	}
 
+	toPass.CanReply = false
+
 	if(sectioninf.AdminOnly == 2) {
 		if(isadmin) {
 			toPass.CanReply = true
-		} else {
-			toPass.CanReply = false
 		}
+	} else if(info.Session.Username != "") {
+		toPass.CanReply = true
 	}
 
 
@@ -228,6 +267,8 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		var postField PostField
 		for _, n := range posts.Posts {
 			postField.Deleted = n.Deleted()
+			postField.DeletedBy = n.DeletedBy()
+
 			if (!postField.Deleted || isadmin) {
 				author := database.GetUsernameByID(n.Author)
 				if(author.Error != nil) {
@@ -251,6 +292,9 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 						} else {
 							postField.ParentContents = `Deleted by a moderator`;
 						}
+					} else {
+						toPass.FatalError = post_.Error.Error()
+						return
 					}
 				}
 			}
@@ -260,18 +304,29 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 			postField.BackTo = post.ID
 			postField.PostID = n.ID
 
-			if(postField.Author == info.Session.Username || info.Session.Me().Admin()) {
+			postField.CanDelete = false
+			if(
+				(postField.Author == info.Session.Username) || 
+				(postField.Deleted && postField.Author == postField.DeletedBy) || 
+				isadmin) {
 				postField.CanDelete = true
 			}
+
+			postFields = append(postFields,postField)
 		}
-		postFields = append(postFields,postField)
 	}
 
 	toPass.PostFields = postFields
 	toPass.BackTo = post.ID
 	toPass.PostID = post.ID
-	if(toPass.Author == info.Session.Username || info.Session.Me().Admin()) {
+	toPass.DeletedBy = post.DeletedBy()
+	toPass.CanDelete = false
+	if(
+		(toPass.Author == info.Session.Username) || 
+		(toPass.Deleted && toPass.Author == toPass.DeletedBy) || 
+		isadmin) {
 		toPass.CanDelete = true
 	}
+
 	return
 }

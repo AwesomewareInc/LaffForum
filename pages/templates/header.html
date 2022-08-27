@@ -24,7 +24,7 @@
 								{{$result := GetUnreadReplyingTo .Session.Username}}
 								<a href='/notifications'>
 									{{if $result.Error}}
-										<em style='{{$result.Error}}'>(? Unread)</em>
+										<em data-error='{{$result.Error}}'>(? Unread)</em>
 									{{else}}
 										{{$unread := (len $result.Posts)}}
 										{{if ge $unread 1}}
