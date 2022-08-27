@@ -14,8 +14,11 @@ import (
 
 var Unescaper = str.NewReplacer(
 	"\n","<br>",
+	"&amp;", "&",
 	"&#39;", "'",
 	"&#34;", "\"",
+	"&lt;", "<pre>&lt;</pre>",
+	"&gt;", "<pre>&gt;</pre>",
 )
 
 type PostPageVariables struct {
@@ -124,9 +127,9 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 		}
 
 		if(v.DeletedBy == v.Author) {
-			deletedString = "<em>[deleted by "+v.DeletedBy+"; "+v.Author+"]</em>"
+			deletedString = "<em>[deleted]</em>"
 		} else {
-			deletedString = "<em>[removed by "+v.DeletedBy+"; "+v.Author+"]</em>"
+			deletedString = "<em>[removed]</em>"
 		}
 
 		templateString = `<tr><td class='from`+deletedClassString+`'>`;
@@ -200,10 +203,9 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 	
 	toPass.Deleted = post.Deleted()
 
-	// redundant check to make sure that if the post is deleted, the post contents aren't even *processed*.
-	if(!toPass.Deleted) {
-		toPass.PostSubject = post.Subject
-		toPass.PostContents = post.Contents
+	// redundant check to make sure that if the post is deleted, nothing is even *processed*
+	if(toPass.Deleted) {
+		return
 	}
 
 
@@ -270,41 +272,10 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		for _, n := range posts.Posts {
 			postField.Deleted = n.Deleted()
 			postField.DeletedBy = n.DeletedBy()
-
-			if (!postField.Deleted || isadmin) {
-				author := database.GetUsernameByID(n.Author)
-				if(author.Error != nil) {
-					postField.Author = `Could not get author; `+author.Error.Error()
-				} else {
-					postField.Author = author.Result.(string);
-				}
-			}
-			if((!postField.Deleted) || isadmin || (userid == n.Author)) {
-				timestamp := strings.PrettyTime(n.Timestamp)
-				if(timestamp.Error != nil) {
-					postField.Timestamp = `Could not parse; `+timestamp.Error.Error()
-				} else {
-					postField.Timestamp = timestamp.Result.(string)
-				}
-				if (n.ReplyTo != post.ID) {
-					post_ := database.GetPostInfo(n.ReplyTo)
-					if(post_.Error == nil) {
-						if ((!post_.Deleted()) || isadmin ) {
-							postField.ParentContents = post_.Contents
-						} else {
-							postField.ParentContents = `Deleted by a moderator`;
-						}
-					} else {
-						toPass.FatalError = post_.Error.Error()
-						return
-					}
-				}
-			}
-
 			postField.Contents = n.Contents
-
 			postField.BackTo = post.ID
 			postField.PostID = n.ID
+			postField.ParentContents = ""
 
 			postField.CanDelete = false
 			if(
@@ -313,6 +284,42 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 				isadmin) {
 				postField.CanDelete = true
 			}
+
+			// Only calculate the following if it's a visible post.
+			if(!postField.Deleted || isadmin || userid == n.Author) {
+				// Poster name
+				if (!postField.Deleted || isadmin) {
+					author := database.GetUsernameByID(n.Author)
+					if(author.Error != nil) {
+						postField.Author = `Could not get author; `+author.Error.Error()
+					} else {
+						postField.Author = author.Result.(string);
+					}
+				}
+				// Timestamp
+				timestamp := strings.PrettyTime(n.Timestamp)
+				if(timestamp.Error != nil) {
+					postField.Timestamp = `Could not parse; `+timestamp.Error.Error()
+				} else {
+					postField.Timestamp = timestamp.Result.(string)
+				}
+				// Parent Post
+				if (n.ReplyTo != post.ID) {
+					post_ := database.GetPostInfo(n.ReplyTo)
+					fmt.Println(post_.Deleted())
+					if(post_.Error == nil) {
+						if (!post_.Deleted() || isadmin ) {
+							postField.ParentContents = post_.Contents
+						} else {
+							postField.ParentContents = "[deleted]"
+						}
+					} else {
+						toPass.FatalError = post_.Error.Error()
+						return
+					}
+				}
+			}
+
 
 			postFields = append(postFields,postField)
 		}
