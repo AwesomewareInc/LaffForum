@@ -208,6 +208,8 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		return
 	}
 
+	toPass.PostContents = post.Contents
+	toPass.PostSubject = post.Subject
 
 	userid := database.GetUserIDByName(username).Result
 	sectioninf := database.GetSectionInfo(post.Topic)
