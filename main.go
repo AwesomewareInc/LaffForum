@@ -52,7 +52,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 				<h1>Error 500.</h1>
 				There was a <b>fatal</b> error on the backend. There's not much else we can say about a fatal error, so please send this to a developer or our support email with a detailed description of what you were doing.<br>
 				<hr>
-				<pre>%v</pre>`,debug.PublicFacingErrorUnstripped(what.(error)).Error()), 
+				<pre>%v</pre>`, debug.PublicFacingErrorUnstripped(what.(error)).Error()),
 				http.StatusInternalServerError)
 			return
 		}
@@ -60,10 +60,10 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 
 	// How are we trying to access the site?
 	switch r.Method {
-		case http.MethodGet, http.MethodHead, http.MethodPost: // These methods are allowed. continue.
-		default: // Send them an error for other ones.
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
+	case http.MethodGet, http.MethodHead, http.MethodPost: // These methods are allowed. continue.
+	default: // Send them an error for other ones.
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
 
 	// Get the pagename.
@@ -76,9 +76,9 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	// Before doing anything else we make a special case for rss, which isn't an internal page or regular page,
-	// and it should be called before anything else is done to read/write objects. 
-	if(pagename == "rss") {
-		pages.RSSServe(w,r,values)
+	// and it should be called before anything else is done to read/write objects.
+	if pagename == "rss" {
+		pages.RSSServe(w, r, values)
 		return
 	}
 
@@ -98,8 +98,8 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// relevant session
-	sess := database.GetSession(r,w)
-	if(sess.Error != nil) {
+	sess := database.GetSession(r, w)
+	if sess.Error != nil {
 		http.Error(w, sess.Error.Error(), 500)
 		return
 	}
@@ -121,10 +121,10 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 	// Serve the file differently based on whether it's an internal page or not.
 	if internal {
 		f, ok := pages.PageFunctions[pagename]
-		if(ok) {
-			f(w,r,*info)
+		if ok {
+			f(w, r, *info)
 		} else {
-			if err := pages.GenericTemplate(w,r,pagename,*info); err != nil {
+			if err := pages.GenericTemplate(w, r, pagename, *info); err != nil {
 				http.Error(w, err.Error(), 500)
 				return
 			}
