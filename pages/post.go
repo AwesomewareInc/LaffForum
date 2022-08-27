@@ -80,25 +80,36 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 			deletedString = " deleted"
 		}
 
-		templateString = "<tr><td class='from"+deletedString+"'>"
-		if(v.Author != "") {
-			templateString += "<a href='/user/"+v.Author+"'>"+v.Author+"</a>"
-		} else {
-			templateString += "<em>[deleted]</em>"
-		}
-		templateString += "</td>"
-		templateString += "<td class='contents"+deletedString+"'>"
+		templateString = `
+		<tr>
+			<td class='from`+deletedString+`'>`;
 
-		templateString += "<b>"+v.Timestamp+"</b><br>"
+		if(v.Author != "") {
+			templateString += `
+				<a href='/user/`+v.Author+`'>`+v.Author+`</a>`
+		} else {
+			templateString += `
+				<em>[deleted]</em>`
+		}
+		templateString += `
+			</td>
+			<td class='contents`+deletedString+`'>
+				<b>`+v.Timestamp+`</b><br>`
 
 		if(v.ParentContents != "") {
-			templateString += "<span class='original-post'>"+strings.Markdown(v.ParentContents)+"</span>"
+			templateString += `
+				<span class='original-post'>
+					`+strings.Markdown(v.ParentContents)+
+				`</span>
+				`
 		}
 
 		if(!v.Deleted) {
-			templateString += strings.Markdown(v.Contents)
+			templateString += 
+				strings.Markdown(v.Contents)
 		} else {
-			templateString += "<em>[deleted]</em>"
+			templateString += `
+				<em>[deleted]</em>`
 		}
 		tmpl.Execute(buf,template.HTML(templateString))
 		fmt.Print(templateString)
@@ -108,7 +119,9 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 				tmpl.Execute(buf,err.Error())
 			}
 		}
-		templateString = `</td></tr>`;
+		templateString = `
+			</td>
+		</tr>`;
 		fmt.Print(templateString)
 		tmpl.Execute(buf,template.HTML(templateString))
 		fmt.Print("\n")
