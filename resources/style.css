@@ -180,6 +180,15 @@ li+ul {
 	margin: 8px;
 }
 
+.last5diss {
+	flex: 2;
+	border: 1px solid #1E40AF; 
+	position: relative;
+	min-width: 50%;
+	margin: 8px;
+}
+
+
 .last5 .item {
 	display: block;
 	margin-left: 1em;

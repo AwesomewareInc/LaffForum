@@ -73,3 +73,42 @@
 	</span>
 </span>
 {{end}}
+{{define "last5discussionposts"}}
+<span class='box last5diss'>
+	<span class='box heading' style='
+		background: #1E40AF; color: white;
+		'>
+		Discuss recently posted issues.
+	</span>
+	<span class='contents'>
+		{{$posts := GetLastFiveDiscussionPosts}}
+		{{if $posts.Error}}
+			{{$posts.Error.Error}}
+		{{else}}
+			{{range $i, $v := $posts.Posts}}
+				{{if not $v.Deleted}}
+					<span class='item'>
+						<b><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></b> by 
+						{{$result := GetUsernameByID $v.Author}}
+						{{if $result.Error}}
+							<em style='{{$result.Error}}'>unknown</em>
+						{{else}}
+							{{if not $result.Result}}
+								<em>[deleted]</em>
+							{{else}}
+								<a href='/user/{{$result.Result}}'>{{$result.Result}}</a>
+							{{end}}
+						{{end}}
+						{{$result = PrettyTime $v.Timestamp}}
+						{{if $result.Error}}
+							<em style='{{$result.Error}}'>(couldn't get time posted)</em>
+						{{else}}
+							{{$result.Result}}
+						{{end}}
+					</span>
+				{{end}}
+			{{end}}
+		{{end}}
+	</span>
+</span>
+{{end}}

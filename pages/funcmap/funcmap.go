@@ -31,6 +31,7 @@ var FuncMap = template.FuncMap{
 	"GetPostsInReplyTo":     		database.GetPostsInReplyTo,
 	"GetPostInfo":           		database.GetPostInfo,
 	"GetLastFivePosts": 			database.GetLastFivePosts,
+	"GetLastFiveDiscussionPosts":	database.GetLastFiveDiscussionPosts,
 	"GetUnreadReplyingTo": 			database.GetUnreadReplyingTo,
 	"GetReadReplyingTo": 			database.GetReadReplyingTo,
 
