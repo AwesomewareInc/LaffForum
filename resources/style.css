@@ -189,7 +189,7 @@ li+ul {
 }
 
 
-.last5 .item, .last5diss item {
+.last5 .item, .last5diss .item {
 	display: block;
 	margin-left: 1em;
 }
