@@ -374,3 +374,11 @@ table.replies .contents p {
 	/* fuck your dark mode the site isn't that bright */
 	body {color: black!important;}
 }
+
+.quake-iframe {
+	border: none!important;
+	width: 40vw;
+	height: 30vw;
+	display: block;
+	pointer-events: none!important;
+}

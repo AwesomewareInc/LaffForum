@@ -44,6 +44,10 @@ func PrintThreeMonthsFromNow() string {
 
 func Markdown(val string) (string) {
 	val = template.HTMLEscapeString(val)
+	val = strings.Replace(val,"{{QUAKE}}",
+		`<a href='/WebQuake/Client/index.htm'>
+			<iframe width='1024' height='768' src='/WebQuake/Client/index.htm' class='quake-iframe'></iframe>
+		</a>`,1)
 	return string(markdown.ToHTML([]byte(val),nil,nil))
 }
 

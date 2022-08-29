@@ -1,0 +1,3 @@
+[submodule "WebQuake"]
+	path = WebQuake
+	url = https://github.com/Triang3l/WebQuake/

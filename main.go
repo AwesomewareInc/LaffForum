@@ -88,8 +88,8 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 		internal = true
 	} else {
 		// Otherwise, check if it could refer to a regular file.
-		if file, err = os.Open("./" + pagename); err == nil {
-			filename = "./" + pagename
+		if file, err = os.Open("." + r.URL.EscapedPath()); err == nil {
+			filename = "." + r.URL.EscapedPath()
 		} else {
 			// If all else fails, send a 404.
 			http.Error(w, err.Error(), 404)
