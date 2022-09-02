@@ -5,6 +5,9 @@ window.onpopstate = (e) => {
 let pages = new Map();
 var parser = new DOMParser();
 
+let p = window.location.prefix+window.location.host
+let filteredPages = ["logout", "login", "register", "submit"]
+
 function replaceLinks() {
 	let links = document.querySelectorAll('a');
 	// For each link on the page.
@@ -13,9 +16,12 @@ function replaceLinks() {
 		if(!link.href.includes(window.location.host)) {
 			return
 		}
-		// DON'T cache the account pages.
-		if(link.href.includes("logout") || link.href.includes("login") || link.href.includes("register")) {
-			return
+
+		// DON'T cache some pages.
+		for(let i in filteredPages) {
+			if(link.href.includes(filteredPages[i])) {
+				return
+			}
 		}
 
 		// Check if we already have its contents cached
