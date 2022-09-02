@@ -6,7 +6,7 @@ let pages = new Map();
 var parser = new DOMParser();
 
 let p = window.location.prefix+window.location.host
-let filteredPages = ["logout", "login", "register", "submit"]
+let filteredPages = ["logout", "login", "register", "submit", "replyto"]
 
 function replaceLinks() {
 	let links = document.querySelectorAll('a');
