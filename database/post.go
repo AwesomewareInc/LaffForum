@@ -211,7 +211,7 @@ func GetReadReplyingTo(username string) (result GetPostsByCriteriaResult) {
 
 	var results []Post
 	for _, v := range usersPosts.Posts {
-		posts := GetPostsByCriteria("WHERE replyto = ? AND unread = 0 AND author != ? ORDER BY id DESC;", v.ID, userid.(int))
+		posts := GetPostsByCriteria("WHERE replyto = ? AND unread = 0 AND author != ? ORDER BY id DESC;", v.ID, userid.(int64))
 		if posts.Error != nil {
 			return posts
 		}
