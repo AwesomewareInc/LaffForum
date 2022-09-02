@@ -278,13 +278,6 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 			postField.PostID = n.ID
 			postField.ParentContents = ""
 
-			postField.CanDelete = false
-			if (postField.Author == info.Session.Username) ||
-				(postField.Deleted && postField.Author == postField.DeletedBy) ||
-				isadmin {
-				postField.CanDelete = true
-			}
-
 			// Only calculate the following if it's a visible post.
 			if !postField.Deleted || isadmin || userid == n.Author {
 				// Poster name
@@ -317,6 +310,14 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 						return
 					}
 				}
+				postField.CanDelete = false
+
+				if (!postField.Deleted && postField.Author == info.Session.Username) ||
+					(postField.Deleted && postField.Author == postField.DeletedBy) ||
+					isadmin {
+					postField.CanDelete = true
+				}
+
 			}
 
 			postFields = append(postFields, postField)
@@ -328,7 +329,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 	toPass.PostID = post.ID
 	toPass.DeletedBy = post.DeletedBy()
 	toPass.CanDelete = false
-	if (toPass.Author == info.Session.Username) ||
+	if (!toPass.Deleted && toPass.Author == info.Session.Username) ||
 		(toPass.Deleted && toPass.Author == toPass.DeletedBy) ||
 		isadmin {
 		toPass.CanDelete = true
