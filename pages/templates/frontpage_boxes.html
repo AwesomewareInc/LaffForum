@@ -28,7 +28,7 @@
 			{{$sections.Error.Error}}
 		{{else}}
 			{{range $i, $v := $sections.Results}}
-				<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a><br>
+				<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a>
 			{{end}}
 		{{end}}
 	</span>

@@ -153,6 +153,11 @@ li+ul {
 	margin: 8px;
 }
 
+.sections a, .announcements a, .last5 .item {
+	display: block;
+	margin-left: 1em;
+}
+
 .announcements {
 	flex: 2;
 	border: 1px solid #A0C99C; 
@@ -370,6 +375,21 @@ table.replies .contents p {
 	right: 5px;
 }
 
+/* mobile */
+
+@media (max-width: 600px) {
+	body {
+		font-size: 5vw!important;
+	}
+	.vbox .hbox {
+		flex-direction: column;
+	}
+	.make-post {
+		width: 90%!important;
+		text-align: center;
+	}
+}
+
 @media (prefers-color-scheme: dark) {
 	/* fuck your dark mode the site isn't that bright */
 	body {color: black!important;}
@@ -382,3 +402,4 @@ table.replies .contents p {
 	display: block;
 	pointer-events: none!important;
 }
+

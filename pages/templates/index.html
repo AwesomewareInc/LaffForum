@@ -4,17 +4,19 @@
 <meta property="og:description" content="Official news and discussion regarding the Funny Wars comi" />
 <span class='vbox'>
 	<span class='hbox'>
-		{{ template "sectionsbox" .}}
-		<span class='whitespace'></span>
+		{{if not .Session.Username}}
 		<span class='box welcome'>
 			<h1>The Funny Wars forum</h1>
 			<p>Official news and discussion regarding the Funny Wars comic</p>
 		</span>
+		<span class='whitespace'></span>
+		{{end}}
+		{{ template "announcementsbox" .}}
 	</span>
 </span>
 <span class='vbox'>
 	<span class='hbox'>
-		{{ template "announcementsbox" .}}
+		{{ template "sectionsbox" .}}
 		{{ template "last5posts" .}}
 	</span>
 </span>
