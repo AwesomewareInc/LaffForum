@@ -9,21 +9,20 @@ import (
 	"github.com/IoIxD/LaffForum/debug"
 )
 
-
 type Post struct {
-	ID        		int
-	Topic     		int
-	Subject   		string
-	Contents  		string
-	Author    		int
-	ReplyTo   		int
-	Timestamp 		int
+	ID        int
+	Topic     int
+	Subject   string
+	Contents  string
+	Author    int
+	ReplyTo   int
+	Timestamp int
 
-	deleted   		interface{}
-	deletedtime 	interface{}
-	deletedby 		interface{}
+	deleted     interface{}
+	deletedtime interface{}
+	deletedby   interface{}
 
-	Error 			error
+	Error error
 }
 
 func (p Post) Deleted() bool {
@@ -135,7 +134,7 @@ func GetPostsBySectionName(name string) (result GetPostsByCriteriaResult) {
 		result.Error = debug.PublicFacingError("Error getting posts by section name; ", id_.Error)
 		return
 	}
-	if(id_.Result == nil) {
+	if id_.Result == nil {
 		return
 	}
 	id := id_.Result.(int64)
@@ -200,20 +199,19 @@ func GetLastFiveDiscussionPosts() (result GetPostsByCriteriaResult) {
 
 func GetReadReplyingTo(username string) (result GetPostsByCriteriaResult) {
 	useridr := GetUserIDByName(username)
-	if(useridr.Error != nil) {
+	if useridr.Error != nil {
 		result.Error = useridr.Error
 		return
-	} 
+	}
 	userid := useridr.Result
 	usersPosts := GetPostsFromUser(username)
-	if(usersPosts.Error != nil) {
+	if usersPosts.Error != nil {
 		return usersPosts
 	}
 
 	var results []Post
 	for _, v := range usersPosts.Posts {
-		posts := GetPostsByCriteria("WHERE replyto = ? AND unread = 0 AND author != ? ORDER BY id DESC;", v.ID, userid.(int))
-		fmt.Println(posts)
+		posts := GetPostsByCriteria("WHERE replyto = ? AND unread = 0 AND author != ? ORDER BY id DESC;", v.ID, userid.(int64))
 		if posts.Error != nil {
 			return posts
 		}
@@ -221,18 +219,18 @@ func GetReadReplyingTo(username string) (result GetPostsByCriteriaResult) {
 			results = append(results, n)
 		}
 	}
-	return GetPostsByCriteriaResult{results,nil}
+	return GetPostsByCriteriaResult{results, nil}
 }
 
 func GetUnreadReplyingTo(username string) (result GetPostsByCriteriaResult) {
 	useridr := GetUserIDByName(username)
-	if(useridr.Error != nil) {
+	if useridr.Error != nil {
 		result.Error = useridr.Error
 		return
-	} 
+	}
 	userid := useridr.Result
 	usersPosts := GetPostsFromUser(username)
-	if(usersPosts.Error != nil) {
+	if usersPosts.Error != nil {
 		return usersPosts
 	}
 
@@ -246,13 +244,13 @@ func GetUnreadReplyingTo(username string) (result GetPostsByCriteriaResult) {
 			results = append(results, n)
 		}
 	}
-	return GetPostsByCriteriaResult{results,nil}
+	return GetPostsByCriteriaResult{results, nil}
 }
 
 // Mark posts as "read" by a session.
-func (session *Session) HasRead(id int) (error) {
+func (session *Session) HasRead(id int) error {
 	err := session.Verify()
-	if(err != nil) {
+	if err != nil {
 		return err
 	}
 	err = ExecuteDirect("UPDATE `posts` SET unread = 0 WHERE id = ?", id)
@@ -271,7 +269,7 @@ func (session *Session) RestorePost(id interface{}, deletedBy string) (err error
 func (session *Session) SetDeleteStatus(id interface{}, deletedBy string, deleteStatus int) (err error) {
 	// Check the "session" that wants to modify this post.
 	err = session.Verify()
-	if(err != nil) {
+	if err != nil {
 		return
 	}
 
@@ -307,13 +305,11 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 
 	// Check the "session" that submitted this post.
 	err := session.Verify()
-	if(err != nil) {
-		result.Error = fmt.Errorf("Verification error; %v",err)
+	if err != nil {
+		result.Error = fmt.Errorf("Verification error; %v", err)
 		return
 	}
 
-	
-	
 	// topic/reply IDs from string, if we have to.
 	var topicID int
 	switch v := topic.(type) {

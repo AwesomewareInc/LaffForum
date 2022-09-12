@@ -6,13 +6,15 @@ import (
 	"strings"
 )
 
-
 func DoCommand(text string) error {
 	text = strings.Replace(text, "\n", "", 99)
 	args := strings.Split(text, " ")
 	command := args[0]
 	var err error
 	switch command {
+	case "help":
+		fmt.Println("createsection, mkadmin")
+		return nil
 	case "createsection":
 		if len(args) < 3 {
 			return fmt.Errorf("createsection <string sectionname> <int adminonly>")
