@@ -342,16 +342,16 @@ table.replies .contents {
 	width: 100%;
 }
 
-table.replies .contents p {
+table.replies .contents {
 	margin: 0;
 }
 
-.original-post p {
+.original-post {
 	opacity: 0.75;
 	display: block;
 }
 
-.original-post p:before {
+.original-post:before {
 	content: "> ";
 }
 
