@@ -403,3 +403,29 @@ table.replies .contents p {
 	pointer-events: none!important;
 }
 
+.opengraph_prefix {
+	color: #03c;
+	text-decoration:underline;
+}
+
+.opengraph {
+	display:block;
+	width: 75%;
+	background: #eee;
+	padding: 0.5em;
+	margin: -1em 0;
+}
+.replies .opengraph {
+	background: #fad67d;
+}
+.opengraph * {
+	color: #444;
+	text-decoration: none;
+}
+.replies .opengraph * {
+	color:black;
+}
+.opengraph img {
+	max-width: 100%;
+	max-height: 100%;
+}

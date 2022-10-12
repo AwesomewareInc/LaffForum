@@ -61,7 +61,6 @@ func PublicFacingError(msg string, err error) error {
 	return fmt.Errorf("%v at %v:%v in %v(), %v. \n\n%v", msg, filename, line, funcname, err.Error(), stacktrace)
 }
 
-
 // Same as above, but we don't strip the stacktrace. Useful for
 // panic recovery where the entire stacktrace is important.
 func PublicFacingErrorUnstripped(err error) error {
