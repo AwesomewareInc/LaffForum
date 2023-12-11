@@ -10,22 +10,34 @@
 	<span class='vbox'>
 		<span class='hbox'>
 			<span class='box authorbox'>
-				{{if .Author}}
-					Post by <a href='/pages/{{.Author}}'>{{.Author}}</a>
+				<span class="vbox">
+					{{if .Author}}
+					
+					<span style="vertical-align: middle"  class="hbox">
+						<span style=" flex: 5;" class="box">Post by <a href='/user/{{.Author}}'>{{.Author}}</a></span>
+						<span class="box"><em>{{.Pronouns}}</em></span>
+					</span>
+					
 				{{else}}
 					<em>[deleted]</em>
 				{{end}}
-				<br>
-				<small style='font-weight: normal;'>posted {{.Timestamp}}</small>
+				
+				<span class="box" style='font-weight: normal;'>posted {{.Timestamp}}</span>
+				</span>
+				
 			</span>
 			<span class='box postinfo'>
-			{{if not .Deleted}}
-				<h1>{{.PostSubject}}</h1>
-			{{end}}
+				<span class="vbox">
+					{{if not .Deleted}}
+						<span class="box"><h1>{{.PostSubject}}</h1></span>
+					{{end}}
+				
+			
 {{end}}
 
 
 {{ define "posts_part2" }}
+				</span>
 			</span>
 		</span>
 	</span>
@@ -35,28 +47,36 @@
 {{end}}
 
 {{define "actionsbox"}}
-				<span class='actions'>
+				<span class="hbox actions">
+					<span class="box">
 					<form class='replyto' action='/replyto'>
 						<input type='hidden' name='backto' value='{{.BackTo}}'>
 						<input type='hidden' name='post' value='{{.PostID}}'>
-						<input type='submit' value='Reply'>
+						
+							<input type='submit' value='Reply'>
+						
 					</form>
+				</span>
 					{{if .CanDelete}}
 						{{if .Deleted}}
-							<form class='delete' action='/undelete'>
-								<input type='hidden' name='backto' value='{{.BackTo}}'>
-								<input type='hidden' name='post' value='{{.PostID}}'>
-								<input type='submit' value='Restore'>
-							</form>
+							<span class="box">
+								<form class='delete' action='/undelete'>
+									<input type='hidden' name='backto' value='{{.BackTo}}'>
+									<input type='hidden' name='post' value='{{.PostID}}'>
+									<input type='submit' value='Restore'>
+								</form>
+							</span>
 						{{else}}
-							<form class='delete' action='/delete'>
-								<input type='hidden' name='backto' value='{{.BackTo}}'>
-								<input type='hidden' name='post' value='{{.PostID}}'>
-								<input type='submit' value='Delete'>
-							</form>
+							<span class="box">
+								<form class='delete' action='/delete'>
+									<input type='hidden' name='backto' value='{{.BackTo}}'>
+									<input type='hidden' name='post' value='{{.PostID}}'>
+									<input type='submit' value='Delete'>
+								</form>
+							</span>
 						{{end}}
 					{{end}}
-				</span>
+			</span>
 {{end}}
 
 {{define "posts_part3"}}

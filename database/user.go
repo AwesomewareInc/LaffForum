@@ -9,15 +9,16 @@ import (
 )
 
 type UserInfo struct {
-	ID         		int
-	Username   		string
-	PrettyName 		string
-	Timestamp  		int
-	bio        		interface{}
-	admin      		interface{}
-	deleted    		interface{}
-	deletedTime 	interface{}
-	Error error
+	ID          int
+	Username    string
+	PrettyName  string
+	Timestamp   int
+	bio         interface{}
+	admin       interface{}
+	deleted     interface{}
+	deletedTime interface{}
+	Pronouns    string
+	Error       error
 }
 
 func (user UserInfo) Bio() string {
@@ -66,8 +67,8 @@ func GetUserInfo(id interface{}) (result UserInfo) {
 	default:
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
-	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin, deleted, deletedtime from `users` WHERE id = ?;", []interface{}{userID},
-		&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin, &result.deleted, &result.deletedTime)
+	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin, deleted, deletedtime, pronouns from `users` WHERE id = ?;", []interface{}{userID},
+		&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin, &result.deleted, &result.deletedTime, &result.Pronouns)
 	if err != nil {
 		result.Error = fmt.Errorf("Couldn't get user info; %v", err.Error())
 		return
@@ -156,35 +157,35 @@ func GetUsernameByID(id int) (result GenericResult) {
 	return
 }
 
-func (session *Session) EditProfile(prettyname, bio string) (err error) {
+func (session *Session) EditProfile(prettyname, bio, pronouns string) (err error) {
 	err = session.Verify()
-	if(err != nil) {
+	if err != nil {
 		return
 	}
 
-	statement, err := database.Prepare("UPDATE `users` SET prettyname = ?, bio = ? WHERE username = ?;")
+	statement, err := database.Prepare("UPDATE `users` SET prettyname = ?, bio = ?, pronouns = ? WHERE username = ?;")
 	if err != nil {
 		return fmt.Errorf("Couldn't prepare statement to edit user profile; " + err.Error())
 	}
 	defer statement.Close()
-	_, err = statement.Exec(SQLSanitize(prettyname), SQLSanitize(bio), SQLSanitize(session.Username))
+	_, err = statement.Exec(SQLSanitize(prettyname), SQLSanitize(bio), SQLSanitize(pronouns), SQLSanitize(session.Username))
 	if err != nil {
 		return fmt.Errorf("Couldn't edit user profile; " + err.Error())
 	}
 
 	return nil
-} 
+}
 
 func (session *Session) DeleteProfile(password string) (err error) {
-	return session.SetProfileDeleteStatus(password,1,time.Now().Unix())
+	return session.SetProfileDeleteStatus(password, 1, time.Now().Unix())
 }
 func (session *Session) UndeleteProfile(password string) (err error) {
-	return session.SetProfileDeleteStatus(password,0,-1)
+	return session.SetProfileDeleteStatus(password, 0, -1)
 }
 
 func (session *Session) SetProfileDeleteStatus(password string, status int, deletedTime int64) (err error) {
 	err = session.Verify()
-	if(err != nil) {
+	if err != nil {
 		return
 	}
 
@@ -197,10 +198,10 @@ func (session *Session) SetProfileDeleteStatus(password string, status int, dele
 		return fmt.Errorf("Couldn't prepare statement to deactivate/reactivate user; " + err.Error())
 	}
 	defer statement.Close()
-	_, err = statement.Exec(status,deletedTime,session.Username)
+	_, err = statement.Exec(status, deletedTime, session.Username)
 	if err != nil {
 		return fmt.Errorf("Couldn't deactivate/reactivate user; " + err.Error())
 	}
 
 	return nil
-} 
+}

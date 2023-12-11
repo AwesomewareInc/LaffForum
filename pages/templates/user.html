@@ -7,7 +7,11 @@
 			{{if .IsAdmin}}
 				<small><b style='float: right'>Admin</b></small>
 			{{end}}
-			<h3>{{.Name}}</h3>
+			
+			<span style="vertical-align: middle"  class="hbox">
+				<span style=" flex: 5;" class="box"><h3 style="margin: 0;">{{.Name}}</h3></span>
+				<span class="box"><em>{{.Pronouns}}</em></span>
+			</span>
 			<p>{{.Bio}}</p>
 			A member since {{.CreatedAt}}
 			{{if .CanEdit}}

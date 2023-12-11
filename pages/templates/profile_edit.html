@@ -1,8 +1,9 @@
 {{if .Session.Username}}
 	{{$prettynamechange := .PostValues.Get "prettyname"}}
 	{{$biochange := .PostValues.Get "bio"}}
+	{{$pronounchange := .PostValues.Get "pronouns"}}
 	{{if $prettynamechange}}
-		{{$error := .Session.EditProfile  $prettynamechange $biochange}}
+		{{$error := .Session.EditProfile $prettynamechange $biochange $pronounchange}}
 		{{if $error}}
 			{{$error}}
 		{{else}}
@@ -18,6 +19,12 @@
 				value='{{if $prettynamechange}}{{$prettynamechange}}{{else}}{{.Session.Me.PrettyName}}{{end}}' 
 				type='text' 
 				name='prettyname'>
+			<h3>Pronouns:</h3>
+			<input 
+				style='width: 100%' 
+				value='{{if $pronounchange}}{{$pronounchange}}{{else}}{{.Session.Me.Pronouns}}{{end}}' 
+				type='text' 
+				name='pronouns'>
 			<h3>About me:</h3>
 			<em>(Markdown is not supported)</em><br>
 			<textarea style='width: 100%' rows='5' name='bio'>{{if $biochange}}{{$biochange}}{{else}}{{.Session.Me.Bio}}{{end}}

@@ -27,6 +27,7 @@ type PostPageVariables struct {
 	CanReply     bool
 	Author       string
 	Timestamp    string
+	Pronouns     string
 
 	Deleted   bool
 	DeletedBy string
@@ -50,6 +51,7 @@ type PostField struct {
 	Contents  string
 	Deleted   bool
 	DeletedBy string
+	Pronouns  string
 
 	ParentContents string
 
@@ -97,7 +99,7 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 	// replace newlines with <br>
 	if !toPass.Deleted {
 		contents := Unescaper.Replace(strings.Markdown(toPass.PostContents))
-		buf.Write([]byte(contents))
+		buf.Write([]byte("<span class='box'>" + contents + "</span>"))
 	} else {
 		if toPass.DeletedBy == toPass.Author {
 			buf.Write([]byte("<em>[deleted]</em>"))
@@ -135,7 +137,10 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 		templateString = `<tr><td class='from` + deletedClassString + `'>`
 
 		if v.Author != "" && !v.Deleted {
-			templateString += `<a href='/user/` + v.Author + `'>` + v.Author + `</a>`
+			templateString += `<span class='hbox'>
+			<a class='username' href='/user/` + v.Author + `'>` + v.Author + `</a>
+			<em class='pronouns'> ` + v.Pronouns + `</em>
+								</span>`
 		} else {
 			templateString += deletedString
 		}
@@ -193,7 +198,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 	}
 
 	if post.ReplyTo != 0 {
-		http.Redirect(w, r, fmt.Sprintf("/post/%v#%v", post.ReplyTo, post.ID), 303)
+		http.Redirect(w, r, fmt.Sprintf("/post/%v#%v", post.ReplyTo, post.ID), http.StatusSeeOther)
 	}
 
 	if post.ID == 0 {
@@ -235,14 +240,13 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		}
 	}
 
-	author := database.GetUsernameByID(post.Author)
+	author := database.GetUserInfo(post.Author)
 	if author.Error != nil {
 		toPass.PassiveErrorHeading = `Could not get author.`
 		toPass.PassiveErrorDescription = author.Error.Error()
 	} else {
-		if author.Result != "" {
-			toPass.Author = author.Result.(string)
-		}
+		toPass.Author = author.PrettyName
+		toPass.Pronouns = author.Pronouns
 	}
 
 	timestamp := strings.PrettyTime(post.Timestamp)
@@ -280,13 +284,15 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 
 			// Only calculate the following if it's a visible post.
 			if !postField.Deleted || isadmin || userid == n.Author {
-				// Poster name
+				// Poster name/pronouns
 				if !postField.Deleted || isadmin {
-					author := database.GetUsernameByID(n.Author)
+					author := database.GetUserInfo(n.Author)
 					if author.Error != nil {
 						postField.Author = `Could not get author; ` + author.Error.Error()
+						postField.Pronouns = "what"
 					} else {
-						postField.Author = author.Result.(string)
+						postField.Author = author.PrettyName
+						postField.Pronouns = author.Pronouns
 					}
 				}
 				// Timestamp

@@ -264,6 +264,7 @@ table.posts .subject {
 	align-self: flex-start;
 }
 
+
 .authorbox {
 	background: #DBEAFE;
 	border: 1px solid #60A5FA;
@@ -319,6 +320,8 @@ table.replies td {
 }
 
 table.replies tr {
+	display: flex;
+	flex-direction: row;
 	padding: 5px;
 }
 
@@ -332,14 +335,19 @@ table.replies .deleted, table.posts .deleted {
 
 table.replies .from {
 	background:  #f9c56c;
-	width: 34%;
-	text-align: center;
+	flex: 1;
+	word-break: auto-phrase;
+}
+table.replies .from .username {
 	font-weight: bold;
+}
+table.replies .from .pronouns {
+	font-size: 90%;
 }
 
 table.replies .contents {
 	background: #fcdbb8;
-	width: 100%;
+	flex: 10;
 }
 
 table.replies .contents {
@@ -387,6 +395,15 @@ table.replies .contents {
 	.make-post {
 		width: 90%!important;
 		text-align: center;
+	}
+	.authorbox, .postinfo {
+		width: 100%;
+	}
+	.authorbox .hbox, .postinfo .hbox {
+		flex-direction: row!important;
+	}
+	.actions, .actions * {
+		position: static!important;
 	}
 }
 

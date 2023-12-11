@@ -352,12 +352,7 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 	}
 
 	// If the user isn't an admin and the section is admin only, reject it.
-	var isAdmin bool
-	if session.Me().admin == nil {
-		isAdmin = false
-	} else {
-		isAdmin = session.Me().admin.(bool)
-	}
+	isAdmin := session.Me().Admin()
 	if (!isAdmin && GetSectionInfo(topicID).AdminOnly == 1) || (!isAdmin && GetSectionInfo(topicID).Archived) {
 		result.Error = fmt.Errorf("Insufficient permissions to post")
 		return

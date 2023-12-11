@@ -37,6 +37,7 @@ ALTER TABLE "users" ADD "bio"               TEXT;
 ALTER TABLE "users" ADD "admin"             INTEGER;
 ALTER TABLE "users" ADD "deleted"           INTEGER;
 ALTER TABLE "users" ADD "deletedtime"       INTEGER;
+ALTER TABLE "users" ADD "pronouns"          TEXT DEFAULT "";
 
 CREATE TABLE IF NOT EXISTS "sessions" (
     "id" INTEGER PRIMARY KEY
