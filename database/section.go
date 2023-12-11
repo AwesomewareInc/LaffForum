@@ -21,7 +21,7 @@ type GetSectionsResult struct {
 
 func GetSections() (result GetSectionsResult) {
 	result.Results = make([]Section, 0)
-	statement, err := database.Prepare("SELECT id, name, adminonly from `sections`;")
+	statement, err := database.Prepare("SELECT id, name, adminonly from `sections` ORDER BY name ASC;")
 	if err != nil {
 		result.Error = err
 		return
@@ -56,7 +56,7 @@ func GetSectionInfo(id interface{}) (result Section) {
 		} else {
 			sectionID = -1
 		}
-		
+
 	case int:
 		sectionID = id.(int)
 	default:
