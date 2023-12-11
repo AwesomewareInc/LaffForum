@@ -17,6 +17,9 @@
 				$allowed = false
 			{{end}}
 		{{end}}
+		{{if $sectioninf.Archived}}
+			$allowed = false
+		{{end}}
 	{{end}}
 	{{$subject := .PostValues.Get "subject"}}
 	{{if ge (len $subject) 1}}

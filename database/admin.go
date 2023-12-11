@@ -16,7 +16,7 @@ func DoCommand(text string) error {
 		fmt.Println("createsection, renamesection, deletesection, mkadmin, revadmin, exit")
 		return nil
 	case "getsections":
-		sections := GetSections()
+		sections := GetSections(false)
 		for _, section := range sections.Results {
 			fmt.Printf("%d: %s (admin only: %t)\n", section.ID, section.Name, section.AdminOnly == 1)
 		}
@@ -45,6 +45,16 @@ func DoCommand(text string) error {
 			return fmt.Errorf("mkadmin <string username>")
 		}
 		err = RemoveAdmin(args[1])
+	case "archivesection":
+		if len(args) < 2 {
+			return fmt.Errorf("archivesection <string sectionname>")
+		}
+		err = ArchiveSection(args[1])
+	case "unarchivesection":
+		if len(args) < 2 {
+			return fmt.Errorf("unarchivesection <string sectionname>")
+		}
+		err = UnarchiveSection(args[1])
 	case "exit":
 		os.Exit(0)
 	default:
@@ -71,4 +81,11 @@ func MakeAdmin(args ...any) error {
 
 func RemoveAdmin(args ...any) error {
 	return ExecuteDirect("UPDATE `users` SET admin = 0 WHERE username = ?;", args...)
+}
+
+func ArchiveSection(args ...any) error {
+	return ExecuteDirect("UPDATE `sections` SET archived = 1 WHERE name = ?;", args...)
+}
+func UnarchiveSection(args ...any) error {
+	return ExecuteDirect("UPDATE `sections` SET archived = 0 WHERE name = ?;", args...)
 }

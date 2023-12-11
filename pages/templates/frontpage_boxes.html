@@ -23,7 +23,7 @@
 		Sections
 	</span>
 	<span class='contents'>
-		{{$sections := GetSections}}
+		{{$sections := GetSections false}}
 		{{if $sections.Error}}
 			{{$sections.Error.Error}}
 		{{else}}
@@ -31,6 +31,7 @@
 				<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}</a>
 			{{end}}
 		{{end}}
+		<a style="font-style: italic; float: right; font-size: 90%" href="/sections">(See more...)</a>
 	</span>
 </span>
 {{end}}

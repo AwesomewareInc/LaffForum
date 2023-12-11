@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS "sections" (
 
 ALTER TABLE "sections" ADD "name"              TEXT;
 ALTER TABLE "sections" ADD "adminonly"         INTEGER DEFAULT 0;
+ALTER TABLE "sections" ADD "archived"          INTEGER DEFAULT 0;
 
 -- Describe USERS
 CREATE TABLE IF NOT EXISTS "users" (

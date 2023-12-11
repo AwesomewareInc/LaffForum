@@ -20,7 +20,8 @@ var tmpl *template.Template
 type PageFunctionsStruct struct {
 	sync.Mutex
 	f map[string]func(w http.ResponseWriter, r *http.Request, info InfoStruct)
-} 
+}
+
 var PageFunctions PageFunctionsStruct
 
 func init() {
@@ -39,22 +40,23 @@ func init() {
 }
 
 type InfoStruct struct {
-	Values     			[]string
-	Query      			url.Values
-	Session    			*database.Session
-	PostValues 			url.Values
-	Request 			*http.Request
-	ResponseWriter 		http.ResponseWriter
+	Values         []string
+	Query          url.Values
+	Session        *database.Session
+	PostValues     url.Values
+	Request        *http.Request
+	ResponseWriter http.ResponseWriter
+	Archived       bool
 }
 
 // Safely add a function to the page functions
 
 func AddPageFunction(name string, f func(w http.ResponseWriter, r *http.Request, info InfoStruct)) {
-	if(PageFunctions.f == nil) {
+	if PageFunctions.f == nil {
 		go func() {
 			for {
 				time.Sleep(150 * time.Millisecond)
-				if(PageFunctions.f == nil) {
+				if PageFunctions.f == nil {
 					PageFunctions.Lock()
 					PageFunctions.f[name] = f
 					PageFunctions.Unlock()

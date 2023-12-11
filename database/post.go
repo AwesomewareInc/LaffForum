@@ -351,6 +351,18 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 		return
 	}
 
+	// If the user isn't an admin and the section is admin only, reject it.
+	var isAdmin bool
+	if session.Me().admin == nil {
+		isAdmin = false
+	} else {
+		isAdmin = session.Me().admin.(bool)
+	}
+	if (!isAdmin && GetSectionInfo(topicID).AdminOnly == 1) || (!isAdmin && GetSectionInfo(topicID).Archived) {
+		result.Error = fmt.Errorf("Insufficient permissions to post")
+		return
+	}
+
 	// Prepare to insert into posts.
 	statement, err := database.Prepare("INSERT INTO `posts` (author, topic, subject, contents, timestamp, replyto) VALUES (?, ?, ?, ?, ?, ?);")
 	if err != nil {

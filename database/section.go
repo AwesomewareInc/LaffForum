@@ -9,6 +9,7 @@ import (
 type Section struct {
 	ID        int
 	Name      string
+	Archived  bool
 	AdminOnly int
 
 	Error error
@@ -19,9 +20,15 @@ type GetSectionsResult struct {
 	Error   error
 }
 
-func GetSections() (result GetSectionsResult) {
+func GetSections(archived bool) (result GetSectionsResult) {
 	result.Results = make([]Section, 0)
-	statement, err := database.Prepare("SELECT id, name, adminonly from `sections` ORDER BY name ASC;")
+	var query string
+	if archived {
+		query = "SELECT id, name, adminonly, archived from `sections` ORDER BY name ASC;"
+	} else {
+		query = "SELECT id, name, adminonly, archived from `sections` WHERE archived = 0 ORDER BY name ASC;"
+	}
+	statement, err := database.Prepare(query)
 	if err != nil {
 		result.Error = err
 		return
@@ -33,11 +40,12 @@ func GetSections() (result GetSectionsResult) {
 		var id int
 		var name string
 		var adminonly int
-		if err := rows.Scan(&id, &name, &adminonly); err != nil {
+		var archived bool
+		if err := rows.Scan(&id, &name, &adminonly, &archived); err != nil {
 			result.Error = err
 			return
 		}
-		result.Results = append(result.Results, Section{id, name, adminonly, nil})
+		result.Results = append(result.Results, Section{id, name, archived, adminonly, nil})
 	}
 	return result
 }
@@ -63,8 +71,8 @@ func GetSectionInfo(id interface{}) (result Section) {
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 		return
 	}
-	err := ExecuteReturn("SELECT id, name, adminonly from `sections` WHERE id = ?;", []interface{}{sectionID},
-		&result.ID, &result.Name, &result.AdminOnly)
+	err := ExecuteReturn("SELECT id, name, adminonly, archived from `sections` WHERE id = ?;", []interface{}{sectionID},
+		&result.ID, &result.Name, &result.AdminOnly, &result.Archived)
 	if err != nil {
 		result.Error = fmt.Errorf("Couldn't get info for the %v secion; %v", id, err.Error())
 		return

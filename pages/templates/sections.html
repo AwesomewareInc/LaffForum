@@ -1,2 +1,21 @@
+{{ template "header.html" .}}
+<title>Sections of the Awesomeware Forum</title>
 <meta property="og:title" content="Sections of the Awesomeware Forum" />
-{{ template "sectionsbox" .}}
+<span class='box sections'>
+	<span class='box heading' style='
+		background: #f9c56c;
+		'>
+		All Sections
+	</span>
+	<span class='contents'>
+		{{$sections := GetSections true}}
+		{{if $sections.Error}}
+			{{$sections.Error.Error}}
+		{{else}}
+			{{range $i, $v := $sections.Results}}
+				<a href='/topic/{{$v.Name}}'>{{Capitalize $v.Name}}{{if $v.Archived}} <small><em>(Archived)</em></small>{{end}}</a>
+			{{end}}
+		{{end}}
+	</span>
+</span>
+{{ template "footer.html"}}
