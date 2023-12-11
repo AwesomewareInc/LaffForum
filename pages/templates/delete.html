@@ -41,7 +41,7 @@
 {{if $allowed}}
 	{{$confirm := .Query.Get "confirm"}}
 	{{if $confirm}}
-		{{$error := .Session.DeletePost  $postid .Session.Username}}
+		{{$error := .Session.DeletePost $postid .Session.Username}}
 		{{if $error}}
 			<b>{{$error}}</b>
 		{{else}}
@@ -62,4 +62,5 @@
 		<input type='submit' value='Yes'>
 	</form>
 {{end}}
-Footer
+
+{{ template "footer.html" .}}

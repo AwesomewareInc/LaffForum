@@ -211,7 +211,7 @@ table.posts {
 	border-collapse: collapse;
     border-spacing: 0;
     overflow-wrap: break-word;
-    word-break: break-word;
+    word-break: auto-phrase;
     width: 100%;
     margin: 4em 0;
 }
@@ -279,35 +279,13 @@ table.posts .subject {
 	position: relative;
 }
 
-.actions {
-	position: absolute;
-	top: 5px;
-	right: 5px;
-}
-
-.actions .replyto, .actions .delete {
-    position: absolute;
-    width: 64px;
-    top: 0;
-}
-.actions input {
-	width: 64px;
-}
-.actions .replyto {
-	right: 0;
-}
-.actions .delete {
-	right: 74px;
-}
-
-
 
 table.replies {
 	font-size: 120%;
 	border-collapse: collapse;
     border-spacing: 0;
     overflow-wrap: break-word;
-    word-break: break-word;
+    word-break: auto-phrase;
     width: 100%;
     margin: 0;
 }
@@ -354,6 +332,19 @@ table.replies .contents {
 	margin: 0;
 }
 
+
+table.replies .actions {
+	position: absolute;
+	top: 0;
+	right: 0;
+	text-align: right;
+	width: 100%;
+}
+
+table.replies .actions * {
+	display: inline-block!important;
+}
+
 .original-post {
 	opacity: 0.75;
 	display: block;
@@ -386,9 +377,14 @@ table.replies .contents {
 /* mobile */
 
 @media (max-width: 600px) {
-	body {
+	body, input {
 		font-size: 5vw!important;
 	}
+
+	input {
+		width: auto!important;
+	}
+	
 	.vbox .hbox {
 		flex-direction: column;
 	}
@@ -402,8 +398,17 @@ table.replies .contents {
 	.authorbox .hbox, .postinfo .hbox {
 		flex-direction: row!important;
 	}
+	.actions {
+		display: block;
+	}
 	.actions, .actions * {
 		position: static!important;
+	}
+}
+
+@media (max-width: 128px) {
+	.authorbox .hbox, .postinfo .hbox {
+		flex-direction: column!important;
 	}
 }
 

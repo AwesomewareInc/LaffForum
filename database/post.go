@@ -392,3 +392,68 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 
 	return
 }
+
+func (session *Session) EditPost(postid interface{}, content string) (result *SubmitPostResult) {
+	result = new(SubmitPostResult)
+
+	// Check the "session" that submitted this post.
+	err := session.Verify()
+	if err != nil {
+		result.Error = fmt.Errorf("Verification error; %v", err)
+		return
+	}
+
+	// Check to make sure the we're editing our OWN post.
+	var postID int
+	switch v := postid.(type) {
+	case string:
+		postID, err = strconv.Atoi(postid.(string))
+		if err != nil {
+			result.Error = err
+			return
+		}
+	case int:
+		postID = postid.(int)
+	default:
+		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
+	}
+	post := GetPostInfo(postID)
+	author := GetUserInfo(post.Author)
+	if author.Error != nil {
+		result.Error = author.Error
+		return
+	}
+	if author.ID != session.Me().ID {
+		result.Error = fmt.Errorf("Cannot edit another persons post")
+		return
+	}
+
+	// Check for invalid length of things
+	if len(content) == 0 {
+		result.Error = fmt.Errorf("Contents of the post cannot be blank")
+		return
+	}
+
+	// Prepare to insert into posts.
+	statement, err := database.Prepare("UPDATE `posts` SET contents = ? WHERE ID = ?;")
+	if err != nil {
+		result.Error = err
+		return
+	}
+	defer statement.Close()
+
+	// Submit the post with those values and what we got in the function arguments, and return the new post id.
+	execResult, err := statement.Exec(content, postID)
+	if err != nil {
+		result.Error = debug.PublicFacingError("", err)
+		return
+	}
+	result.Result = GetPostInfo(fmt.Sprint(result.ID))
+	result.ID, err = execResult.LastInsertId()
+	if err != nil {
+		result.Error = debug.PublicFacingError("", err)
+		return
+	}
+
+	return
+}

@@ -43,6 +43,7 @@ type PostPageVariables struct {
 	PostID    int
 	CanDelete bool
 	ShowReply bool
+	CanEdit   bool
 }
 
 type PostField struct {
@@ -58,6 +59,7 @@ type PostField struct {
 	BackTo    int
 	PostID    int
 	CanDelete bool
+	CanEdit   bool
 }
 
 func init() {
@@ -206,6 +208,17 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		return
 	}
 
+	toPass.BackTo = post.ID
+	toPass.PostID = post.ID
+	toPass.DeletedBy = post.DeletedBy()
+	toPass.CanDelete = false
+	toPass.CanEdit = false
+	if (!toPass.Deleted && toPass.Author == info.Session.Username) ||
+		(toPass.DeletedBy == info.Session.Username) ||
+		isadmin {
+		toPass.CanDelete = true
+		toPass.CanEdit = true
+	}
 	toPass.Deleted = post.Deleted()
 
 	// redundant check to make sure that if the post is deleted, nothing is even *processed*
@@ -317,11 +330,13 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 					}
 				}
 				postField.CanDelete = false
+				postField.CanEdit = false
 
 				if (!postField.Deleted && postField.Author == info.Session.Username) ||
-					(postField.Deleted && postField.Author == postField.DeletedBy) ||
+					(info.Session.Username == postField.DeletedBy) ||
 					isadmin {
 					postField.CanDelete = true
+					postField.CanEdit = true
 				}
 
 			}
@@ -329,17 +344,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 			postFields = append(postFields, postField)
 		}
 	}
-
 	toPass.PostFields = postFields
-	toPass.BackTo = post.ID
-	toPass.PostID = post.ID
-	toPass.DeletedBy = post.DeletedBy()
-	toPass.CanDelete = false
-	if (!toPass.Deleted && toPass.Author == info.Session.Username) ||
-		(toPass.Deleted && toPass.Author == toPass.DeletedBy) ||
-		isadmin {
-		toPass.CanDelete = true
-	}
 
 	return
 }

@@ -53,9 +53,9 @@
 {{if $allowed}}
 	{{$contents := .Query.Get "content"}}
 	{{if ge (len $contents) 1}}
-		{{$post := .Session.SubmitPost  $postinfo.Topic (print "RE: " $postinfo.Subject) $contents $postid}}
+		{{$post := .Session.EditPost $postid $contents}}
 		{{if $post.Error}}
-			<h1>Error while submitting your reply.</h1>
+			<h1>Error while editing your post.</h1>
 			<span style="white-space: pre-wrap">{{$post.Error}}</span>
 		{{else}}
 			{{Redirect (print "/post/" $backto) 303}}	
@@ -65,22 +65,16 @@
 	{{if $replyee.Error}}
 		<h3>(couldn't get the name of the person this reply is directed at; ){{$replyee.Error.Error}}</h3>
 	{{else}}
-		{{$header := ""}}
-		{{if $replyee.Result}}
-			{{$header = (print "Reply to " $replyee.Result "'s post in " (Capitalize $sectioninfo.Name))}}
-		{{else}}
-			{{$header = (print "Reply to a post in " (Capitalize $sectioninfo.Name))}}
-			<h3>REMINDER: you are replying to the post of a deleted account. They will never be notified of this.</h3>
-		{{end}}
+	{{$header := (print "Editing post in " (Capitalize $sectioninfo.Name))}}
 
 		<title>{{$header}}</title>
 		<meta property="og:title" content="{{$header}}" />
 		<h1>{{$header}}</h1>
 	<strikethough>You can use markdown to flair your posts.</strikethough> Image uploads are currently not supported, please link to <a href="https://imgur.com/">Imgur</a><br><br>
-	<form method='get' action='/replyto'>
+	<form method='get' action='/edit'>
 		<input type='hidden' name='post' value='{{$postid}}'>
 		<input type='hidden' name='backto' value='{{$backto}}'>
-		<textarea style="width: 100%; height: 25%; display:block;" name='content' value='{{$contents}}'></textarea>
+		<textarea style="width: 100%; height: 25%; display:block;" name='content' value='{{$contents}}'>{{$postinfo.Contents}}</textarea>
 		<input type='submit'>
 	</form>
 	{{end}}
