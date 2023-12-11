@@ -26,14 +26,14 @@ var FuncMap = template.FuncMap{
 	"GetUserInfo":     database.GetUserInfo,
 
 	// working with posts
-	"GetPostsBySectionName":      database.GetPostsBySectionName,
-	"GetPostsFromUser":           database.GetPostsFromUser,
-	"GetPostsInReplyTo":          database.GetPostsInReplyTo,
-	"GetPostInfo":                database.GetPostInfo,
-	"GetLastFivePosts":           database.GetLastFivePosts,
-	"GetLastFiveDiscussionPosts": database.GetLastFiveDiscussionPosts,
-	"GetUnreadReplyingTo":        database.GetUnreadReplyingTo,
-	"GetReadReplyingTo":          database.GetReadReplyingTo,
+	"GetPostsBySectionName":             database.GetPostsBySectionName,
+	"GetPostsFromUser":                  database.GetPostsFromUser,
+	"GetPostsInReplyTo":                 database.GetPostsInReplyTo,
+	"GetPostInfo":                       database.GetPostInfo,
+	"GetLastFivePosts":                  database.GetLastFivePosts,
+	"GetLastFiveProjectDiscussionPosts": database.GetLastFiveProjectDiscussionPosts,
+	"GetUnreadReplyingTo":               database.GetUnreadReplyingTo,
+	"GetReadReplyingTo":                 database.GetReadReplyingTo,
 
 	// working with sections/topics
 	"GetSections":        database.GetSections,

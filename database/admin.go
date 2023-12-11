@@ -13,8 +13,13 @@ func DoCommand(text string) error {
 	var err error
 	switch command {
 	case "help":
-		fmt.Println("createsection, mkadmin")
+		fmt.Println("createsection, renamesection, deletesection, mkadmin, revadmin, exit")
 		return nil
+	case "getsections":
+		sections := GetSections()
+		for _, section := range sections.Results {
+			fmt.Printf("%d: %s (admin only: %t)\n", section.ID, section.Name, section.AdminOnly == 1)
+		}
 	case "createsection":
 		if len(args) < 3 {
 			return fmt.Errorf("createsection <string sectionname> <int adminonly>")

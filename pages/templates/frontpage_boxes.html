@@ -78,10 +78,10 @@
 	<span class='box heading' style='
 		background: #1E40AF; color: white;
 		'>
-		Discuss recently posted issues.
+		Discuss recent projects.
 	</span>
 	<span class='contents'>
-		{{$posts := GetLastFiveDiscussionPosts}}
+		{{$posts := GetLastFiveProjectDiscussionPosts}}
 		{{if $posts.Error}}
 			{{$posts.Error.Error}}
 		{{else}}
