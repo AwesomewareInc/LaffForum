@@ -127,7 +127,7 @@ func Markdown(val string) string {
 
 	// we can't make these static thanks gomarkdown
 	var p = parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock)
-	var renderer = html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags | html.SkipLinks})
+	var renderer = html.NewRenderer(html.RendererOptions{})
 
 	return string(markdown.Render(p.Parse([]byte(val)), renderer))
 }
