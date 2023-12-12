@@ -128,10 +128,7 @@ func Markdown(val string) string {
 		val = strings.ReplaceAll(val, link, newVal.String())
 	}
 
-	if p == nil {
-		return val
-	}
-	if []byte(val) == nil {
+	if p == nil || []byte(val) == nil || renderer == nil {
 		return val
 	}
 	return string(markdown.Render(p.Parse([]byte(val)), renderer))
