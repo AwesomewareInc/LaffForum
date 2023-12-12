@@ -181,7 +181,7 @@ func GetPostsInReplyTo(id int) (result GetPostsByCriteriaResult) {
 }
 
 func GetLastFivePosts() (result GetPostsByCriteriaResult) {
-	result_ := GetPostsByCriteria("WHERE replyto = ? AND topic != 2 ORDER BY id DESC LIMIT 25;", 0)
+	result_ := GetPostsByCriteria("WHERE replyto = ? AND topic != 2 ORDER BY id DESC LIMIT 10;", 0)
 	if result_.Error != nil {
 		result.Error = result_.Error
 		return
