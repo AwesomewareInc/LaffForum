@@ -64,6 +64,10 @@ func Markdown(val string) string {
 	val = template.HTMLEscapeString(val)
 	val = string(markdown.Render(p.Parse([]byte(val)), renderer))
 
+	val = strings.ReplaceAll(val, "<p>", "")
+	val = strings.ReplaceAll(val, "</p>", "")
+
+	val = strings.ReplaceAll(val, "<br>", "")
 	// quake
 	val = strings.Replace(val, "{{QUAKE}}",
 		`<a href='/WebQuake/Client/index.htm'>

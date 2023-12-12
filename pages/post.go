@@ -13,7 +13,6 @@ import (
 )
 
 var Unescaper = str.NewReplacer(
-	"\n", "<br>",
 	"&amp;", "&",
 	"&#39;", "'",
 	"&#34;", "\"",
@@ -99,8 +98,7 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 
 	// The contents of the post are displayed here to bypass html/template's html escaping.
 	// (template.HTML(...) doesn't work for us)
-	// Also whitespace: pre-wrap ruins the padding for some reason so here is where we
-	// replace newlines with <br>
+
 	if !toPass.Deleted {
 		contents := Unescaper.Replace(strings.Markdown(toPass.PostContents))
 		buf.Write([]byte("<span class='box'>" + contents + "</span>"))
@@ -141,24 +139,26 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 		templateString = `<tr><td class='from` + deletedClassString + `'>`
 
 		if v.Author != "" && !v.Deleted {
-			templateString += `<span class='vbox'>
+			var editedString string
+			if v.BeenEdited {
+				editedString = `  <em class='edited'>[edited]</em>`
+			}
+			templateString += `
 			<span class="hbox">
-				<span style='flex: 3' class="box">
+				<span class="unbox box">
 					<a class='username' href='/user/` + v.Author + `'>` + v.Author + `</a>
 				</span>
-				<span style='flex: 1' class="box">
-					<em class='pronouns'> ` + v.Pronouns + `</em>
+				<span class="tmbox box">
+					<em class='timestamp'> ` + v.Timestamp + `</em>
 				</span>
-			</span>`
-			if v.BeenEdited {
-				templateString += `<span class="edited hbox"><em>[edited]</em></span>`
-			}
-			templateString += `</span>`
+				<span class="prbox box">
+					<em class='pronouns'> ` + v.Pronouns + `</em>` + editedString + `
+				</span>`
 		} else {
 			templateString += deletedString
 		}
 
-		templateString += `</td><td class='contents` + deletedClassString + `'><b>` + v.Timestamp + `</b><br>`
+		templateString += `</td><td class='contents` + deletedClassString + `'>`
 
 		if v.ParentContents != "" {
 			templateString += `<span class='original-post'>` + strings.Markdown(v.ParentContents) + `</span>`

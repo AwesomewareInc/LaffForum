@@ -299,8 +299,16 @@ table.replies td {
 
 table.replies tr {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
 	padding: 5px;
+}
+
+table.replies .box {
+	display: inline-flex;
+}
+
+table.replies .unbox {
+	flex: 10;
 }
 
 table.replies tr input[type="submit"] {
@@ -313,14 +321,21 @@ table.replies .deleted, table.posts .deleted {
 
 table.replies .from {
 	background:  #f9c56c;
-	flex: 3;
-	word-break: auto-phrase;
-}
-table.replies .from .username {
+	flex: 5;
 	font-weight: bold;
+	word-break: break-all;
+	word-wrap:break-word;
+	height: 1em;
+	line-height: 1em;
 }
-table.replies .from .pronouns, .edited {
+table.replies .from .pronouns, table.replies .from .timestamp, table.replies .from .edited {
+	font-weight: normal;
 	font-size: 90%;
+}
+table.replies .from .edited {
+	position: absolute;
+	right: 1em;
+	padding-left: 1em;
 }
 
 table.replies .contents {
@@ -334,9 +349,7 @@ table.replies .contents {
 
 
 table.replies .actions {
-	position: absolute;
-	top: 0;
-	right: 0;
+	float: right;
 	text-align: right;
 	width: 100%;
 }
@@ -404,6 +417,7 @@ table.replies .actions * {
 	.actions, .actions * {
 		position: static!important;
 	}
+
 }
 
 @media (max-width: 128px) {
