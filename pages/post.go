@@ -24,6 +24,7 @@ var Unescaper = str.NewReplacer(
 type PostPageVariables struct {
 	PostSubject  string
 	PostContents string
+	PostEdited   bool
 	CanReply     bool
 	Author       string
 	Timestamp    string
@@ -47,12 +48,13 @@ type PostPageVariables struct {
 }
 
 type PostField struct {
-	Author    string
-	Timestamp string
-	Contents  string
-	Deleted   bool
-	DeletedBy string
-	Pronouns  string
+	Author     string
+	Timestamp  string
+	Contents   string
+	Deleted    bool
+	DeletedBy  string
+	Pronouns   string
+	BeenEdited bool
 
 	ParentContents string
 
@@ -139,10 +141,19 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 		templateString = `<tr><td class='from` + deletedClassString + `'>`
 
 		if v.Author != "" && !v.Deleted {
-			templateString += `<span class='hbox'>
-			<a class='username' href='/user/` + v.Author + `'>` + v.Author + `</a>
-			<em class='pronouns'> ` + v.Pronouns + `</em>
-								</span>`
+			templateString += `<span class='vbox'>
+			<span class="hbox">
+				<span style='flex: 3' class="box">
+					<a class='username' href='/user/` + v.Author + `'>` + v.Author + `</a>
+				</span>
+				<span style='flex: 1' class="box">
+					<em class='pronouns'> ` + v.Pronouns + `</em>
+				</span>
+			</span>`
+			if v.BeenEdited {
+				templateString += `<span class="edited hbox"><em>[edited]</em></span>`
+			}
+			templateString += `</span>`
 		} else {
 			templateString += deletedString
 		}
@@ -228,6 +239,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 
 	toPass.PostContents = post.Contents
 	toPass.PostSubject = post.Subject
+	toPass.PostEdited = post.BeenEdited == 1
 
 	userid := database.GetUserIDByName(username).Result
 	sectioninf := database.GetSectionInfo(post.Topic)
@@ -294,6 +306,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 			postField.BackTo = post.ID
 			postField.PostID = n.ID
 			postField.ParentContents = ""
+			postField.BeenEdited = n.BeenEdited == 1
 
 			// Only calculate the following if it's a visible post.
 			if !postField.Deleted || isadmin || userid == n.Author {

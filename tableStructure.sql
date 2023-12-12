@@ -13,6 +13,7 @@ ALTER TABLE "posts" ADD "deleted"           INTEGER DEFAULT (0);
 ALTER TABLE "posts" ADD "deletedtime"       INTEGER;
 ALTER TABLE "posts" ADD "deletedby"         TEXT;
 ALTER TABLE "posts" ADD "unread"            INTEGER DEFAULT (1);
+ALTER TABLE "posts" ADD "beenEdited"        INTEGER DEFAULT (0);
 
 -- Describe SECTIONS
 CREATE TABLE IF NOT EXISTS "sections" (

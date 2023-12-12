@@ -10,13 +10,14 @@ import (
 )
 
 type Post struct {
-	ID        int
-	Topic     int
-	Subject   string
-	Contents  string
-	Author    int
-	ReplyTo   int
-	Timestamp int
+	ID         int
+	Topic      int
+	Subject    string
+	Contents   string
+	Author     int
+	ReplyTo    int
+	Timestamp  int
+	BeenEdited int
 
 	deleted     interface{}
 	deletedtime interface{}
@@ -66,7 +67,7 @@ func GetPostInfo(id interface{}) (result Post) {
 		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
 
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted, deletedtime, deletedby from `posts` WHERE id = ? LIMIT 1;")
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, beenEdited, deleted, deletedtime, deletedby from `posts` WHERE id = ? LIMIT 1;")
 	if err != nil {
 		result.Error = debug.PublicFacingError("Error while getting post info;", err)
 		return
@@ -82,11 +83,13 @@ func GetPostInfo(id interface{}) (result Post) {
 			&result.Author,
 			&result.ReplyTo,
 			&result.Timestamp,
+			&result.BeenEdited,
 			&result.deleted,
 			&result.deletedtime,
 			&result.deletedby); err != nil {
 			result.Error = debug.PublicFacingError("Error while getting post info;", err)
 		}
+		fmt.Println("%v", result.BeenEdited)
 	}
 
 	return
@@ -98,7 +101,7 @@ type GetPostsByCriteriaResult struct {
 }
 
 func GetPostsByCriteria(criteria string, values ...any) (result GetPostsByCriteriaResult) {
-	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, deleted, deletedtime, deletedby FROM `posts` " + criteria)
+	statement, err := database.Prepare("SELECT id, topic, subject, contents, author, replyto, timestamp, beenEdited, deleted, deletedtime, deletedby FROM `posts` " + criteria)
 	if err != nil {
 		result.Error = fmt.Errorf("Couldn't get posts following the relevant criteria; " + err.Error())
 		return
@@ -115,15 +118,16 @@ func GetPostsByCriteria(criteria string, values ...any) (result GetPostsByCriter
 		var author int
 		var replyto int
 		var timestamp int
+		var beenEdited int
 		var deleted interface{}
 		var deletedtime interface{}
 		var deletedby interface{}
-		if err := rows.Scan(&id, &topic, &subject, &contents, &author, &replyto, &timestamp, &deleted, &deletedtime, &deletedby); err != nil {
+		if err := rows.Scan(&id, &topic, &subject, &contents, &author, &replyto, &timestamp, &beenEdited, &deleted, &deletedtime, &deletedby); err != nil {
 			result.Error = debug.PublicFacingError("Error getting posts by section name; ", err)
 			return
 		}
 
-		result.Posts = append(result.Posts, Post{int(id.(int64)), topic, subject, contents, author, replyto, timestamp, deleted, deletedtime, deletedby, nil})
+		result.Posts = append(result.Posts, Post{int(id.(int64)), topic, subject, contents, author, replyto, timestamp, beenEdited, deleted, deletedtime, deletedby, nil})
 	}
 	return
 }
@@ -359,7 +363,7 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 	}
 
 	// Prepare to insert into posts.
-	statement, err := database.Prepare("INSERT INTO `posts` (author, topic, subject, contents, timestamp, replyto) VALUES (?, ?, ?, ?, ?, ?);")
+	statement, err := database.Prepare("INSERT INTO `posts` (author, topic, subject, contents, timestamp, replyto, beenEdited) VALUES (?, ?, ?, ?, ?, ?, 0);")
 	if err != nil {
 		result.Error = err
 		return
@@ -435,7 +439,7 @@ func (session *Session) EditPost(postid interface{}, content string) (result *Su
 	}
 
 	// Prepare to insert into posts.
-	statement, err := database.Prepare("UPDATE `posts` SET contents = ? WHERE ID = ?;")
+	statement, err := database.Prepare("UPDATE `posts` SET contents = ?, beenEdited = ? WHERE ID = ?;")
 	if err != nil {
 		result.Error = err
 		return
@@ -443,7 +447,7 @@ func (session *Session) EditPost(postid interface{}, content string) (result *Su
 	defer statement.Close()
 
 	// Submit the post with those values and what we got in the function arguments, and return the new post id.
-	execResult, err := statement.Exec(content, postID)
+	execResult, err := statement.Exec(content, 1, postID)
 	if err != nil {
 		result.Error = debug.PublicFacingError("", err)
 		return

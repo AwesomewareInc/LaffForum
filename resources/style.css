@@ -313,13 +313,13 @@ table.replies .deleted, table.posts .deleted {
 
 table.replies .from {
 	background:  #f9c56c;
-	flex: 1;
+	flex: 2;
 	word-break: auto-phrase;
 }
 table.replies .from .username {
 	font-weight: bold;
 }
-table.replies .from .pronouns {
+table.replies .from .pronouns, .edited {
 	font-size: 90%;
 }
 

@@ -17,6 +17,11 @@
 						<span style=" flex: 5;" class="box">Post by <a href='/user/{{.Author}}'>{{.Author}}</a></span>
 						<span class="box"><em>{{.Pronouns}}</em></span>
 					</span>
+					{{if .PostEdited}}
+						<span class="edited hbox">
+							<em>[edited]</em>
+						</span>
+					{{end}}
 					
 				{{else}}
 					<em>[deleted]</em>
