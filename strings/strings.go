@@ -21,7 +21,7 @@ import (
 // todo: put this all into a database for permenant caching
 var cachedOpenGraph = make(map[string]*opengraph.OpenGraph)
 var regexLinkFinder = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
-var regexRawLinkFinder = regexp.MustCompile(`https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)`)
+var regexRawLinkFinder = regexp.MustCompile(`https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([^\<]*)`)
 
 // Capitalize a string
 func Capitalize(value string) string {
@@ -68,6 +68,8 @@ func Markdown(val string) string {
 	val = strings.ReplaceAll(val, "</p>", "")
 
 	val = strings.ReplaceAll(val, "<br>", "")
+
+	val = strings.ReplaceAll(val, "&ndash;", "--")
 	// quake
 	val = strings.Replace(val, "{{QUAKE}}",
 		`<a href='/WebQuake/Client/index.htm'>
@@ -100,7 +102,14 @@ func Markdown(val string) string {
 			cachedOpenGraph[string(href)] = og
 		}
 
-		// todo: actual template for this shit
+		// edge case: if the href is drive.google.com, embed it using the preview url
+		if strings.Contains(string(href), "drive.google.com") {
+			newHref := strings.ReplaceAll(string(href), "/view", "/preview")
+			newHref = strings.ReplaceAll(newHref, "&ndash", "-")
+			val = strings.ReplaceAll(val, link, "<iframe src='"+newHref+"' width='320' height='240' allow=autoplay></iframe>")
+			continue
+		}
+
 		newVal := bytes.NewBuffer(nil)
 		if og.Title == "" && og.Description == "" {
 			val = strings.ReplaceAll(val, link, `<a href="`+string(href)+`">`+string(title)+`</a>`)
