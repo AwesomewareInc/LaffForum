@@ -85,8 +85,6 @@ func RSSServe(w http.ResponseWriter, r *http.Request, values []string) {
 	buf.Write([]byte(`
 			</channel>
 		</rss>`))
-
-	fmt.Println(string(buf.Bytes()))
 	w.Write(buf.Bytes())
 }
 

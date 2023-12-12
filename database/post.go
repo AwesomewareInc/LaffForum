@@ -89,7 +89,6 @@ func GetPostInfo(id interface{}) (result Post) {
 			&result.deletedby); err != nil {
 			result.Error = debug.PublicFacingError("Error while getting post info;", err)
 		}
-		fmt.Println("%v", result.BeenEdited)
 	}
 
 	return
