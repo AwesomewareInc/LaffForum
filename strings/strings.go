@@ -131,6 +131,9 @@ func Markdown(val string) string {
 	if p == nil {
 		return val
 	}
+	if []byte(val) == nil {
+		return val
+	}
 	return string(markdown.Render(p.Parse([]byte(val)), renderer))
 }
 
