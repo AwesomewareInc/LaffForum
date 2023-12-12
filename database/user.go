@@ -61,7 +61,7 @@ func GetUserInfo(id interface{}) (result UserInfo) {
 			result.Error = fmt.Errorf("Couldn't get user id from username; %v", j.Error.Error())
 			return
 		}
-		userID = int(j.Result.(int64))
+		userID = int(j.Result.(int))
 	case int:
 		userID = id.(int)
 	default:
