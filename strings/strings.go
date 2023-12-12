@@ -56,8 +56,13 @@ func PrintThreeMonthsFromNow() string {
 // Parsing a markdown string.
 
 func Markdown(val string) string {
+	// we can't make these static thanks gomarkdown
+	var p = parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock)
+	var renderer = html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags | html.SkipLinks | html.SkipHTML})
+
 	// basic shit
 	val = template.HTMLEscapeString(val)
+	val = string(markdown.Render(p.Parse([]byte(val)), renderer))
 
 	// quake
 	val = strings.Replace(val, "{{QUAKE}}",
@@ -125,11 +130,7 @@ func Markdown(val string) string {
 		val = strings.ReplaceAll(val, link, newVal.String())
 	}
 
-	// we can't make these static thanks gomarkdown
-	var p = parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock)
-	var renderer = html.NewRenderer(html.RendererOptions{})
-
-	return string(markdown.Render(p.Parse([]byte(val)), renderer))
+	return val
 }
 
 func HTMLEscape(val string) string {
