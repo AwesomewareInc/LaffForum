@@ -270,7 +270,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		toPass.PassiveErrorHeading = `Could not get author.`
 		toPass.PassiveErrorDescription = author.Error.Error()
 	} else {
-		toPass.Author = author.PrettyName
+		toPass.Author = author.Username
 		toPass.Pronouns = author.Pronouns
 	}
 
@@ -317,7 +317,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 						postField.Author = `Could not get author; ` + author.Error.Error()
 						postField.Pronouns = "what"
 					} else {
-						postField.Author = author.PrettyName
+						postField.Author = author.Username
 						postField.Pronouns = author.Pronouns
 					}
 				}
