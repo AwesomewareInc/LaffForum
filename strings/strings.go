@@ -12,14 +12,17 @@ import (
 	"github.com/IoIxD/LaffForum/database"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
+	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 )
 
 // cached opengraph
 // todo: put this all into a database for permenant caching
 var cachedOpenGraph = make(map[string]*opengraph.OpenGraph)
 
-var parser = html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags | html.SkipLinks | html.SkipHTML})
+var p = parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock)
+var renderer = html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags | html.SkipLinks | html.SkipHTML})
 var regexLinkFinder = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
 var regexRawLinkFinder = regexp.MustCompile(`https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)`)
 
@@ -111,7 +114,6 @@ func Markdown(val string) string {
 		}
 		if og.Images != nil {
 			for _, image := range og.Images {
-
 				newVal.Write([]byte(fmt.Sprintf("<img src='%v'>", image.URL)))
 			}
 		}
@@ -126,7 +128,7 @@ func Markdown(val string) string {
 		val = strings.ReplaceAll(val, link, newVal.String())
 	}
 
-	return val
+	return string(markdown.Render(p.Parse([]byte(val)), renderer))
 }
 
 func HTMLEscape(val string) string {

@@ -313,7 +313,7 @@ table.replies .deleted, table.posts .deleted {
 
 table.replies .from {
 	background:  #f9c56c;
-	flex: 2;
+	flex: 3;
 	word-break: auto-phrase;
 }
 table.replies .from .username {
