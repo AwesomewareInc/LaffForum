@@ -222,12 +222,25 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 	toPass.BackTo = post.ID
 	toPass.PostID = post.ID
 	toPass.DeletedBy = post.DeletedBy()
+
+	author := database.GetUserInfo(post.Author)
+	if author.Error != nil {
+		toPass.PassiveErrorHeading = `Could not get author.`
+		toPass.PassiveErrorDescription = author.Error.Error()
+	} else {
+		toPass.Author = author.Username
+		toPass.Pronouns = author.Pronouns
+	}
+
 	toPass.CanDelete = false
 	toPass.CanEdit = false
 	if (!toPass.Deleted && toPass.Author == info.Session.Username) ||
-		(toPass.DeletedBy == info.Session.Username) ||
+		(toPass.Deleted && toPass.DeletedBy == info.Session.Username) ||
 		isadmin {
 		toPass.CanDelete = true
+	}
+
+	if toPass.Author == info.Session.Username {
 		toPass.CanEdit = true
 	}
 	toPass.Deleted = post.Deleted()
@@ -263,15 +276,6 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		} else {
 			http.Redirect(w, r, fmt.Sprintf("/post/%v", reply.ID), 303)
 		}
-	}
-
-	author := database.GetUserInfo(post.Author)
-	if author.Error != nil {
-		toPass.PassiveErrorHeading = `Could not get author.`
-		toPass.PassiveErrorDescription = author.Error.Error()
-	} else {
-		toPass.Author = author.Username
-		toPass.Pronouns = author.Pronouns
 	}
 
 	timestamp := strings.PrettyTime(post.Timestamp)
@@ -345,11 +349,14 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 				postField.CanDelete = false
 				postField.CanEdit = false
 
+				if postField.Author == info.Session.Username {
+					postField.CanEdit = true
+				}
+
 				if (!postField.Deleted && postField.Author == info.Session.Username) ||
-					(info.Session.Username == postField.DeletedBy) ||
+					(postField.Deleted && info.Session.Username == postField.DeletedBy) ||
 					isadmin {
 					postField.CanDelete = true
-					postField.CanEdit = true
 				}
 
 			}
