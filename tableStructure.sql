@@ -47,11 +47,12 @@ CREATE TABLE IF NOT EXISTS "sessions" (
     "id" INTEGER PRIMARY KEY
 );
 
-ALTER TABLE "sessions" ADD "genkey"         TEXT;
 ALTER TABLE "sessions" ADD "pubkey"         TEXT;
-ALTER TABLE "sessions" ADD "privkey"        TEXT;
 ALTER TABLE "sessions" ADD "username"       TEXT;
 ALTER TABLE "sessions" ADD "timestamp"      TEXT;
+-- what the fuck was i thinking???
+ALTER TABLE "sessions" DROP COLUMN "genkey";
+ALTER TABLE "sessions" DROP COLUMN "privkey"; 
 
 CREATE TABLE IF NOT EXISTS "reservedNames" (
     "id" INTEGER PRIMARY KEY

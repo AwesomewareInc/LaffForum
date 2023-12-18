@@ -16,7 +16,7 @@ import (
 
 func main() {
 	fmt.Println("Starting...")
-	
+
 	// initialize a thread in the back that checks for "deactivated accounts" in the database that need to be scrubbed after three months.
 	go database.DeletedAccountThread()
 
@@ -37,7 +37,7 @@ func main() {
 		}
 	}()
 
-	fmt.Println("Started");
+	fmt.Println("Started")
 	// Start the server.
 	if err := s.ListenAndServe(); err != nil {
 		fmt.Println(err)

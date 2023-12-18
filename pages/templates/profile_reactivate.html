@@ -1,3 +1,4 @@
+
 {{$time := ""}}
 {{$result := PrettyTime .Session.Me.DeletedTime}}
 {{if not $result.Error}}
@@ -13,7 +14,9 @@
 			{{Redirect "/" 303}}
 		{{end}}
 	{{end}}
-	<h1>You deactivated your account {{$time}}</h1>
+
+	{{template "header_real.html" .}}
+	<span class="box heading alert">You deactivated your account.</span>
 	<p>Would you like to reactivate it? You need to enter your password again to do so.</p>
 	<hr>
 	<form method='post'>
@@ -25,4 +28,6 @@
 	<form method='post' action='/logout'>
 		<input type='submit' value='No'>
 	</form>
+	{{template "footer.html" .}}
+	
 {{end}}

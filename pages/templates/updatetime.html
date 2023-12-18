@@ -1,29 +1,4 @@
-<html>
-	<head>
-		<link href="/resources/style.css" type="text/css" rel="stylesheet">
-		<script src="/resources/script.js" defer></script>
-		<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-		<meta property="og:type" content="website" />
-		<meta property="og:image" content="https://{{.Request.Host}}/resources/logo.svg" />
-	</head>
-	<body>
-        {{/*
-            Simplified form of header.html; we do it this way because we do a hack where we just redirect to this page if the user accesses "header.html" and needs to see this.
-            */}}
-		<span class='container'>
-			<span class='header'>
-				<span class='top'>
-					<a class='logo' href='/'><img src="/resources/logo.svg" alt="LaffForum" width="128" height="64"></a>
-				</span>
-			</span>
-			<span class='links'>
-				<a href='/'>Home</a> | 
-				<a href='/about'>About</a> | 
-				<a href='/rules'>Rules</a> |
-				<a href='/privacy'>Privacy</a>
-			</span>
-			<span class='main'>
-                <span class="box heading alert">Since you last logged in, the forum has started storing age. This information is private and is only used internally. Please update your information.</span>
-                {{template "profile_edit.html" .}}
-                {{template "footer.html" .}}
+{{template "header_real.html" .}}
+<span class="box heading alert">Since you last logged in, the forum has started storing age. This information is private and is only used internally. Please update your information.</span>
+{{template "profile_edit.html" .}}
+{{template "footer.html" .}}

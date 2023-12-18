@@ -106,7 +106,7 @@ func UserPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		toPass.CreatedAt = timestamp.Result.(string)
 	}
 	toPass.CanEdit = false
-	if user.Username() == info.Session.Username {
+	if user.Username() == info.Session.Username() {
 		toPass.CanEdit = true
 	}
 

@@ -112,7 +112,7 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 
 	}
 
-	if info.Session.Username != "" {
+	if info.Session.Username() != "" {
 		err = tmpl.ExecuteTemplate(buf, "actionsbox", toPass)
 		if err != nil {
 			tmpl.Execute(buf, err.Error())
@@ -173,7 +173,7 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 		}
 		buf.Write([]byte(templateString))
 
-		if info.Session.Username != "" {
+		if info.Session.Username() != "" {
 			err = tmpl.ExecuteTemplate(buf, "actionsbox", v)
 			if err != nil {
 				tmpl.Execute(buf, err.Error())
@@ -196,7 +196,7 @@ func PostPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 }
 
 func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info InfoStruct) (toPass PostPageVariables) {
-	username := info.Session.Username
+	username := info.Session.Username()
 	isadmin := info.Session.Me().Admin()
 
 	if len(values) <= 0 {
@@ -236,8 +236,8 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 	toPass.CanDelete = false
 	toPass.CanEdit = false
 	toPass.CanReply = true
-	if (!toPass.Deleted && toPass.Author == info.Session.Username) ||
-		(toPass.Deleted && toPass.DeletedBy == info.Session.Username) ||
+	if (!toPass.Deleted && toPass.Author == info.Session.Username()) ||
+		(toPass.Deleted && toPass.DeletedBy == info.Session.Username()) ||
 		isadmin {
 		toPass.CanDelete = true
 	}
@@ -248,7 +248,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		toPass.CanReply = false
 	}
 
-	if toPass.Author == info.Session.Username {
+	if toPass.Author == info.Session.Username() {
 		toPass.CanEdit = true
 	}
 	toPass.Deleted = post.Deleted()
@@ -300,7 +300,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 			} else {
 				toPass.CanReply = false
 			}
-		} else if info.Session.Username != "" {
+		} else if info.Session.Username() != "" {
 			toPass.CanReply = true
 		}
 	}
@@ -360,12 +360,12 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 				postField.CanEdit = false
 				postField.CanReply = true
 
-				if postField.Author == info.Session.Username {
+				if postField.Author == info.Session.Username() {
 					postField.CanEdit = true
 				}
 
-				if (!postField.Deleted && postField.Author == info.Session.Username) ||
-					(postField.Deleted && info.Session.Username == postField.DeletedBy) ||
+				if (!postField.Deleted && postField.Author == info.Session.Username()) ||
+					(postField.Deleted && info.Session.Username() == postField.DeletedBy) ||
 					isadmin {
 					postField.CanDelete = true
 				}

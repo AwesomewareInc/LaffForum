@@ -89,8 +89,14 @@ func CommandListenerThread() {
 
 func ExecuteDirect(query string, args ...any) error {
 	_, err := database.Exec(query, args[:]...)
-	fmt.Println(err)
-	return err
+	if err != nil {
+		// TODO: find out what the actual error type here is.
+		if strings.Contains(query, "DROP COLUMN") && !strings.Contains(err.Error(), "no such column") {
+			fmt.Println(err)
+			return err
+		}
+	}
+	return nil
 }
 
 func ExecuteReturn(query string, args []any, dest ...any) error {
@@ -105,6 +111,23 @@ func ExecuteReturn(query string, args []any, dest ...any) error {
 		}
 	}
 	return nil
+}
+
+func ExecuteReturnMany(query string, args []any) ([]interface{}, error) {
+	dest := make([]any, 0)
+	rows, err := database.Query(query, args[:]...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var ok interface{}
+		if err := rows.Scan(&ok); err != nil {
+			return nil, err
+		}
+		dest = append(dest, ok)
+	}
+	return dest, nil
 }
 
 type GenericResult struct {

@@ -1,4 +1,8 @@
 <title>Logout</title>
 <meta property="og:title" content="Logout" />
-{{.Session.Clear }}
-{{Redirect "/" 303}}
+{{$what := .Session.Clear }}
+{{if eq $what ""}}
+    {{Redirect "/" 303}}
+{{else}}
+    {{$what}}
+{{end}}

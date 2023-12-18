@@ -54,7 +54,10 @@
 					 <a href='/post/{{$ogpost.ID}}'>{{$ogpost.Subject}}</a>
 				{{end}}
 				</b></p>
-				{{$session.HasRead $v.ID}}
+				{{$err := $session.HasRead $v.ID}}
+				{{if $err.Error}}
+					{{$err}}
+				{{end}}
 				<hr>
 			{{end}}
 		</span>

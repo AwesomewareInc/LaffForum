@@ -1,3 +1,4 @@
+{{define "header_real.html"}}
 <html>
 	<head>
 		<link href="/resources/style.css" type="text/css" rel="stylesheet">
@@ -14,27 +15,20 @@
 					<a class='logo' href='/'><img src="/resources/logo.svg" alt="LaffForum" width="128" height="64"></a>
 					<span class='user'>
 						{{if .Session.Username}}
-							{{if .Session.Me.Deleted}}
-								{{Redirect "/profile/reactivate" 303}}
-							{{else}}
-								{{$result := GetUnreadReplyingTo .Session.Username}}
-								<a href='/notifications'>
-									{{if $result.Error}}
-										<em data-error='{{$result.Error}}'>(? Unread)</em>
+							{{$result := GetUnreadReplyingTo .Session.Username}}
+							<a href='/notifications'>
+								{{if $result.Error}}
+									<em data-error='{{$result.Error}}'>(? Unread)</em>
+								{{else}}
+									{{$unread := (len $result.Posts)}}
+									{{if ge $unread 1}}
+										<span class='unread'>!! {{$unread}} Unread !! </span>
 									{{else}}
-										{{$unread := (len $result.Posts)}}
-										{{if ge $unread 1}}
-											<span class='unread'>!! {{$unread}} Unread !! </span>
-										{{else}}
-											{{$unread}} Unread
-										{{end}}
+										{{$unread}} Unread
 									{{end}}
-								</a> |
-								<a href="/user/{{.Session.Username}}">{{.Session.Username}}</a> | <a href='/logout'>Logout</a>
-							{{end}}
-							{{if eq .Session.Me.Birthday 0}}
-								{{Redirect "/updatetime" 303}}
-							{{end}}
+								{{end}}
+							</a> |
+							<a href="/user/{{.Session.Username}}">{{.Session.Username}}</a> | <a href='/logout'>Logout</a>
 						{{else}}
 							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
 						{{end}}
@@ -48,4 +42,14 @@
 				<a href='/privacy'>Privacy</a>
 			</span>
 			<span class='main'>
-				
+{{end}}
+
+{{if .Session.Username}}
+	{{if .Session.Me.Deleted}}
+		{{Redirect "/profile/reactivate" 303}}
+	{{end}}
+	{{if eq .Session.Me.Birthday 0}}
+		{{Redirect "/updatetime" 303}}
+	{{end}}
+{{end}}
+{{template "header_real.html" .}}

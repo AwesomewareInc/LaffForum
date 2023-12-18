@@ -272,9 +272,6 @@ func (session *Session) HasRead(id int) error {
 	if err != nil {
 		return err
 	}
-	//if session.Me().Banned() {
-	//	return fmt.Errorf("You're banned. Reason: %v", session.Me().BanReason())
-	//}
 	err = ExecuteDirect("UPDATE `posts` SET unread = 0 WHERE id = ?", id)
 	if err != nil {
 		return err
@@ -289,7 +286,6 @@ func (session *Session) RestorePost(id interface{}, deletedBy string) (err error
 	return session.SetDeleteStatus(id, deletedBy, 0)
 }
 func (session *Session) SetDeleteStatus(id interface{}, deletedBy string, deleteStatus int) (err error) {
-	// Check the "session" that wants to modify this post.
 	err = session.Verify()
 	if err != nil {
 		return
@@ -328,7 +324,6 @@ type SubmitPostResult struct {
 func (session *Session) SubmitPost(topic interface{}, subject string, content string, replyto interface{}) (result *SubmitPostResult) {
 	result = new(SubmitPostResult)
 
-	// Check the "session" that submitted this post.
 	err := session.Verify()
 	if err != nil {
 		result.Error = fmt.Errorf("Verification error; %v", err)
@@ -399,7 +394,7 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 	defer statement.Close()
 
 	// Get the necessary values.
-	userid_ := GetUserIDByName(session.Username)
+	userid_ := GetUserIDByName(session.Username())
 	if userid_.Error != nil {
 		result.Error = debug.PublicFacingError("", userid_.Error)
 		return
@@ -428,7 +423,6 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 func (session *Session) EditPost(postid interface{}, content string) (result *SubmitPostResult) {
 	result = new(SubmitPostResult)
 
-	// Check the "session" that submitted this post.
 	err := session.Verify()
 	if err != nil {
 		result.Error = fmt.Errorf("Verification error; %v", err)

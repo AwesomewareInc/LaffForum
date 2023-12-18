@@ -106,11 +106,17 @@ func GetUserInfo(id interface{}) (result UserInfo) {
 			return
 		}
 		userID = int(j.Result.(int64))
+		fmt.Println(userID)
 	case int:
 		userID = id.(int)
+	case int64:
+		userID = int(id.(int64))
 	default:
 		result.error = fmt.Errorf("Invalid type '%v' given.", v)
+		fmt.Println(result.error)
+		return
 	}
+
 	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin, deleted, deletedtime, pronouns, banReason, birthday, banned from `users` WHERE id = ?;", []interface{}{userID},
 		&result.id, &result.username, &result.prettyName, &result.timestamp, &result.bio, &result.admin, &result.deleted, &result.deletedTime, &result.pronouns, &result.banReason, &result.birthday, &result.banned)
 	if err != nil {
@@ -251,7 +257,7 @@ func (session *Session) EditProfile(prettyname, bio, pronouns, birthdayRaw strin
 		return fmt.Errorf("Couldn't prepare statement to edit user profile; " + err.Error())
 	}
 	defer statement.Close()
-	_, err = statement.Exec(SQLSanitize(prettyname), SQLSanitize(bio), SQLSanitize(pronouns), birthday.Unix(), banned, banReason, SQLSanitize(session.Username))
+	_, err = statement.Exec(SQLSanitize(prettyname), SQLSanitize(bio), SQLSanitize(pronouns), birthday.Unix(), banned, banReason, SQLSanitize(session.Username()))
 	if err != nil {
 		return fmt.Errorf("Couldn't edit user profile; " + err.Error())
 	}
@@ -272,7 +278,7 @@ func (session *Session) SetProfileDeleteStatus(password string, status int, dele
 		return
 	}
 
-	if passerr := VerifyPassword(session.Username, password); passerr != "" {
+	if passerr := VerifyPassword(session.Username(), password); passerr != "" {
 		return fmt.Errorf(passerr)
 	}
 
