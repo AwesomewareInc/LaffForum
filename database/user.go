@@ -9,16 +9,35 @@ import (
 )
 
 type UserInfo struct {
-	ID          int
-	Username    string
-	PrettyName  string
-	Timestamp   int
+	id          int
+	username    string
+	prettyName  string
+	timestamp   int
 	bio         interface{}
 	admin       interface{}
 	deleted     interface{}
 	deletedTime interface{}
-	Pronouns    string
-	Error       error
+	banned      int
+	banReason   string
+	pronouns    string
+	birthday    int
+	error       error
+}
+
+func (user UserInfo) ID() int {
+	return user.id
+}
+
+func (user UserInfo) Username() string {
+	return user.username
+}
+
+func (user UserInfo) PrettyName() string {
+	return user.prettyName
+}
+
+func (user UserInfo) Timestamp() int {
+	return user.timestamp
 }
 
 func (user UserInfo) Bio() string {
@@ -52,25 +71,50 @@ func (user UserInfo) DeletedTime() int {
 	}
 }
 
+func (user UserInfo) Banned() bool {
+	return user.banned == 1
+}
+
+func (user UserInfo) BanReason() string {
+	return user.banReason
+}
+
+func (user UserInfo) Pronouns() string {
+	return user.pronouns
+}
+
+func (user UserInfo) Birthday() int {
+	return user.birthday
+}
+
+func (user UserInfo) BirthdayFormatted() string {
+	ok := time.Unix(int64(user.birthday), 0)
+	return ok.Format("2006-01-02")
+}
+
+func (user UserInfo) Error() error {
+	return user.error
+}
+
 func GetUserInfo(id interface{}) (result UserInfo) {
 	var userID int
 	switch v := id.(type) {
 	case string:
 		j := GetUserIDByName(id.(string))
 		if j.Error != nil {
-			result.Error = fmt.Errorf("Couldn't get user id from username; %v", j.Error.Error())
+			result.error = fmt.Errorf("Couldn't get user id from username; %v", j.Error.Error())
 			return
 		}
 		userID = int(j.Result.(int64))
 	case int:
 		userID = id.(int)
 	default:
-		result.Error = fmt.Errorf("Invalid type '%v' given.", v)
+		result.error = fmt.Errorf("Invalid type '%v' given.", v)
 	}
-	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin, deleted, deletedtime, pronouns from `users` WHERE id = ?;", []interface{}{userID},
-		&result.ID, &result.Username, &result.PrettyName, &result.Timestamp, &result.bio, &result.admin, &result.deleted, &result.deletedTime, &result.Pronouns)
+	err := ExecuteReturn("SELECT id, username, prettyname, timestamp, bio, admin, deleted, deletedtime, pronouns, banReason, birthday, banned from `users` WHERE id = ?;", []interface{}{userID},
+		&result.id, &result.username, &result.prettyName, &result.timestamp, &result.bio, &result.admin, &result.deleted, &result.deletedTime, &result.pronouns, &result.banReason, &result.birthday, &result.banned)
 	if err != nil {
-		result.Error = fmt.Errorf("Couldn't get user info; %v", err.Error())
+		result.error = fmt.Errorf("Couldn't get user info; %v", err.Error())
 		return
 	}
 	return
@@ -85,10 +129,17 @@ func UserExists(username string) string {
 	if id != 0 {
 		return "Username is taken!"
 	}
+	err = ExecuteReturn("SELECT count(id) from `reservedNames` WHERE username = ?;", []interface{}{username}, &id)
+	if err != nil {
+		return "Couldn't validate username; " + err.Error()
+	}
+	if id != 0 {
+		return "Username is taken!"
+	}
 	return ""
 }
 
-func CreateUser(username, prettyname, pass1, pass2 string) string {
+func CreateUser(username, prettyname, pass1, pass2, pronouns, birthdayRaw string) string {
 	// Check if somebody with that username exists.
 	err_ := UserExists(username)
 	if err_ != "" {
@@ -119,18 +170,34 @@ func CreateUser(username, prettyname, pass1, pass2 string) string {
 		return err_
 	}
 
+	banned := 0
+	banReason := ""
+	birthday, err := time.Parse("2006-01-02", birthdayRaw)
+	if err != nil {
+		return err.Error()
+	}
+
+	birthdayDate, err := time.ParseDuration(fmt.Sprintf("%vs", time.Now().Unix()-birthday.Unix()))
+	if err != nil {
+		return err.Error()
+	}
+	if birthdayDate.Hours()/8760 < 13 {
+		banned = 1
+		banReason = "Underaged"
+	}
+
 	// Those are the main checks for now, now create the user.
 
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(pass1), 10)
 	if err != nil {
 		return "Couldn't generate password; " + err.Error()
 	}
-	statement, err := database.Prepare("INSERT INTO `users` (username, password, prettyname, timestamp) VALUES (?, ?, ?, ?);")
+	statement, err := database.Prepare("INSERT INTO `users` (username, password, prettyname, timestamp, pronouns, birthday, banned, banReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?);")
 	if err != nil {
 		return "Couldn't prepare statement to create user; " + err.Error()
 	}
 	defer statement.Close()
-	_, err = statement.Exec(username, hashedPass, prettyname, fmt.Sprintf("%v", time.Now().Unix()))
+	_, err = statement.Exec(username, hashedPass, prettyname, fmt.Sprintf("%v", time.Now().Unix()), pronouns, birthday.Unix(), banned, banReason)
 	if err != nil {
 		return "Couldn't create user; " + err.Error()
 	}
@@ -157,18 +224,34 @@ func GetUsernameByID(id int) (result GenericResult) {
 	return
 }
 
-func (session *Session) EditProfile(prettyname, bio, pronouns string) (err error) {
+func (session *Session) EditProfile(prettyname, bio, pronouns, birthdayRaw string) (err error) {
 	err = session.Verify()
 	if err != nil {
 		return
 	}
 
-	statement, err := database.Prepare("UPDATE `users` SET prettyname = ?, bio = ?, pronouns = ? WHERE username = ?;")
+	banned := 0
+	banReason := ""
+	birthday, err := time.Parse("2006-01-02", birthdayRaw)
+	if err != nil {
+		return
+	}
+
+	birthdayDate, err := time.ParseDuration(fmt.Sprintf("%vs", time.Now().Unix()-birthday.Unix()))
+	if err != nil {
+		return
+	}
+	if birthdayDate.Hours()/8760 < 13 {
+		banned = 1
+		banReason = "Underaged"
+	}
+
+	statement, err := database.Prepare("UPDATE `users` SET prettyname = ?, bio = ?, pronouns = ?, birthday = ?, banned = ?, banReason = ? WHERE username = ?;")
 	if err != nil {
 		return fmt.Errorf("Couldn't prepare statement to edit user profile; " + err.Error())
 	}
 	defer statement.Close()
-	_, err = statement.Exec(SQLSanitize(prettyname), SQLSanitize(bio), SQLSanitize(pronouns), SQLSanitize(session.Username))
+	_, err = statement.Exec(SQLSanitize(prettyname), SQLSanitize(bio), SQLSanitize(pronouns), birthday.Unix(), banned, banReason, SQLSanitize(session.Username))
 	if err != nil {
 		return fmt.Errorf("Couldn't edit user profile; " + err.Error())
 	}

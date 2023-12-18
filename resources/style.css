@@ -66,6 +66,12 @@ li+ul {
 	margin: 0 0 4px 0;
 }
 
+.alert {
+	background: rgb(255, 69, 69);
+	color: white;
+	text-align: center;
+}
+
 .box .contents {
 	padding: 5px;
 }

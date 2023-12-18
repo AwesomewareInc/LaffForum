@@ -36,11 +36,13 @@ func DoCommand(text string) error {
 		}
 		err = DeleteSection(args[1])
 	case "mkadmin":
+	case "makeadmin":
 		if len(args) < 2 {
 			return fmt.Errorf("mkadmin <string username>")
 		}
 		err = MakeAdmin(args[1])
 	case "revadmin":
+	case "removeadmin":
 		if len(args) < 2 {
 			return fmt.Errorf("mkadmin <string username>")
 		}
@@ -55,6 +57,23 @@ func DoCommand(text string) error {
 			return fmt.Errorf("unarchivesection <string sectionname>")
 		}
 		err = UnarchiveSection(args[1])
+	case "ban":
+		if len(args) < 2 {
+			return fmt.Errorf("ban <string username> <optional string banReason>")
+		}
+		banReason := "Unspecified."
+		if len(args) >= 3 {
+			if args[2] != "" {
+				banReason = SQLSanitize(strings.Join(args[2:], " "))
+			}
+		}
+		err = BanUser(banReason, args[1])
+	case "unban":
+		if len(args) < 2 {
+			return fmt.Errorf("unban <string username>")
+		}
+
+		err = UnbanUser(args[1])
 	case "exit":
 		os.Exit(0)
 	default:
@@ -88,4 +107,12 @@ func ArchiveSection(args ...any) error {
 }
 func UnarchiveSection(args ...any) error {
 	return ExecuteDirect("UPDATE `sections` SET archived = 0 WHERE name = ?;", args...)
+}
+
+func BanUser(args ...any) error {
+	return ExecuteDirect("UPDATE `users` SET banned = 1, banReason = ? WHERE username = ?;", args...)
+}
+
+func UnbanUser(args ...any) error {
+	return ExecuteDirect("UPDATE `users` SET banned = 0 WHERE username = ?;", args...)
 }

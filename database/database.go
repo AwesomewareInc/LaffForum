@@ -51,31 +51,23 @@ func init() {
 	}
 
 	// Try and create the database.
-	file, err := os.Open("./tableStructure.sql")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	sql := make([]byte,2048)
-	_, err = file.Read(sql)
-
+	sql, err := os.ReadFile("./tableStructure.sql")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	statements := strings.Split(string(sql),";")
+	statements := strings.Split(string(sql), ";")
 	for _, v := range statements {
 		err = ExecuteDirect(v)
 		if err != nil {
 			// If-oh. fuck.
-			if(!strings.Contains(err.Error(),"duplicate")) {
+			if !strings.Contains(err.Error(), "duplicate") {
 				fmt.Println(err)
 				os.Exit(1)
-			} 
+			}
 		}
 	}
-
 
 	usernameCheck = regexp.MustCompile(`[^A-z0-9_-]`)
 
@@ -96,7 +88,8 @@ func CommandListenerThread() {
 }
 
 func ExecuteDirect(query string, args ...any) error {
-	_, err = database.Exec(query, args[:]...)
+	_, err := database.Exec(query, args[:]...)
+	fmt.Println(err)
 	return err
 }
 
@@ -129,37 +122,41 @@ func DeletedAccountThread() {
 	defer tick.Stop()
 	for {
 		select {
-			case <-tick.C:
-				found := make([]string, 0)
-				statement, err := database.Prepare("SELECT username, deletedtime from `users` WHERE `deleted` = 1;")
+		case <-tick.C:
+			found := make([]string, 0)
+			statement, err := database.Prepare("SELECT username, deletedtime from `users` WHERE `deleted` = 1;")
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			rows, err := statement.Query()
+			for rows.Next() {
+				var username string
+				var deletedtime int64
+				if err := rows.Scan(&username, &deletedtime); err != nil {
+					fmt.Println(err)
+				}
+				deletedTimeParsed := time.Unix(deletedtime, 0)
 				if err != nil {
 					fmt.Println(err)
 				}
-
-				rows, err := statement.Query()
-				for rows.Next() {
-					var username string
-					var deletedtime int64
-					if err := rows.Scan(&username,&deletedtime); err != nil {
-						fmt.Println(err)
-					}
-					deletedTimeParsed := time.Unix(deletedtime, 0)
-					if err != nil {
-						fmt.Println(err)
-					}
-					scheduledForDeletion := deletedTimeParsed.Add(time.Hour*2190)
-					if(time.Now().After(scheduledForDeletion)) {
-						found = append(found, username)
-					}
+				scheduledForDeletion := deletedTimeParsed.Add(time.Hour * 2190)
+				if time.Now().After(scheduledForDeletion) {
+					found = append(found, username)
 				}
-				for _, v := range found {
-					err := ExecuteDirect("DELETE FROM `users` WHERE `username` = ?;",v)
-					if(err != nil) {
-						fmt.Println(err)
-					}
-					fmt.Printf("deleted %v",v)
+			}
+			for _, v := range found {
+				err := ExecuteDirect("DELETE FROM `users` WHERE `username` = ?;", v)
+				if err != nil {
+					fmt.Println(err)
 				}
-				statement.Close()
+				err = ExecuteDirect("INSERT INTO `reservedNames` (username) VALUES (?);", v)
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Printf("deleted %v", v)
+			}
+			statement.Close()
 		}
 	}
 }

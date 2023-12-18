@@ -147,6 +147,22 @@ func GetPostsBySectionName(name string) (result GetPostsByCriteriaResult) {
 	return
 }
 
+func GetLast5PostsBySectionName(name string) (result GetPostsByCriteriaResult) {
+	id_ := GetSectionIDByName(name)
+	if id_.Error != nil {
+		result.Error = debug.PublicFacingError("Error getting posts by section name; ", id_.Error)
+		return
+	}
+	if id_.Result == nil {
+		return
+	}
+	id := id_.Result.(int64)
+
+	result = GetPostsByCriteria("WHERE topic = ? AND replyto = 0 ORDER BY id DESC LIMIT 5;", id)
+
+	return
+}
+
 func GetPostsFromUser(name string) (result GetPostsByCriteriaResult) {
 	id_ := GetUserIDByName(name)
 	if id_.Error != nil {
@@ -256,6 +272,9 @@ func (session *Session) HasRead(id int) error {
 	if err != nil {
 		return err
 	}
+	//if session.Me().Banned() {
+	//	return fmt.Errorf("You're banned. Reason: %v", session.Me().BanReason())
+	//}
 	err = ExecuteDirect("UPDATE `posts` SET unread = 0 WHERE id = ?", id)
 	if err != nil {
 		return err
@@ -274,6 +293,9 @@ func (session *Session) SetDeleteStatus(id interface{}, deletedBy string, delete
 	err = session.Verify()
 	if err != nil {
 		return
+	}
+	if session.Me().Banned() {
+		return fmt.Errorf("You're banned. Reason: %v", session.Me().BanReason())
 	}
 
 	var postID int
@@ -310,6 +332,10 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 	err := session.Verify()
 	if err != nil {
 		result.Error = fmt.Errorf("Verification error; %v", err)
+		return
+	}
+	if session.Me().Banned() {
+		result.Error = fmt.Errorf("You're banned. Reason: %v", session.Me().BanReason())
 		return
 	}
 
@@ -357,8 +383,11 @@ func (session *Session) SubmitPost(topic interface{}, subject string, content st
 	// If the user isn't an admin and the section is admin only, reject it.
 	isAdmin := session.Me().Admin()
 	if (!isAdmin && GetSectionInfo(topicID).AdminOnly == 1) || (!isAdmin && GetSectionInfo(topicID).Archived) {
-		result.Error = fmt.Errorf("Insufficient permissions to post")
-		return
+		if replyID == 0 {
+			result.Error = fmt.Errorf("Insufficient permissions to post")
+			return
+		}
+
 	}
 
 	// Prepare to insert into posts.
@@ -406,6 +435,11 @@ func (session *Session) EditPost(postid interface{}, content string) (result *Su
 		return
 	}
 
+	if session.Me().Banned() {
+		result.Error = fmt.Errorf("You're banned. Reason: %v", session.Me().BanReason())
+		return
+	}
+
 	// Check to make sure the we're editing our OWN post.
 	var postID int
 	switch v := postid.(type) {
@@ -422,11 +456,11 @@ func (session *Session) EditPost(postid interface{}, content string) (result *Su
 	}
 	post := GetPostInfo(postID)
 	author := GetUserInfo(post.Author)
-	if author.Error != nil {
-		result.Error = author.Error
+	if author.Error() != nil {
+		result.Error = author.Error()
 		return
 	}
-	if author.ID != session.Me().ID {
+	if author.ID() != session.Me().ID() {
 		result.Error = fmt.Errorf("Cannot edit another persons post")
 		return
 	}

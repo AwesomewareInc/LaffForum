@@ -1,0 +1,8 @@
+<span class="vbox">
+    <span class="box heading alert">This account has been banned. Reason: {{.BanReason}}</span>
+</span>
+{{define "banned_session.html"}}
+<span class="vbox">
+    <span class="box heading alert">This account has been banned. Reason: {{.Session.Me.BanReason}}</span>
+</span>
+{{end}}

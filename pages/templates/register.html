@@ -15,8 +15,10 @@
 	{{$prettyname := index $prettynames 0}}
 	{{$pass1 := index $pass1s 0}}
 	{{$pass2 := index $pass2s 0}}
+	{{$pronouns := index (index .PostValues "pronouns") 0}}
+	{{$birthday := index (index .PostValues "birthday") 0}}
 
-	{{$errors = CreateUser $username $prettyname $pass1 $pass2}}
+	{{$errors = CreateUser $username $prettyname $pass1 $pass2 $pronouns $birthday}}
 	{{if eq $errors ""}}
 		{{$captchas := index .PostValues "h-captcha-response"}}
 		{{$captcha := index $captchas 0}}
@@ -45,6 +47,8 @@
 		Full Name: <input type='text' name='prettyname'><br><br>
 		Password: <input type='password' name='pass1'><br><br>
 		Confirm Password: <input type='password' name='pass2'><br><br>
+		Pronouns: <input type="text" name="pronouns"><br><br>
+		Birthday: <input type="date" name="birthday"><br><br>
 		<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
 		<input type='submit' value='Sign up'>
 	</form>

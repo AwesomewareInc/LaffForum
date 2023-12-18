@@ -2,6 +2,7 @@ package pages
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 
 	"github.com/IoIxD/LaffForum/database"
@@ -15,30 +16,37 @@ func init() {
 func UserPageServe(w http.ResponseWriter, r *http.Request, info InfoStruct) {
 	// Buffer for the final page.
 	buf := bytes.NewBuffer(nil)
-
+	buf2 := bytes.NewBuffer(nil)
+	hadError := false
 	// header
 	err := tmpl.ExecuteTemplate(buf, "header.html", info)
 	if err != nil {
-		tmpl.Execute(buf, err.Error())
+		buf2.Write([]byte(err.Error()))
+		hadError = true
 	}
 
 	// Get all the values to pass to the future templates.
 	toPass := UserPageGen(w, r, info.Values, info)
-
 	err = tmpl.ExecuteTemplate(buf, "user.html", toPass)
 	if err != nil {
-		tmpl.Execute(buf, err.Error())
+		buf2.Write([]byte(err.Error()))
+		hadError = true
 	}
 
 	err = tmpl.ExecuteTemplate(buf, "footer.html", info)
 	if err != nil {
-		tmpl.Execute(buf, err.Error())
+		buf2.Write([]byte(err.Error()))
+		hadError = true
 	}
-
-	w.Write(buf.Bytes())
+	if hadError {
+		w.Write(buf2.Bytes())
+	} else {
+		w.Write(buf.Bytes())
+	}
 }
 
 type UserPageVariables struct {
+	Session  *database.Session
 	Name     string
 	Pronouns string
 	IsAdmin  bool
@@ -47,6 +55,8 @@ type UserPageVariables struct {
 	CreatedAt string
 
 	CanEdit bool
+
+	Error error
 
 	Posts []UserPostField
 }
@@ -60,49 +70,49 @@ type UserPostField struct {
 
 func UserPageGen(w http.ResponseWriter, r *http.Request, values []string, info InfoStruct) (toPass UserPageVariables) {
 	if len(info.Values) <= 0 {
-		w.Write([]byte("what"))
-		return
+		toPass.Error = fmt.Errorf("no values")
 	}
+	toPass.Session = info.Session
 	userid := values[1]
 	user := database.GetUserInfo(userid)
-	if user.Error != nil {
-		w.Write([]byte(user.Error.Error()))
-		return
+	if user.Error() != nil {
+		toPass.Error = user.Error()
 	}
-	if user.ID == 0 {
-		w.Write([]byte(`This user does not exist.`))
-		return
+	if user.ID() == 0 {
+		toPass.Error = fmt.Errorf("This user does not exist")
 	}
 	if user.Deleted() {
-		w.Write([]byte(`This user has deactivated their account.`))
-		return
+		toPass.Error = fmt.Errorf("This user has deactivated their account")
 	}
-	if user.PrettyName != "" {
-		toPass.Name = user.PrettyName
+	if user.Banned() {
+		toPass.Error = fmt.Errorf("This user has been banned! " + user.BanReason())
+	}
+
+	if user.PrettyName() != "" {
+		toPass.Name = user.PrettyName()
 	} else {
-		toPass.Name = user.Username
+		toPass.Name = user.Username()
 	}
 
 	toPass.IsAdmin = user.Admin()
 
 	toPass.Bio = user.Bio()
-	toPass.Pronouns = user.Pronouns
+	toPass.Pronouns = user.Pronouns()
 
-	timestamp := strings.PrettyTime(user.Timestamp)
+	timestamp := strings.PrettyTime(user.Timestamp())
 	if timestamp.Error != nil {
 		toPass.CreatedAt = "Couldn't get timestamp; " + timestamp.Error.Error()
 	} else {
 		toPass.CreatedAt = timestamp.Result.(string)
 	}
 	toPass.CanEdit = false
-	if user.Username == info.Session.Username {
+	if user.Username() == info.Session.Username {
 		toPass.CanEdit = true
 	}
 
-	posts := database.GetPostsFromUser(user.Username)
+	posts := database.GetPostsFromUser(user.Username())
 	if posts.Error != nil {
-		w.Write([]byte(posts.Error.Error()))
-		return
+		toPass.Error = posts.Error
 	}
 	toPass.Posts = make([]UserPostField, 0)
 	for _, v := range posts.Posts {

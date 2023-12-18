@@ -3,6 +3,9 @@
 <meta property="og:title" content="Notifications" />
 {{$session := .Session}}
 {{if $session.Username}}
+	{{if $session.Me.Banned}}
+		{{template "banned_session.html" .}}
+	{{end}}
 	{{$result := GetUnreadReplyingTo $session.Username}}
 	{{if $result.Error}}
 		Couldn't get notifications: <b>{{$result.Error}}</b>

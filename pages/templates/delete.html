@@ -6,6 +6,11 @@
 	{{$allowed = false}}
 {{end}}
 
+{{if .Session.Me.Banned}}
+	{{template "banned_session.html" .}}
+	{{$allowed = false}}
+{{end}}
+
 {{if $allowed}}
 	{{if eq (len .Values) 0}}
 		.<br>
@@ -32,10 +37,12 @@
 	{{end}}
 {{end}}
 
-{{$fuckyou := GetIDByUsername .Session.Username}}
-{{if and (not .Session.Me.Admin) (ne $postinfo.Author $fuckyou.Result )}}
-	Permission denied bozo.<br>
-	{{$allowed = false}}
+{{if $allowed}}
+	{{$fuckyou := GetIDByUsername .Session.Username}}
+	{{if and (not .Session.Me.Admin) (ne $postinfo.Author $fuckyou.Result )}}
+		Permission denied bozo.<br>
+		{{$allowed = false}}
+	{{end}}
 {{end}}
 
 {{if $allowed}}

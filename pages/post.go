@@ -61,6 +61,7 @@ type PostField struct {
 	PostID    int
 	CanDelete bool
 	CanEdit   bool
+	CanReply  bool
 }
 
 func init() {
@@ -224,20 +225,27 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 	toPass.DeletedBy = post.DeletedBy()
 
 	author := database.GetUserInfo(post.Author)
-	if author.Error != nil {
+	if author.Error() != nil {
 		toPass.PassiveErrorHeading = `Could not get author.`
-		toPass.PassiveErrorDescription = author.Error.Error()
+		toPass.PassiveErrorDescription = author.Error().Error()
 	} else {
-		toPass.Author = author.Username
-		toPass.Pronouns = author.Pronouns
+		toPass.Author = author.Username()
+		toPass.Pronouns = author.Pronouns()
 	}
 
 	toPass.CanDelete = false
 	toPass.CanEdit = false
+	toPass.CanReply = true
 	if (!toPass.Deleted && toPass.Author == info.Session.Username) ||
 		(toPass.Deleted && toPass.DeletedBy == info.Session.Username) ||
 		isadmin {
 		toPass.CanDelete = true
+	}
+
+	if info.Session.Me().Banned() {
+		toPass.CanDelete = false
+		toPass.CanEdit = false
+		toPass.CanReply = false
 	}
 
 	if toPass.Author == info.Session.Username {
@@ -285,14 +293,16 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 		toPass.Timestamp = timestamp.Result.(string)
 	}
 
-	toPass.CanReply = false
-
-	if sectioninf.AdminOnly == 2 {
-		if isadmin {
+	if !info.Session.Me().Banned() {
+		if sectioninf.AdminOnly == 2 {
+			if isadmin {
+				toPass.CanReply = true
+			} else {
+				toPass.CanReply = false
+			}
+		} else if info.Session.Username != "" {
 			toPass.CanReply = true
 		}
-	} else if info.Session.Username != "" {
-		toPass.CanReply = true
 	}
 
 	postFields := make([]PostField, 0)
@@ -317,12 +327,12 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 				// Poster name/pronouns
 				if !postField.Deleted || isadmin {
 					author := database.GetUserInfo(n.Author)
-					if author.Error != nil {
-						postField.Author = `Could not get author; ` + author.Error.Error()
+					if author.Error() != nil {
+						postField.Author = `Could not get author; ` + author.Error().Error()
 						postField.Pronouns = "what"
 					} else {
-						postField.Author = author.Username
-						postField.Pronouns = author.Pronouns
+						postField.Author = author.Username()
+						postField.Pronouns = author.Pronouns()
 					}
 				}
 				// Timestamp
@@ -348,6 +358,7 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 				}
 				postField.CanDelete = false
 				postField.CanEdit = false
+				postField.CanReply = true
 
 				if postField.Author == info.Session.Username {
 					postField.CanEdit = true
@@ -357,6 +368,12 @@ func PostPageGen(w http.ResponseWriter, r *http.Request, values []string, info I
 					(postField.Deleted && info.Session.Username == postField.DeletedBy) ||
 					isadmin {
 					postField.CanDelete = true
+				}
+
+				if info.Session.Me().Banned() {
+					postField.CanDelete = false
+					postField.CanEdit = false
+					postField.CanReply = false
 				}
 
 			}

@@ -1,9 +1,12 @@
-{{if .Session.Username}}
+{{if .Session.Me.Banned}}
+	{{template "banned_session.html" .}}
+{{else if .Session.Username}}
 	{{$prettynamechange := .PostValues.Get "prettyname"}}
 	{{$biochange := .PostValues.Get "bio"}}
 	{{$pronounchange := .PostValues.Get "pronouns"}}
+	{{$birthday := .PostValues.Get "birthday"}}
 	{{if $prettynamechange}}
-		{{$error := .Session.EditProfile $prettynamechange $biochange $pronounchange}}
+		{{$error := .Session.EditProfile $prettynamechange $biochange $pronounchange $birthday}}
 		{{if $error}}
 			{{$error}}
 		{{else}}
@@ -13,22 +16,39 @@
 	<span class='vbox'>
 		<h1>Edit your profile</h1>
 		<form method='post'>
-			<h3>Full name:</h3>
-			<input 
-				style='width: 100%' 
-				value='{{if $prettynamechange}}{{$prettynamechange}}{{else}}{{.Session.Me.PrettyName}}{{end}}' 
-				type='text' 
-				name='prettyname'>
-			<h3>Pronouns:</h3>
-			<input 
-				style='width: 100%' 
+			<span class="hbox">
+				<h3 style='flex: 1'>Full name:</h3>
+				<input 
+					style='flex: 2' 
+					value='{{if $prettynamechange}}{{$prettynamechange}}{{else}}{{.Session.Me.PrettyName}}{{end}}' 
+					type='text' 
+					name='prettyname'>
+			</span>
+			<span class="hbox">
+				<h3 style='flex: 1'>Pronouns:</h3>
+				<input 
+				style='flex: 2' 
 				value='{{if $pronounchange}}{{$pronounchange}}{{else}}{{.Session.Me.Pronouns}}{{end}}' 
 				type='text' 
 				name='pronouns'>
-			<h3>About me:</h3>
-			<em>(Markdown is not supported)</em><br>
-			<textarea style='width: 100%' rows='5' name='bio'>{{if $biochange}}{{$biochange}}{{else}}{{.Session.Me.Bio}}{{end}}
-			</textarea>
+			</span>
+			<span class="hbox">
+				<h3 style='flex: 1'>About me:</h3>
+				<span class="vbox" style="flex: 2">
+					<span class="box">
+						<textarea style="width: 100%" rows='5' name='bio'>{{if $biochange}}{{$biochange}}{{else}}{{.Session.Me.Bio}}{{end}}</textarea>
+					</span>
+					<span class="box">
+						<em>(Markdown is not supported)</em>
+					</span>
+				</span>
+				
+				
+			</span>
+			<span class="hbox">
+				<h3 style='flex: 1'>Date of birth:</h3>
+				<input value="{{.Session.Me.BirthdayFormatted}}" style='flex: 2' type="date" name="birthday">	
+			</span>
 			<input type='Submit' value='Save Profile'>
 		</form>
 	</span>

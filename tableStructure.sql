@@ -39,6 +39,9 @@ ALTER TABLE "users" ADD "admin"             INTEGER;
 ALTER TABLE "users" ADD "deleted"           INTEGER;
 ALTER TABLE "users" ADD "deletedtime"       INTEGER;
 ALTER TABLE "users" ADD "pronouns"          TEXT DEFAULT "";
+ALTER TABLE "users" ADD "banned"            INTEGER DEFAULT 0;
+ALTER TABLE "users" ADD "banReason"         TEXT DEFAULT "";
+ALTER TABLE "users" ADD "birthday"          INTEGER DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS "sessions" (
     "id" INTEGER PRIMARY KEY
@@ -49,3 +52,9 @@ ALTER TABLE "sessions" ADD "pubkey"         TEXT;
 ALTER TABLE "sessions" ADD "privkey"        TEXT;
 ALTER TABLE "sessions" ADD "username"       TEXT;
 ALTER TABLE "sessions" ADD "timestamp"      TEXT;
+
+CREATE TABLE IF NOT EXISTS "reservedNames" (
+    "id" INTEGER PRIMARY KEY
+);
+
+ALTER TABLE "reservedNames" ADD "username" TEXT;

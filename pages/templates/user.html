@@ -3,45 +3,54 @@
 <meta property="og:description" content="See {{.Name}}'s page on the Awesomeware Forum" />
 <span class='vbox'>
 	<span class='hbox'>
-		<span class='box userinfo'>
-			{{if .IsAdmin}}
-				<small><b style='float: right'>Admin</b></small>
+		{{if .Error}}
+			{{if .Session.Me.Banned}}
+				{{template "banned_session.html" .}}
+			{{else}}
+				<span class="box heading alert">{{.Error}}</span><br>
 			{{end}}
-			
-			<span style="vertical-align: middle"  class="hbox">
-				<span style=" flex: 5;" class="box"><h3 style="margin: 0;">{{.Name}}</h3></span>
-				<span class="box"><em>{{.Pronouns}}</em></span>
-			</span>
-			<p>{{.Bio}}</p>
-			A member since {{.CreatedAt}}
-			{{if .CanEdit}}
-				<br><br>
-				<form method='post' action='/profile/edit'>
-					<input type='submit' class='editprofilebutton' value='Edit Profile'>
-				</form>
-			{{end}}
-		</span>
-		<span class='box posts'>
-			<table class='posts user'>
-				<thead>
-					<tr>
-						<th>Topic</th>
-						<th>{{.Name}}'s posts</th>
-					</tr>
-				</thead>
-				<tbody>
-				{{range $i, $v := .Posts}}
-					{{if not $v.Deleted}}
-						<tr>
-							<td class='topic'>
-								<a href='/topic/{{$v.Topic}}'>{{Capitalize $v.Topic}}</a>
-							</td>
-							<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
-						</tr>
-					{{end}}
+		{{else}}
+			<span class='box userinfo'>
+				{{if .IsAdmin}}
+					<small><b style='float: right'>Admin</b></small>
 				{{end}}
-				</tbody>
-			</table>
-		</span>
+				
+				<span style="vertical-align: middle"  class="hbox">
+					<span style=" flex: 5;" class="box"><h3 style="margin: 0;">{{.Name}}</h3></span>
+					<span class="box"><em>{{.Pronouns}}</em></span>
+				</span>
+				<p>{{.Bio}}</p>
+				A member since {{.CreatedAt}}
+				{{if .CanEdit}}
+					<br><br>
+					<form method='post' action='/profile/edit'>
+						<input type='submit' class='editprofilebutton' value='Edit Profile'>
+					</form>
+				{{end}}
+			</span>
+			<span class='box posts'>
+				<table class='posts user'>
+					<thead>
+						<tr>
+							<th>Topic</th>
+							<th>{{.Name}}'s posts</th>
+						</tr>
+					</thead>
+					<tbody>
+					{{range $i, $v := .Posts}}
+						{{if not $v.Deleted}}
+							<tr>
+								<td class='topic'>
+									<a href='/topic/{{$v.Topic}}'>{{Capitalize $v.Topic}}</a>
+								</td>
+								<td class='subject'><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></td>
+							</tr>
+						{{end}}
+					{{end}}
+					</tbody>
+				</table>
+			</span>
+		{{end}}
+		
 	</span>
 </span>

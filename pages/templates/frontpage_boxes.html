@@ -3,10 +3,10 @@
 	<span class='box heading' style='
 		background: #A0C99C;
 		'>
-		Announcements
+		<a style='color: black' href="/topic/announcements">Announcements</a>
 	</span>
 	<span class='contents'>
-		{{$posts := GetPostsBySectionName "announcements"}}
+		{{$posts := GetLast5PostsBySectionName "announcements"}}
 		{{range $i, $v := $posts.Posts}}
 			{{if not $v.Deleted}}
 				<h3><a href='/post/{{$v.ID}}'>{{$v.Subject}}</a></h3>

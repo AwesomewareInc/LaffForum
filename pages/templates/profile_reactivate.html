@@ -4,9 +4,7 @@
 	{{$time = $result.Result}}
 {{end}}
 
-{{if not .Session.Username}}
-	You aren't logged in.
-{{else}}
+{{if .Session.Username}}
 	{{if .PostValues.Get "confirm"}}
 		{{$error := .Session.UndeleteProfile  (.PostValues.Get "password")}}
 		{{if $error}}

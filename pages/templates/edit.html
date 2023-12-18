@@ -1,9 +1,13 @@
 {{ template "header.html" . }}
 
 {{$allowed := true}}
-{{if .Session.Username}}
-{{else}}
+{{if not .Session.Username}}
 	You aren't logged in.<br>
+	{{$allowed = false}}
+{{end}}
+
+{{if .Session.Me.Banned}}
+	{{template "banned_session.html" .}}
 	{{$allowed = false}}
 {{end}}
 

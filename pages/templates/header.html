@@ -12,12 +12,6 @@
 			<span class='header'>
 				<span class='top'>
 					<a class='logo' href='/'><img src="/resources/logo.svg" alt="LaffForum" width="128" height="64"></a>
-					<!---
-					<span class='search'>
-						<input type='text'>
-						<input type='submit'>
-					</span>
-					--->
 					<span class='user'>
 						{{if .Session.Username}}
 							{{if .Session.Me.Deleted}}
@@ -38,6 +32,9 @@
 								</a> |
 								<a href="/user/{{.Session.Username}}">{{.Session.Username}}</a> | <a href='/logout'>Logout</a>
 							{{end}}
+							{{if eq .Session.Me.Birthday 0}}
+								{{Redirect "/updatetime" 303}}
+							{{end}}
 						{{else}}
 							<a href='/login'>LogIn</a> | <a href='/register'>SignUp</a>
 						{{end}}
@@ -51,3 +48,4 @@
 				<a href='/privacy'>Privacy</a>
 			</span>
 			<span class='main'>
+				

@@ -4,23 +4,33 @@
 {{$post := ""}}
 {{$id := -1}}
 {{$verificationErrors := ""}}
-{{if .Session.Username}}
-	{{$allowed := true}}
-	{{$sectioninf := GetSectionInfo $topic}}
-	{{if $sectioninf.Error}}
-		{{$sectioninf.Error.Error}}
-		{{$allowed = false}}
-	{{else}}
-		{{if eq $sectioninf.AdminOnly 1}}
-			{{if .Session.Me.Admin}}
-			{{else}}
-				$allowed = false
-			{{end}}
-		{{end}}
-		{{if $sectioninf.Archived}}
+{{$allowed := true}}
+{{if not .Session.Username}}
+	<span class="vbox">
+		<span class="box heading alert">Must be logged in.</span>
+	</span>
+	{{$allowed = false}}
+{{end}}
+{{if .Session.Me.Banned}}
+	{{template "banned_session.html" .}}
+	{{$allowed = false}}
+{{end}}
+{{$sectioninf := GetSectionInfo $topic}}
+{{if $sectioninf.Error}}
+	{{$sectioninf.Error.Error}}
+	{{$allowed = false}}
+{{else}}
+	{{if eq $sectioninf.AdminOnly 1}}
+		{{if .Session.Me.Admin}}
+		{{else}}
 			$allowed = false
 		{{end}}
 	{{end}}
+	{{if $sectioninf.Archived}}
+		$allowed = false
+	{{end}}
+{{end}}
+{{if $allowed}}
 	{{$subject := .PostValues.Get "subject"}}
 	{{if ge (len $subject) 1}}
 		{{$captcha := .PostValues.Get "h-captcha-response"}}
@@ -56,6 +66,4 @@
 		<div class="h-captcha" data-sitekey="172337d6-4a4e-447a-af25-4be55354bd60"></div>
 		<input type='submit'>
 	</form>
-{{else}}
-	You aren't logged in.
 {{end}}

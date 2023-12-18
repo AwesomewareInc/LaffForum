@@ -7,6 +7,11 @@
 	{{$allowed = false}}
 {{end}}
 
+{{if .Session.Me.Banned}}
+	{{template "banned_session.html" .}}
+	{{$allowed = false}}
+{{end}}
+
 {{if $allowed}}
 	{{if eq (len .Values) 0}}
 		what are you doing.<br>

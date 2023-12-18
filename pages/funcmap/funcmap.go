@@ -27,6 +27,7 @@ var FuncMap = template.FuncMap{
 
 	// working with posts
 	"GetPostsBySectionName":             database.GetPostsBySectionName,
+	"GetLast5PostsBySectionName":		 database.GetLast5PostsBySectionName,
 	"GetPostsFromUser":                  database.GetPostsFromUser,
 	"GetPostsInReplyTo":                 database.GetPostsInReplyTo,
 	"GetPostInfo":                       database.GetPostInfo,

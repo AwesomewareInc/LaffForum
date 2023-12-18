@@ -3,7 +3,11 @@
 <meta property="og:title" content="The Awesomeware Forum" />
 <meta property="og:description" content="Official news and discussion regarding Awesomeware projects" />
 <span class='vbox'>
+	{{if .Session.Me.Banned}}
+		{{template "banned_session.html" .}}
+	{{end}}
 	<span class='hbox'>
+
 		{{if not .Session.Username}}
 		<span class='box welcome'>
 			<h1>The AwesomeWare forum</h1>
