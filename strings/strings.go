@@ -67,7 +67,7 @@ func Markdown(val string) string {
 	val = strings.ReplaceAll(val, "<p>", "")
 	val = strings.ReplaceAll(val, "</p>", "")
 
-	val = strings.ReplaceAll(val, "<br>", "")
+	val = strings.ReplaceAll(val, "\n\n", "<br>")
 
 	val = strings.ReplaceAll(val, "&ndash;", "--")
 	// quake
