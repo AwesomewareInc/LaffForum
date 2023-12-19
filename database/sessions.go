@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/ssh"
 )
 
 // Files for creaeting and working with "sessions"
@@ -326,7 +328,7 @@ func PubKeyFromString(str string) (crypto.PublicKey, error) {
 	}
 
 	var key crypto.PublicKey
-	var err1, err2 error
+	var err1, err2, err3 error
 
 	if key, err1 = x509.ParsePKCS1PublicKey(block.Bytes); err1 == nil {
 		return key, nil
@@ -334,6 +336,9 @@ func PubKeyFromString(str string) (crypto.PublicKey, error) {
 	if key, err2 = x509.ParsePKIXPublicKey(block.Bytes); err2 == nil {
 		return key, nil
 	}
+	if key, err3 = ssh.ParsePublicKey(block.Bytes); err3 == nil {
+		return key, nil
+	}
 
-	return nil, fmt.Errorf("Couldn't parse public key in any format; <br><br>PKCS1: %v<br><br>PKIX: %v", err1, err2)
+	return nil, fmt.Errorf("Couldn't parse public key in any format; \n\nPKCS1: %v\n\nPKIX: %v\n\nSSH: %v", err1, err2, err3)
 }
