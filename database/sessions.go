@@ -179,16 +179,20 @@ func (session Session) GetValidPublicKeys(privKey string) ([]string, error) {
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing the public key: %v", err)
 			}
-			lol := pubKeyRaw.(*rsa.PublicKey)
-			cipher, err := rsa.EncryptPKCS1v15(rand.Reader, lol, []byte(id))
-			if err != nil {
-				return nil, fmt.Errorf("Couldn't encrypt privKey: %v", err)
+			if lol, ok := pubKeyRaw.(*rsa.PublicKey); ok {
+				cipher, err := rsa.EncryptPKCS1v15(rand.Reader, lol, []byte(id))
+				if err != nil {
+					return nil, fmt.Errorf("Couldn't encrypt privKey: %v", err)
+				}
+				// silently fail if they don't match.
+				_, err = rsa.DecryptPKCS1v15(nil, privKeyRaw_, cipher)
+				if err == nil {
+					publicKeys = append(publicKeys, key)
+				}
+			} else {
+				return nil, fmt.Errorf("Invalid public key. Try clearing your cookies.")
 			}
-			// silently fail if they don't match.
-			_, err = rsa.DecryptPKCS1v15(nil, privKeyRaw_, cipher)
-			if err == nil {
-				publicKeys = append(publicKeys, key)
-			}
+
 		}
 	} else if privKeyRaw_, ok := privKeyRaw.(*ecdsa.PrivateKey); ok {
 		for _, key := range session.keys {
@@ -200,11 +204,15 @@ func (session Session) GetValidPublicKeys(privKey string) ([]string, error) {
 			if err != nil {
 				return nil, fmt.Errorf("Couldn't encrypt privKey: %v", err)
 			}
-			lol := pubKeyRaw.(ecdsa.PublicKey)
-			valid := ecdsa.Verify(&lol, []byte(privKey), r, s)
-			if valid {
-				publicKeys = append(publicKeys, key)
+			if lol, ok := pubKeyRaw.(*ecdsa.PublicKey); ok {
+				valid := ecdsa.Verify(lol, []byte(privKey), r, s)
+				if valid {
+					publicKeys = append(publicKeys, key)
+				}
+			} else {
+				return nil, fmt.Errorf("Invalid public key. Try clearing your cookies.")
 			}
+
 		}
 	} else {
 		return nil, fmt.Errorf("Invalid key type. Key was %v", privKey)
