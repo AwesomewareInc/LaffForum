@@ -328,10 +328,10 @@ func PubKeyFromString(str string) (crypto.PublicKey, error) {
 	var key crypto.PublicKey
 	var err1, err2 error
 
-	if key, err1 = x509.ParsePKCS1PublicKey(block.Bytes); err == nil {
+	if key, err1 = x509.ParsePKCS1PublicKey(block.Bytes); err1 == nil {
 		return key, nil
 	}
-	if key, err2 = x509.ParsePKIXPublicKey(block.Bytes); err == nil {
+	if key, err2 = x509.ParsePKIXPublicKey(block.Bytes); err2 == nil {
 		return key, nil
 	}
 
