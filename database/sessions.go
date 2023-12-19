@@ -335,5 +335,5 @@ func PubKeyFromString(str string) (crypto.PublicKey, error) {
 		return key, nil
 	}
 
-	return nil, fmt.Errorf("Couldn't parse private key in any format; \nPKCS1: %v, EC: %v", err1, err2)
+	return nil, fmt.Errorf("Couldn't parse public key in any format; <br><br>PKCS1: %v<br><br>PKIX: %v", err1, err2)
 }
